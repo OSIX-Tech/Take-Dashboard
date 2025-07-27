@@ -12,7 +12,7 @@ const Topbar = ({ title, onLogout }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 lg:space-x-4">
           <img
-            src="/src/assets/logo.png"
+            src="/logo.png"
             alt="TAKE Logo"
             className="h-8 sm:h-10 lg:h-12 w-auto object-contain"
           />

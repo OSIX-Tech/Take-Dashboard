@@ -26,11 +26,11 @@ const Login = ({ onLogin }) => {
       <div className="max-w-sm w-full space-y-4 sm:space-y-6">
         <div className="text-center">
           <div className="flex justify-center mb-3 sm:mb-4">
-            <img
-              src="/src/assets/logo.png"
-              alt="TAKE Logo"
-              className="h-10 sm:h-12 w-auto object-contain mx-auto"
-            />
+                          <img
+                src="/logo.png"
+                alt="TAKE Logo"
+                className="h-10 sm:h-12 w-auto object-contain mx-auto"
+              />
           </div>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
             Acceso Administrativo

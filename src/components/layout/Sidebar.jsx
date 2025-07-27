@@ -8,7 +8,7 @@ import {
   ChevronLeft, 
   ChevronRight
 } from 'lucide-react'
-import logo from '../../assets/logo.png'
+
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false)
