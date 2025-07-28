@@ -18,10 +18,17 @@ const Layout = ({ children, onLogout }) => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+      {/* Sidebar - always visible, collapsed on mobile, expandable on desktop */}
+      <div className="flex-shrink-0">
+        <Sidebar />
+      </div>
+      
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar title={getPageTitle()} onLogout={onLogout} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <Topbar 
+          title={getPageTitle()} 
+          onLogout={onLogout}
+        />
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

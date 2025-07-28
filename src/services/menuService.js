@@ -1,29 +1,41 @@
 import { apiService } from './api.js'
+import { mockApiService } from './mockData.js'
 
-// Menu Items Service
+// Menu Service - Updated to match your backend endpoints
 export const menuService = {
-  // Get all menu items with categories
+  // Get complete menu (categories and items) - matches your GET /menu endpoint
+  async getMenu() {
+    try {
+      const response = await apiService.get('menu')
+      return response.data || response
+    } catch (error) {
+      console.error('Error fetching menu:', error)
+      // Fallback to mock data if backend is not available
+      console.log('🔧 Falling back to mock data for menu')
+      return mockApiService.getMenuItems()
+    }
+  },
+
+  // Get menu items from the complete menu response
   async getMenuItems() {
     try {
-      const response = await apiService.get('menu/items', {
-        include: 'categories'
-      })
-      return response.data || response
+      const menuResponse = await this.getMenu()
+      // Extract items from the complete menu response
+      return menuResponse.items || menuResponse
     } catch (error) {
       console.error('Error fetching menu items:', error)
       throw error
     }
   },
 
-  // Get menu item by ID
-  async getMenuItem(id) {
+  // Get categories from the complete menu response
+  async getCategories() {
     try {
-      const response = await apiService.get(`menu/items/${id}`, {
-        include: 'categories'
-      })
-      return response.data || response
+      const menuResponse = await this.getMenu()
+      // Extract categories from the complete menu response
+      return menuResponse.categories || []
     } catch (error) {
-      console.error('Error fetching menu item:', error)
+      console.error('Error fetching categories:', error)
       throw error
     }
   },
@@ -31,7 +43,7 @@ export const menuService = {
   // Create new menu item
   async createMenuItem(data) {
     try {
-      const response = await apiService.post('menu/items', data)
+      const response = await apiService.post('menu/item', data)
       return response.data || response
     } catch (error) {
       console.error('Error creating menu item:', error)
@@ -42,7 +54,7 @@ export const menuService = {
   // Update menu item
   async updateMenuItem(id, data) {
     try {
-      const response = await apiService.patch(`menu/items/${id}`, data)
+      const response = await apiService.put(`menu/item/${id}`, data)
       return response.data || response
     } catch (error) {
       console.error('Error updating menu item:', error)
@@ -53,7 +65,7 @@ export const menuService = {
   // Delete menu item
   async deleteMenuItem(id) {
     try {
-      const response = await apiService.delete(`menu/items/${id}`)
+      const response = await apiService.delete(`menu/item/${id}`)
       return response.data || response
     } catch (error) {
       console.error('Error deleting menu item:', error)
@@ -61,41 +73,85 @@ export const menuService = {
     }
   },
 
-  // Get menu items by category
+  // Create new category
+  async createCategory(data) {
+    try {
+      const response = await apiService.post('menu/category', data)
+      return response.data || response
+    } catch (error) {
+      console.error('Error creating category:', error)
+      throw error
+    }
+  },
+
+  // Update category
+  async updateCategory(id, data) {
+    try {
+      const response = await apiService.put(`menu/category/${id}`, data)
+      return response.data || response
+    } catch (error) {
+      console.error('Error updating category:', error)
+      throw error
+    }
+  },
+
+  // Delete category
+  async deleteCategory(id) {
+    try {
+      const response = await apiService.delete(`menu/category/${id}`)
+      return response.data || response
+    } catch (error) {
+      console.error('Error deleting category:', error)
+      throw error
+    }
+  },
+
+  // Get menu items by category (filter from complete menu)
   async getMenuItemsByCategory(categoryId) {
     try {
-      const response = await apiService.get('menu/items', {
-        category_id: categoryId,
-        include: 'categories'
-      })
-      return response.data || response
+      const menuItems = await this.getMenuItems()
+      return menuItems.filter(item => item.category_id === categoryId)
     } catch (error) {
       console.error('Error fetching menu items by category:', error)
       throw error
     }
   },
 
-  // Get available menu items
+  // Get available menu items (filter from complete menu)
   async getAvailableMenuItems() {
     try {
-      const response = await apiService.get('menu/items', {
-        is_available: true,
-        include: 'categories'
-      })
-      return response.data || response
+      const menuItems = await this.getMenuItems()
+      return menuItems.filter(item => item.is_available === true)
     } catch (error) {
       console.error('Error fetching available menu items:', error)
       throw error
     }
   },
 
-  // Get menu statistics
+  // Calculate menu statistics from complete menu
   async getMenuStats() {
     try {
-      const response = await apiService.get('menu/stats')
-      return response.data || response
+      const menuItems = await this.getMenuItems()
+      const categories = await this.getCategories()
+      
+      const totalItems = menuItems.length
+      const availableItems = menuItems.filter(item => item.is_available).length
+      const unavailableItems = totalItems - availableItems
+      const totalValue = menuItems.reduce((sum, item) => sum + (item.price || 0), 0)
+      const averagePrice = totalItems > 0 ? totalValue / totalItems : 0
+      const highestPrice = Math.max(...menuItems.map(item => item.price || 0))
+      
+      return {
+        total_items: totalItems,
+        available_items: availableItems,
+        unavailable_items: unavailableItems,
+        total_value: totalValue,
+        average_price: averagePrice,
+        highest_price: highestPrice,
+        categories_count: categories.length
+      }
     } catch (error) {
-      console.error('Error fetching menu stats:', error)
+      console.error('Error calculating menu stats:', error)
       throw error
     }
   }

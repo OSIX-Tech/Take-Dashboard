@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { 
   Menu as MenuIcon, 
@@ -9,51 +9,76 @@ import {
   ChevronRight
 } from 'lucide-react'
 
-
 const Sidebar = () => {
+  // On mobile, always collapsed. On desktop, can be toggled
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if we're on mobile and force collapsed state
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024 // lg breakpoint
+      setIsMobile(mobile)
+      if (mobile) {
+        setIsCollapsed(true) // Force collapsed on mobile
+      }
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const menuItems = [
     { 
-      icon: <MenuIcon className="w-6 h-6" />, 
+      icon: <MenuIcon className="w-5 h-5 lg:w-6 lg:h-6" />, 
       label: 'Menú', 
       path: '/menu',
       description: 'Gestionar elementos del menú'
     },
     { 
-      icon: <Calendar className="w-6 h-6" />, 
+      icon: <Calendar className="w-5 h-5 lg:w-6 lg:h-6" />, 
       label: 'Eventos', 
       path: '/events',
       description: 'Gestionar eventos'
     },
     { 
-      icon: <Gift className="w-6 h-6" />, 
+      icon: <Gift className="w-5 h-5 lg:w-6 lg:h-6" />, 
       label: 'Recompensas', 
       path: '/rewards',
       description: 'Gestionar recompensas'
     },
     { 
-      icon: <Trophy className="w-6 h-6" />, 
+      icon: <Trophy className="w-5 h-5 lg:w-6 lg:h-6" />, 
       label: 'Juego', 
       path: '/game',
       description: 'Ver clasificación'
     },
   ]
 
+  const handleToggleCollapse = () => {
+    if (!isMobile) {
+      setIsCollapsed(!isCollapsed)
+    }
+  }
+
   return (
     <div className={`bg-white border-r border-gray-200 h-screen transition-all duration-300 ease-in-out flex flex-col ${
+      // Mobile: always collapsed (w-16), Desktop: can be toggled
       isCollapsed ? 'w-16 lg:w-20' : 'w-64 lg:w-72 xl:w-80'
     }`}>
       {/* Header */}
       <div className="p-3 lg:p-4 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center justify-center w-full">
+          {/* Only show title on desktop when not collapsed */}
           {!isCollapsed && (
             <span className="font-bold text-lg lg:text-xl tracking-wide text-black transition-all duration-300">Dashboard</span>
           )}
         </div>
+        {/* Only show collapse button on desktop */}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="ml-2 p-2 lg:p-3 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation"
+          onClick={handleToggleCollapse}
+          className="hidden lg:block p-2 lg:p-3 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation"
         >
           {isCollapsed ? (
             <ChevronRight className="w-5 h-5" />
@@ -70,7 +95,7 @@ const Sidebar = () => {
             key={index}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center ${isCollapsed ? 'justify-center' : ''} px-3 py-3 lg:py-4 rounded-xl text-base lg:text-lg font-semibold transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation
+              flex items-center justify-center lg:justify-start px-3 py-3 lg:py-4 rounded-xl text-base lg:text-lg font-semibold transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation
               ${isActive
                 ? 'bg-black text-white shadow-sm'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-black'}
@@ -85,6 +110,7 @@ const Sidebar = () => {
                     : <span className="[&_.lucide]:text-black">{item.icon}</span>
                   }
                 </span>
+                {/* Only show labels on desktop when not collapsed */}
                 {!isCollapsed && (
                   <span className="ml-3 lg:ml-4 text-base lg:text-lg font-semibold">{item.label}</span>
                 )}
@@ -95,10 +121,11 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className={`p-3 lg:p-4 border-t border-gray-100 flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
+      <div className={`p-3 lg:p-4 border-t border-gray-100 flex items-center justify-center lg:justify-start`}>
         <div className={`w-8 h-8 lg:w-10 lg:h-10 bg-gray-200 rounded-full flex items-center justify-center`}>
           <span className="text-gray-600 text-sm lg:text-base font-medium">A</span>
         </div>
+        {/* Only show user info on desktop when not collapsed */}
         {!isCollapsed && (
           <div className="flex-1 ml-3">
             <p className="text-xs lg:text-sm font-medium text-gray-700">Administrador</p>
