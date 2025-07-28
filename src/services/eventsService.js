@@ -1,23 +1,22 @@
 import { apiService } from './api.js'
 import { mockApiService } from './mockData.js'
 
-// Events Service - Updated to match your backend endpoints
+// Events Service - Updated to match your backend endpoints exactly
 export const eventsService = {
-  // Get all events - Using mock data since GET /events is not implemented yet
+  // Get all events
   async getEvents() {
     try {
-      // Since GET /events doesn't exist in your backend, we'll use mock data
-      console.log('🔧 Using mock data for events since GET /events is not implemented')
-      const mockResponse = await mockApiService.getEvents()
-      return mockResponse
+      const response = await apiService.get('events')
+      return response.data || response
     } catch (error) {
       console.error('Error fetching events:', error)
-      // Return empty array as fallback
-      return { data: [] }
+      // Fallback to mock data if backend is not available
+      console.log('🔧 Falling back to mock data for events')
+      return mockApiService.getEvents()
     }
   },
 
-  // Get event by ID (you'll need to implement this endpoint)
+  // Get event by ID
   async getEvent(id) {
     try {
       const response = await apiService.get(`events/${id}`)
@@ -28,10 +27,10 @@ export const eventsService = {
     }
   },
 
-  // Create new event - matches your POST /event endpoint
+  // Create new event - matches your POST /events endpoint
   async createEvent(data) {
     try {
-      const response = await apiService.post('event', data)
+      const response = await apiService.post('events', data)
       return response.data || response
     } catch (error) {
       console.error('Error creating event:', error)
@@ -39,10 +38,10 @@ export const eventsService = {
     }
   },
 
-  // Update event - matches your PUT /event/{id} endpoint
+  // Update event - matches your PATCH /events/{id} endpoint
   async updateEvent(id, data) {
     try {
-      const response = await apiService.put(`event/${id}`, data)
+      const response = await apiService.patch(`events/${id}`, data)
       return response.data || response
     } catch (error) {
       console.error('Error updating event:', error)
@@ -50,10 +49,10 @@ export const eventsService = {
     }
   },
 
-  // Delete event - matches your DELETE /event/{id} endpoint
+  // Delete event - matches your DELETE /events/{id} endpoint
   async deleteEvent(id) {
     try {
-      const response = await apiService.delete(`event/${id}`)
+      const response = await apiService.delete(`events/${id}`)
       return response.data || response
     } catch (error) {
       console.error('Error deleting event:', error)
@@ -61,36 +60,61 @@ export const eventsService = {
     }
   },
 
-  // Get published events (you'll need to implement this endpoint)
-  async getPublishedEvents() {
+  // Get events by status
+  async getEventsByStatus(status) {
     try {
-      const response = await apiService.get('events?published_at=not.is.null')
-      return response.data || response
+      const events = await this.getEvents()
+      return events.filter(event => event.status === status)
     } catch (error) {
-      console.error('Error fetching published events:', error)
+      console.error('Error fetching events by status:', error)
       throw error
     }
   },
 
-  // Get events by date range (you'll need to implement this endpoint)
-  async getEventsByDateRange(startDate, endDate) {
-    try {
-      const response = await apiService.get(`events?published_at=gte.${startDate}&published_at=lte.${endDate}`)
-      return response.data || response
-    } catch (error) {
-      console.error('Error fetching events by date range:', error)
-      throw error
-    }
-  },
-
-  // Get upcoming events (you'll need to implement this endpoint)
+  // Get upcoming events
   async getUpcomingEvents() {
     try {
-      const now = new Date().toISOString()
-      const response = await apiService.get(`events?published_at=gte.${now}`)
-      return response.data || response
+      const events = await this.getEvents()
+      const now = new Date()
+      return events.filter(event => new Date(event.published_at) > now)
     } catch (error) {
       console.error('Error fetching upcoming events:', error)
+      throw error
+    }
+  },
+
+  // Get past events
+  async getPastEvents() {
+    try {
+      const events = await this.getEvents()
+      const now = new Date()
+      return events.filter(event => new Date(event.published_at) < now)
+    } catch (error) {
+      console.error('Error fetching past events:', error)
+      throw error
+    }
+  },
+
+  // Calculate event statistics
+  async getEventStats() {
+    try {
+      const events = await this.getEvents()
+      
+      const totalEvents = events.length
+      const upcomingEvents = events.filter(event => new Date(event.published_at) > new Date()).length
+      const pastEvents = totalEvents - upcomingEvents
+      const activeEvents = events.filter(event => event.status === 'active').length
+      const completedEvents = events.filter(event => event.status === 'completed').length
+      
+      return {
+        total_events: totalEvents,
+        upcoming_events: upcomingEvents,
+        past_events: pastEvents,
+        active_events: activeEvents,
+        completed_events: completedEvents
+      }
+    } catch (error) {
+      console.error('Error calculating event stats:', error)
       throw error
     }
   }

@@ -28,11 +28,15 @@ const Layout = ({ children, onLogout }) => {
           title={getPageTitle()} 
           onLogout={onLogout}
         />
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 lg:p-6">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>
+        {/* Super small footer */}
+        <footer className="bg-white border-t border-gray-200 px-3 py-2 text-center">
+          <p className="text-xs text-gray-500">© 2025 OSIX. Todos los derechos reservados.</p>
+        </footer>
       </div>
     </div>
   )

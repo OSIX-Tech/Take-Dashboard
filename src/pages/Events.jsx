@@ -1,18 +1,20 @@
-import { useState, useEffect } from 'react'
-import { 
-  Plus, 
-  Calendar, 
-  Edit, 
-  Trash2, 
-  X,
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import {
+  Plus,
   Search,
-  Image
+  Edit,
+  Trash2,
+  Calendar,
+  Clock,
+  X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { eventsService } from '@/services/eventsService'
+import { useApiState } from '@/hooks/useApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 
@@ -23,13 +25,35 @@ const Events = () => {
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
-  const [formData, setFormData] = useState({ 
-    title: '', 
-    content: '', 
-    image_url: '', 
+  const [submitting, setSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    image_url: '',
     published_at: new Date().toISOString().slice(0, 16)
   })
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Modal component using portal
+  const Modal = ({ isOpen, onClose, children }) => {
+    if (!isOpen) return null
+
+    return createPortal(
+      <div 
+        className="fixed inset-0 z-50 overflow-y-auto"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+      >
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <div className="relative w-full max-w-md">
+            <div className="relative bg-white rounded-lg shadow-xl">
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )
+  }
 
   // Load data on component mount
   useEffect(() => {
@@ -41,10 +65,10 @@ const Events = () => {
       setLoading(true)
       setError(null)
       console.log('🔄 Loading events...')
-      
+
       const eventsResponse = await eventsService.getEvents()
-      console.log('📦 Events response:', eventsResponse)
-      
+      console.log('�� Events response:', eventsResponse)
+
       if (eventsResponse && eventsResponse.data) {
         setEvents(eventsResponse.data || [])
       } else if (eventsResponse) {
@@ -63,36 +87,66 @@ const Events = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     try {
+      setSubmitting(true)
+      console.log('🚀 Submitting event data:', formData)
+
       if (editingEvent) {
-        await eventsService.updateEvent(editingEvent.id, formData)
+        console.log('📝 Updating event:', editingEvent.id)
+        const response = await eventsService.updateEvent(editingEvent.id, formData)
+        console.log('✅ Event updated:', response)
+
         // Update event locally after successful save
-        setEvents(events.map(event => event.id === editingEvent.id ? { ...event, ...formData } : event))
+        setEvents(events.map(event =>
+          event.id === editingEvent.id
+            ? { ...event, ...formData, ...response }
+            : event
+        ))
         setEditingEvent(null)
       } else {
-        await eventsService.createEvent(formData)
+        console.log('➕ Creating new event')
+        const response = await eventsService.createEvent(formData)
+        console.log('✅ Event created:', response)
+
         // Add event locally after successful save
         const newEvent = {
-          id: Date.now().toString(),
-          ...formData
+          id: response.id || Date.now().toString(),
+          ...formData,
+          ...response
         }
         setEvents([...events, newEvent])
       }
-      
-      setFormData({ title: '', content: '', image_url: '', published_at: new Date().toISOString().slice(0, 16) })
+
+      // Reset form
+      setFormData({
+        title: '',
+        content: '',
+        image_url: '',
+        published_at: new Date().toISOString().slice(0, 16)
+      })
       setShowForm(false)
-      loadData() // Reload data after save
+
+      // Reload data to ensure consistency
+      await loadData()
+
     } catch (error) {
-      console.error('Error saving event:', error)
+      console.error('❌ Error saving event:', error)
+      alert(`Error al guardar el evento: ${error.message}`)
+    } finally {
+      setSubmitting(false)
     }
   }
 
   const handleEdit = (event) => {
     setEditingEvent(event)
     setFormData({
-      ...event,
-      published_at: event.published_at ? new Date(event.published_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)
+      title: event.title || '',
+      content: event.content || '',
+      image_url: event.image_url || '',
+      published_at: event.published_at
+        ? new Date(event.published_at).toISOString().slice(0, 16)
+        : new Date().toISOString().slice(0, 16)
     })
     setShowForm(true)
   }
@@ -100,30 +154,57 @@ const Events = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este evento?')) {
       try {
+        console.log('🗑️ Deleting event:', id)
         await eventsService.deleteEvent(id)
+        console.log('✅ Event deleted successfully')
+
         // Delete event locally after successful delete
         setEvents(events.filter(event => event.id !== id))
-        loadData() // Reload data after delete
+
+        // Reload data to ensure consistency
+        await loadData()
       } catch (error) {
-        console.error('Error deleting event:', error)
+        console.error('❌ Error deleting event:', error)
+        alert(`Error al eliminar el evento: ${error.message}`)
       }
     }
   }
 
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      content: '',
+      image_url: '',
+      published_at: new Date().toISOString().slice(0, 16)
+    })
+    setEditingEvent(null)
+  }
+
+  const handleCancel = () => {
+    setShowForm(false)
+    resetForm()
+  }
+
   const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.content.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         event.content?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
   })
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    if (!dateString) return 'Sin fecha'
+
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch (error) {
+      return 'Fecha inválida'
+    }
   }
 
   // Show loading state
@@ -146,7 +227,10 @@ const Events = () => {
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Gestión de Eventos</h1>
             <p className="text-gray-600 mt-1 text-sm lg:text-base">Gestiona tus eventos y talleres</p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="bg-black hover:bg-gray-800 px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation w-full sm:w-auto">
+          <Button
+            onClick={() => setShowForm(true)}
+            className="bg-black hover:bg-gray-800 px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation w-full sm:w-auto"
+          >
             <Plus className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2" />
             <span className="hidden sm:inline">Crear Evento</span>
             <span className="sm:hidden">Crear</span>
@@ -167,6 +251,87 @@ const Events = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Add/Edit Form Modal */}
+        <Modal isOpen={showForm} onClose={handleCancel}>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">
+                {editingEvent ? 'Editar Evento' : 'Crear Nuevo Evento'}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                className="h-8 w-8 p-0 hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título *</label>
+                <Input
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  placeholder="Título del evento"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contenido *</label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({...formData, content: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows="4"
+                  placeholder="Descripción del evento"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora *</label>
+                <Input
+                  type="datetime-local"
+                  value={formData.published_at}
+                  onChange={(e) => setFormData({...formData, published_at: e.target.value})}
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
+                <Input
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                  placeholder="https://example.com/image.jpg"
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <Button type="submit" className="flex-1" disabled={submitting}>
+                  {submitting ? 'Guardando...' : (editingEvent ? 'Actualizar' : 'Crear')} Evento
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  className="flex-1"
+                  disabled={submitting}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Modal>
       </div>
     )
   }
@@ -179,7 +344,10 @@ const Events = () => {
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Gestión de Eventos</h1>
           <p className="text-gray-600 mt-1 text-sm lg:text-base">Gestiona tus eventos y talleres</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="bg-black hover:bg-gray-800 px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation w-full sm:w-auto">
+        <Button
+          onClick={() => setShowForm(true)}
+          className="bg-black hover:bg-gray-800 px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation w-full sm:w-auto"
+        >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2" />
           <span className="hidden sm:inline">Crear Evento</span>
           <span className="sm:hidden">Crear</span>
@@ -249,11 +417,11 @@ const Events = () => {
                   Evento
                 </Badge>
               </div>
-              
+
               {event.image_url && (
                 <div className="mt-3">
-                  <img 
-                    src={event.image_url} 
+                  <img
+                    src={event.image_url}
                     alt={event.title}
                     className="w-full h-32 sm:h-40 object-cover rounded-lg"
                   />
@@ -266,87 +434,91 @@ const Events = () => {
 
       {/* Add/Edit Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
-          <Card className="max-w-sm sm:max-w-md w-full mx-auto p-3 sm:p-4 lg:p-6 max-h-[90vh] overflow-y-auto">
-            <CardHeader className="p-0 pb-3 sm:pb-4 lg:pb-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base sm:text-lg lg:text-xl">
-                  {editingEvent ? 'Editar Evento' : 'Crear Nuevo Evento'}
-                </CardTitle>
+        <Modal isOpen={showForm} onClose={handleCancel}>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">
+                {editingEvent ? 'Editar Evento' : 'Crear Nuevo Evento'}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                className="h-8 w-8 p-0 hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título *</label>
+                <Input
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  placeholder="Título del evento"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contenido *</label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({...formData, content: e.target.value})}
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent text-sm sm:text-base resize-none"
+                  rows="4"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora *</label>
+                <Input
+                  type="datetime-local"
+                  value={formData.published_at}
+                  onChange={(e) => setFormData({...formData, published_at: e.target.value})}
+                  className="py-2 sm:py-3 text-sm sm:text-base"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
+                <Input
+                  type="text"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                  className="py-2 sm:py-3 text-sm sm:text-base"
+                  placeholder="https://example.com/image.jpg"
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-3 sm:pt-4">
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowForm(false)}
-                  className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 p-0 touch-manipulation"
+                  type="submit"
+                  className="flex-1 bg-black hover:bg-gray-800 py-2 sm:py-3 text-sm sm:text-base touch-manipulation"
+                  disabled={submitting}
                 >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {submitting ? 'Guardando...' : (editingEvent ? 'Actualizar' : 'Crear') + ' Evento'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  className="flex-1 py-2 sm:py-3 text-sm sm:text-base touch-manipulation"
+                  disabled={submitting}
+                >
+                  Cancelar
                 </Button>
               </div>
-            </CardHeader>
-            
-            <CardContent className="p-0">
-              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 lg:space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
-                  <Input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    className="py-2 sm:py-3 text-sm sm:text-base"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contenido</label>
-                  <textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({...formData, content: e.target.value})}
-                    className="w-full px-3 py-2 sm:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent text-sm sm:text-base resize-none"
-                    rows="4"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora</label>
-                  <Input
-                    type="datetime-local"
-                    value={formData.published_at}
-                    onChange={(e) => setFormData({...formData, published_at: e.target.value})}
-                    className="py-2 sm:py-3 text-sm sm:text-base"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
-                  <Input
-                    type="text"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                    className="py-2 sm:py-3 text-sm sm:text-base"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-                
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-3 sm:pt-4">
-                  <Button type="submit" className="flex-1 bg-black hover:bg-gray-800 py-2 sm:py-3 text-sm sm:text-base touch-manipulation">
-                    {editingEvent ? 'Actualizar' : 'Crear'} Evento
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowForm(false)}
-                    className="flex-1 py-2 sm:py-3 text-sm sm:text-base touch-manipulation"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+            </form>
+          </div>
+        </Modal>
       )}
     </div>
   )

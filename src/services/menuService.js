@@ -1,7 +1,7 @@
 import { apiService } from './api.js'
 import { mockApiService } from './mockData.js'
 
-// Menu Service - Updated to match your backend endpoints
+// Menu Service - Updated to match your backend endpoints exactly
 export const menuService = {
   // Get complete menu (categories and items) - matches your GET /menu endpoint
   async getMenu() {
@@ -40,7 +40,7 @@ export const menuService = {
     }
   },
 
-  // Create new menu item
+  // Create new menu item - matches your POST /menu/item endpoint
   async createMenuItem(data) {
     try {
       const response = await apiService.post('menu/item', data)
@@ -51,7 +51,7 @@ export const menuService = {
     }
   },
 
-  // Update menu item
+  // Update menu item - matches your PUT /menu/item/{id} endpoint
   async updateMenuItem(id, data) {
     try {
       const response = await apiService.put(`menu/item/${id}`, data)
@@ -62,7 +62,7 @@ export const menuService = {
     }
   },
 
-  // Delete menu item
+  // Delete menu item - matches your DELETE /menu/item/{id} endpoint
   async deleteMenuItem(id) {
     try {
       const response = await apiService.delete(`menu/item/${id}`)
@@ -73,7 +73,7 @@ export const menuService = {
     }
   },
 
-  // Create new category
+  // Create new category - matches your POST /menu/category endpoint
   async createCategory(data) {
     try {
       const response = await apiService.post('menu/category', data)
@@ -84,7 +84,7 @@ export const menuService = {
     }
   },
 
-  // Update category
+  // Update category - matches your PUT /menu/category/{id} endpoint
   async updateCategory(id, data) {
     try {
       const response = await apiService.put(`menu/category/${id}`, data)
@@ -95,7 +95,7 @@ export const menuService = {
     }
   },
 
-  // Delete category
+  // Delete category - matches your DELETE /menu/category/{id} endpoint
   async deleteCategory(id) {
     try {
       const response = await apiService.delete(`menu/category/${id}`)
@@ -157,34 +157,34 @@ export const menuService = {
   }
 }
 
-// Categories Service
+// Categories Service - Updated to match your API endpoints
 export const categoryService = {
-  // Get all categories
+  // Get all categories from the complete menu
   async getCategories() {
     try {
-      const response = await apiService.get('menu/categories')
-      return response.data || response
+      const menuResponse = await apiService.get('menu')
+      return menuResponse.categories || []
     } catch (error) {
       console.error('Error fetching categories:', error)
       throw error
     }
   },
 
-  // Get category by ID
+  // Get category by ID (filter from complete menu)
   async getCategory(id) {
     try {
-      const response = await apiService.get(`menu/categories/${id}`)
-      return response.data || response
+      const categories = await this.getCategories()
+      return categories.find(cat => cat.id === id)
     } catch (error) {
       console.error('Error fetching category:', error)
       throw error
     }
   },
 
-  // Create new category
+  // Create new category - matches your POST /menu/category endpoint
   async createCategory(data) {
     try {
-      const response = await apiService.post('menu/categories', data)
+      const response = await apiService.post('menu/category', data)
       return response.data || response
     } catch (error) {
       console.error('Error creating category:', error)
@@ -192,10 +192,10 @@ export const categoryService = {
     }
   },
 
-  // Update category
+  // Update category - matches your PUT /menu/category/{id} endpoint
   async updateCategory(id, data) {
     try {
-      const response = await apiService.patch(`menu/categories/${id}`, data)
+      const response = await apiService.put(`menu/category/${id}`, data)
       return response.data || response
     } catch (error) {
       console.error('Error updating category:', error)
@@ -203,10 +203,10 @@ export const categoryService = {
     }
   },
 
-  // Delete category
+  // Delete category - matches your DELETE /menu/category/{id} endpoint
   async deleteCategory(id) {
     try {
-      const response = await apiService.delete(`menu/categories/${id}`)
+      const response = await apiService.delete(`menu/category/${id}`)
       return response.data || response
     } catch (error) {
       console.error('Error deleting category:', error)

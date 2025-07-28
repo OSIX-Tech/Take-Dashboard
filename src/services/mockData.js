@@ -56,18 +56,8 @@ export const mockData = {
     }
   ],
 
-  // Events
-  events: [
-    {
-      id: 1,
-      title: "Evento de Café",
-      content: "Descripción del evento de café",
-      image_url: "https://example.com/event.jpg",
-      published_at: "2024-01-01T00:00:00Z",
-      created_at: "2024-01-01T00:00:00Z",
-      updated_at: "2024-01-01T00:00:00Z"
-    }
-  ],
+  // Events - Empty array to use real API data
+  events: [],
 
   // Rewards
   rewards: [
@@ -106,37 +96,7 @@ export const mockData = {
         name: "Café Quiz"
       }
     }
-  ],
-
-  // Menu stats
-  menuStats: {
-    total_items: 52,
-    available_items: 50,
-    unavailable_items: 2,
-    total_value: 142.85,
-    average_price: 2.75,
-    highest_price: 4.00,
-    categories_count: 13
-  },
-
-  // Rewards stats
-  rewardsStats: {
-    total_users: 150,
-    active_users: 120,
-    total_seals: 2500,
-    available_seals: 1800,
-    users_ready_to_redeem: 25,
-    average_seals_per_user: 16.67
-  },
-
-  // Game stats
-  gameStats: {
-    total_players: 85,
-    active_players: 65,
-    total_games: 3,
-    average_score: 1250,
-    highest_score: 2500
-  }
+  ]
 }
 
 // Función para simular delay de red
@@ -175,26 +135,16 @@ export const mockApiService = {
     return createSuccessResponse(mockData.categories)
   },
 
-  async getMenuStats() {
-    await simulateNetworkDelay()
-    return createSuccessResponse(mockData.menuStats)
-  },
-
-  // Events endpoints
+  // Events endpoints - Returns empty array to force real API usage
   async getEvents() {
     await simulateNetworkDelay()
-    return createSuccessResponse(mockData.events)
+    return createSuccessResponse([])
   },
 
   // Rewards endpoints
   async getRewards() {
     await simulateNetworkDelay()
     return createSuccessResponse(mockData.rewards)
-  },
-
-  async getRewardsStats() {
-    await simulateNetworkDelay()
-    return createSuccessResponse(mockData.rewardsStats)
   },
 
   // Games endpoints
@@ -206,10 +156,5 @@ export const mockApiService = {
   async getLeaderboard() {
     await simulateNetworkDelay()
     return createSuccessResponse(mockData.highScores)
-  },
-
-  async getGameStats() {
-    await simulateNetworkDelay()
-    return createSuccessResponse(mockData.gameStats)
   }
 } 

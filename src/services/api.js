@@ -1,5 +1,6 @@
 // API Service Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 
 // Import mock data
 import { mockApiService } from './mockData.js'
@@ -8,182 +9,196 @@ import { mockApiService } from './mockData.js'
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL
-    this.defaultHeaders = {
-      'Content-Type': 'application/json',
-    }
-    this.useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true' || false
+    this.useMockData = USE_MOCK_DATA
   }
 
-  // Get auth token from localStorage
-  getAuthToken() {
-    return localStorage.getItem('authToken')
+  // Get authorization headers
+  getAuthHeaders() {
+    const token = localStorage.getItem('authToken')
+    return token ? { 'Authorization': `Bearer ${token}` } : {}
   }
 
-  // Add auth header if token exists
-  getHeaders() {
-    const token = this.getAuthToken()
-    return {
-      ...this.defaultHeaders,
-      ...(token && { Authorization: `Bearer ${token}` })
-    }
-  }
-
-  // Check if backend is available
-  async checkBackendHealth() {
-    try {
-      const response = await fetch(`${this.baseURL}/health`, {
-        method: 'GET',
-        headers: this.getHeaders(),
-      })
-      return response.ok
-    } catch (error) {
-      return false
-    }
-  }
-
-  // Handle API response
+  // Handle response
   async handleResponse(response) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
     }
-    return response.json()
+    
+    // Try to parse JSON, if it fails return the text
+    try {
+      return response.json()
+    } catch (error) {
+      return response.text()
+    }
   }
 
-  // GET request with fallback to mock data
+  // GET request
   async get(endpoint, params = {}) {
-    // If mock data is enabled or backend is not available, use mock data
-    if (this.useMockData) {
-      console.log(`🔧 Using mock data for: ${endpoint}`)
-      return this.getMockData(endpoint, params)
-    }
-
     try {
+      // If mock data is enabled or backend is not available, use mock data
+      if (this.useMockData) {
+        console.log(`🔧 Using mock data for: ${endpoint}`)
+        return this.getMockData(endpoint, params)
+      }
+
       const url = new URL(`${this.baseURL}/${endpoint}`)
+      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
+
+      console.log(`🌐 Making GET request to: ${url.toString()}`)
       
-      // Add query parameters
-      Object.keys(params).forEach(key => {
-        if (params[key] !== undefined && params[key] !== null) {
-          url.searchParams.append(key, params[key])
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
         }
       })
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: this.getHeaders(),
-      })
-
-      return this.handleResponse(response)
+      const result = await this.handleResponse(response)
+      console.log(`✅ GET ${endpoint} successful:`, result)
+      return result
     } catch (error) {
-      console.log(`⚠️ Backend unavailable, falling back to mock data for: ${endpoint}`)
+      console.error(`❌ GET ${endpoint} failed:`, error)
+      // Fallback to mock data if backend is not available
+      console.log(`🔧 Falling back to mock data for: ${endpoint}`)
       return this.getMockData(endpoint, params)
     }
   }
 
   // POST request
   async post(endpoint, data = {}) {
-    if (this.useMockData) {
-      console.log(`🔧 Using mock data for POST: ${endpoint}`)
-      return { success: true, data: data }
-    }
-
     try {
+      // If mock data is enabled, use mock data
+      if (this.useMockData) {
+        console.log(`🔧 Using mock data for: ${endpoint}`)
+        return this.getMockData(endpoint, data)
+      }
+
+      console.log(`🌐 Making POST request to: ${this.baseURL}/${endpoint}`, data)
+      
       const response = await fetch(`${this.baseURL}/${endpoint}`, {
         method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
+        },
+        body: JSON.stringify(data)
       })
 
-      return this.handleResponse(response)
+      const result = await this.handleResponse(response)
+      console.log(`✅ POST ${endpoint} successful:`, result)
+      return result
     } catch (error) {
-      console.log(`⚠️ Backend unavailable for POST: ${endpoint}`)
-      return { success: false, error: 'Backend unavailable' }
+      console.error(`❌ POST ${endpoint} failed:`, error)
+      // For POST requests, we don't fallback to mock data, we throw the error
+      throw error
     }
   }
 
   // PUT request
   async put(endpoint, data = {}) {
-    if (this.useMockData) {
-      console.log(`🔧 Using mock data for PUT: ${endpoint}`)
-      return { success: true, data: data }
-    }
-
     try {
+      // If mock data is enabled, use mock data
+      if (this.useMockData) {
+        console.log(`🔧 Using mock data for: ${endpoint}`)
+        return this.getMockData(endpoint, data)
+      }
+
+      console.log(`🌐 Making PUT request to: ${this.baseURL}/${endpoint}`, data)
+      
       const response = await fetch(`${this.baseURL}/${endpoint}`, {
         method: 'PUT',
-        headers: this.getHeaders(),
-        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
+        },
+        body: JSON.stringify(data)
       })
 
-      return this.handleResponse(response)
+      const result = await this.handleResponse(response)
+      console.log(`✅ PUT ${endpoint} successful:`, result)
+      return result
     } catch (error) {
-      console.log(`⚠️ Backend unavailable for PUT: ${endpoint}`)
-      return { success: false, error: 'Backend unavailable' }
+      console.error(`❌ PUT ${endpoint} failed:`, error)
+      throw error
     }
   }
 
   // PATCH request
   async patch(endpoint, data = {}) {
-    if (this.useMockData) {
-      console.log(`🔧 Using mock data for PATCH: ${endpoint}`)
-      return { success: true, data: data }
-    }
-
     try {
+      // If mock data is enabled, use mock data
+      if (this.useMockData) {
+        console.log(`🔧 Using mock data for: ${endpoint}`)
+        return this.getMockData(endpoint, data)
+      }
+
+      console.log(`🌐 Making PATCH request to: ${this.baseURL}/${endpoint}`, data)
+      
       const response = await fetch(`${this.baseURL}/${endpoint}`, {
         method: 'PATCH',
-        headers: this.getHeaders(),
-        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
+        },
+        body: JSON.stringify(data)
       })
 
-      return this.handleResponse(response)
+      const result = await this.handleResponse(response)
+      console.log(`✅ PATCH ${endpoint} successful:`, result)
+      return result
     } catch (error) {
-      console.log(`⚠️ Backend unavailable for PATCH: ${endpoint}`)
-      return { success: false, error: 'Backend unavailable' }
+      console.error(`❌ PATCH ${endpoint} failed:`, error)
+      throw error
     }
   }
 
   // DELETE request
   async delete(endpoint) {
-    if (this.useMockData) {
-      console.log(`🔧 Using mock data for DELETE: ${endpoint}`)
-      return { success: true, message: 'Item deleted (mock)' }
-    }
-
     try {
+      // If mock data is enabled, use mock data
+      if (this.useMockData) {
+        console.log(`🔧 Using mock data for: ${endpoint}`)
+        return this.getMockData(endpoint)
+      }
+
+      console.log(`🌐 Making DELETE request to: ${this.baseURL}/${endpoint}`)
+      
       const response = await fetch(`${this.baseURL}/${endpoint}`, {
         method: 'DELETE',
-        headers: this.getHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
+        }
       })
 
-      return this.handleResponse(response)
+      const result = await this.handleResponse(response)
+      console.log(`✅ DELETE ${endpoint} successful:`, result)
+      return result
     } catch (error) {
-      console.log(`⚠️ Backend unavailable for DELETE: ${endpoint}`)
-      return { success: false, error: 'Backend unavailable' }
+      console.error(`❌ DELETE ${endpoint} failed:`, error)
+      throw error
     }
   }
 
   // Get mock data based on endpoint
   async getMockData(endpoint, params = {}) {
     switch (endpoint) {
+      case 'menu':
+        return mockApiService.getMenuItems()
       case 'menu/items':
         return mockApiService.getMenuItems()
       case 'menu/categories':
         return mockApiService.getCategories()
-      case 'menu/stats':
-        return mockApiService.getMenuStats()
       case 'events':
         return mockApiService.getEvents()
       case 'rewards':
         return mockApiService.getRewards()
-      case 'rewards/stats':
-        return mockApiService.getRewardsStats()
       case 'games':
         return mockApiService.getGames()
       case 'games/leaderboard':
         return mockApiService.getLeaderboard()
-      case 'games/stats':
-        return mockApiService.getGameStats()
       default:
         return { success: false, error: 'Mock endpoint not found' }
     }
@@ -228,7 +243,7 @@ class ApiService {
 
       xhr.open('POST', `${this.baseURL}/${endpoint}`)
       
-      const token = this.getAuthToken()
+      const token = localStorage.getItem('authToken')
       if (token) {
         xhr.setRequestHeader('Authorization', `Bearer ${token}`)
       }
