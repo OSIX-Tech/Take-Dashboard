@@ -58,10 +58,23 @@ const Login = ({ onLogin }) => {
       // Simular delay para mejor UX
       await new Promise(resolve => setTimeout(resolve, 800))
       
-      // JWT demo (NO válido para backend real, solo para pruebas frontend)
-      const demoToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZW1vIjoxLCJuYW1lIjoiRGVtbyBVc2VyIiwiZW1haWwiOiJkZW1vQGV4YW1wbGUuY29tIn0.1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+      // Crear token demo seguro (NO es un JWT real)
+      const demoPayload = {
+        demo: true,
+        name: 'Demo User',
+        email: 'demo@example.com',
+        exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hora
+        isDemo: true,
+        isAdmin: false,
+        role: 'user'
+      }
+      
+      // Token demo simple (no es un JWT real, solo para frontend)
+      const demoToken = btoa(JSON.stringify(demoPayload)) + '.demo.signature'
       localStorage.setItem('authToken', demoToken)
-      if (onLogin) onLogin(DEMO_USER)
+      
+      // Redirigir directamente a /menu
+      window.location.href = '/menu'
     } catch (err) {
       console.error('Error en demo login:', err)
     } finally {

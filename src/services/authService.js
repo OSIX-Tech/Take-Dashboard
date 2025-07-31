@@ -62,6 +62,20 @@ export const authService = {
     try {
       // Intentar decodificar el token (admin o user)
       const tokenToDecode = adminToken || token
+      
+      // Manejar token demo (formato: base64.demo.signature)
+      if (tokenToDecode.includes('.demo.signature')) {
+        const payload = JSON.parse(atob(tokenToDecode.split('.')[0]))
+        return {
+          name: payload.name || 'Demo User',
+          email: payload.email || 'demo@example.com',
+          isDemo: payload.demo || true,
+          isAdmin: payload.isAdmin || false,
+          role: payload.role || 'user'
+        }
+      }
+      
+      // Manejar JWT real (formato: header.payload.signature)
       const payload = JSON.parse(atob(tokenToDecode.split('.')[1]))
       return {
         name: payload.name || 'Usuario',
@@ -71,6 +85,7 @@ export const authService = {
         role: adminToken ? 'admin' : 'user'
       }
     } catch (error) {
+      console.error('Error decoding token:', error)
       return {
         name: 'Usuario',
         email: 'admin@take.com',

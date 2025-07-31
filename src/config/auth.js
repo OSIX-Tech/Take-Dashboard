@@ -16,7 +16,7 @@ export const AUTH_CONFIG = {
   ADMIN_EMAIL_WHITELIST: import.meta.env.VITE_ADMIN_EMAIL_WHITELIST?.split(',') || [],
   
   // JWT Secret (for demo tokens)
-  JWT_SECRET: import.meta.env.VITE_JWT_SECRET || 'demo-secret-key'
+  JWT_SECRET: import.meta.env.VITE_JWT_SECRET || 'change-this-in-production'
 }
 
 // Demo user data

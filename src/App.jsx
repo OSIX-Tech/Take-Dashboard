@@ -96,18 +96,26 @@ function App() {
         const hasAdminToken = authService.isAdminAuthenticated()
         
         if (hasAuthToken || hasAdminToken) {
-          // Si hay token, intentar verificar la sesión
-          try {
-            await authService.checkSession()
-            const user = authService.getCurrentUser()
+          // Si hay token, verificar si es demo o real
+          const user = authService.getCurrentUser()
+          
+          if (user?.isDemo) {
+            // Token demo - no verificar con backend
             setCurrentUser(user)
             setIsAuthenticated(true)
-          } catch (error) {
-            // Si la sesión no es válida, limpiar y redirigir a login
-            console.log('Sesión inválida, limpiando tokens')
-            authService.clearAuth()
-            setIsAuthenticated(false)
-            setCurrentUser(null)
+          } else {
+            // Token real - intentar verificar la sesión con el backend
+            try {
+              await authService.checkSession()
+              setCurrentUser(user)
+              setIsAuthenticated(true)
+            } catch (error) {
+              // Si la sesión no es válida, limpiar y redirigir a login
+              console.log('Sesión inválida, limpiando tokens')
+              authService.clearAuth()
+              setIsAuthenticated(false)
+              setCurrentUser(null)
+            }
           }
         } else {
           // No hay tokens, no está autenticado
@@ -167,8 +175,10 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Ruta por defecto - siempre redirige a login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Ruta por defecto - redirige a login o menu según autenticación */}
+          <Route path="/" element={
+            isAuthenticated ? <Navigate to="/menu" replace /> : <Navigate to="/login" replace />
+          } />
           
           {/* Ruta del login - siempre muestra login */}
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
@@ -178,11 +188,35 @@ function App() {
             <AdminCallback onLogin={handleLogin} />
           } />
           
-          {/* Rutas protegidas - todas redirigen al login por ahora */}
-          <Route path="/menu" element={<Navigate to="/login" replace />} />
-          <Route path="/game" element={<Navigate to="/login" replace />} />
-          <Route path="/rewards" element={<Navigate to="/login" replace />} />
-          <Route path="/events" element={<Navigate to="/login" replace />} />
+          {/* Rutas protegidas - permiten acceso si está autenticado */}
+          <Route path="/menu" element={
+            isAuthenticated ? (
+              <Layout onLogout={handleLogout}>
+                <Menu />
+              </Layout>
+            ) : <Navigate to="/login" replace />
+          } />
+          <Route path="/game" element={
+            isAuthenticated ? (
+              <Layout onLogout={handleLogout}>
+                <Game />
+              </Layout>
+            ) : <Navigate to="/login" replace />
+          } />
+          <Route path="/rewards" element={
+            isAuthenticated ? (
+              <Layout onLogout={handleLogout}>
+                <Rewards />
+              </Layout>
+            ) : <Navigate to="/login" replace />
+          } />
+          <Route path="/events" element={
+            isAuthenticated ? (
+              <Layout onLogout={handleLogout}>
+                <Events />
+              </Layout>
+            ) : <Navigate to="/login" replace />
+          } />
           
           {/* Ruta de fallback - redirige al login si la ruta no existe */}
           <Route path="*" element={<Navigate to="/login" replace />} />
