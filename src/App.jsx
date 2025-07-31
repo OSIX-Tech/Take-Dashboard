@@ -82,21 +82,6 @@ const AdminCallback = ({ onLogin }) => {
   return null
 }
 
-// Componente para manejar errores de autenticación en la ruta raíz
-const AuthErrorHandler = () => {
-  const [searchParams] = useSearchParams()
-  const error = searchParams.get('error')
-
-  useEffect(() => {
-    if (error) {
-      // Redirigir al login con el error
-      window.location.href = `/login?error=${encodeURIComponent(error)}`
-    }
-  }, [error])
-
-  return null
-}
-
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -107,25 +92,32 @@ function App() {
     const checkAuth = async () => {
       try {
         // Verificar si hay token en localStorage (user o admin)
-        if (authService.isAuthenticated() || authService.isAdminAuthenticated()) {
-          // Intentar verificar la sesión con el backend
+        const hasAuthToken = authService.isAuthenticated()
+        const hasAdminToken = authService.isAdminAuthenticated()
+        
+        if (hasAuthToken || hasAdminToken) {
+          // Si hay token, intentar verificar la sesión
           try {
             await authService.checkSession()
             const user = authService.getCurrentUser()
             setCurrentUser(user)
             setIsAuthenticated(true)
           } catch (error) {
-            // Si la sesión no es válida, limpiar
+            // Si la sesión no es válida, limpiar y redirigir a login
+            console.log('Sesión inválida, limpiando tokens')
             authService.clearAuth()
             setIsAuthenticated(false)
             setCurrentUser(null)
           }
         } else {
+          // No hay tokens, no está autenticado
           setIsAuthenticated(false)
           setCurrentUser(null)
         }
       } catch (error) {
         console.error('Error checking authentication:', error)
+        // En caso de error, asumir que no está autenticado
+        authService.clearAuth()
         setIsAuthenticated(false)
         setCurrentUser(null)
       } finally {
@@ -175,50 +167,22 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Ruta por defecto - maneja errores de autenticación */}
-          <Route path="/" element={
-            isAuthenticated ? <Navigate to="/menu" replace /> : <AuthErrorHandler />
-          } />
+          {/* Ruta por defecto - siempre redirige a login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
           
-          {/* Ruta del login */}
-          <Route path="/login" element={
-            isAuthenticated ? <Navigate to="/menu" replace /> : <Login onLogin={handleLogin} />
-          } />
+          {/* Ruta del login - siempre muestra login */}
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
           
           {/* Ruta del callback de admin */}
           <Route path="/admin/callback" element={
             <AdminCallback onLogin={handleLogin} />
           } />
           
-          {/* Rutas protegidas - redirigen al login si no está autenticado */}
-          <Route path="/menu" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Menu />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
-          <Route path="/game" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Game />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
-          <Route path="/rewards" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Rewards />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
-          <Route path="/events" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Events />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
+          {/* Rutas protegidas - todas redirigen al login por ahora */}
+          <Route path="/menu" element={<Navigate to="/login" replace />} />
+          <Route path="/game" element={<Navigate to="/login" replace />} />
+          <Route path="/rewards" element={<Navigate to="/login" replace />} />
+          <Route path="/events" element={<Navigate to="/login" replace />} />
           
           {/* Ruta de fallback - redirige al login si la ruta no existe */}
           <Route path="*" element={<Navigate to="/login" replace />} />
