@@ -17,7 +17,7 @@ const Layout = ({ children, onLogout }) => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 safe-area">
       {/* Sidebar - always visible, collapsed on mobile, expandable on desktop */}
       <div className="flex-shrink-0">
         <Sidebar />

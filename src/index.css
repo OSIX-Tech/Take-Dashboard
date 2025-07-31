@@ -135,6 +135,58 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  /* iPhone-specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS Safari specific styles */
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Fix for iOS Safari rendering issues */
+    * {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+    
+    /* Better color rendering on iOS */
+    .bg-white {
+      background-color: #ffffff !important;
+    }
+    
+    .bg-gray-50 {
+      background-color: #f9fafb !important;
+    }
+    
+    .bg-gray-100 {
+      background-color: #f3f4f6 !important;
+    }
+    
+    .text-gray-900 {
+      color: #111827 !important;
+    }
+    
+    .text-gray-700 {
+      color: #374151 !important;
+    }
+    
+    .text-gray-600 {
+      color: #4b5563 !important;
+    }
+    
+    .text-gray-500 {
+      color: #6b7280 !important;
+    }
+    
+    .border-gray-200 {
+      border-color: #e5e7eb !important;
+    }
+    
+    .border-gray-100 {
+      border-color: #f3f4f6 !important;
+    }
+  }
+
   /* Custom card hover effects */
   .card-hover {
     @apply transition-all duration-300 ease-out;

@@ -1,113 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Trophy, Medal, Calendar, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { highScoreService } from '@/services/gameService'
+import LoadingSpinner from '@/components/common/LoadingSpinner'
+import ErrorMessage from '@/components/common/ErrorMessage'
 
 function Game() {
-  // Mock leaderboard data
-  const leaderboard = [
-    {
-      id: 1,
-      name: "Jugador 1",
-      email: "jugador1@example.com",
-      score: 2500,
-      level: 15,
-      achievements: 8,
-      lastPlayed: "2024-01-15T10:30:00Z",
-      rank: 1
-    },
-    {
-      id: 2,
-      name: "Jugador 2",
-      email: "jugador2@example.com",
-      score: 2200,
-      level: 12,
-      achievements: 6,
-      lastPlayed: "2024-01-14T15:45:00Z",
-      rank: 2
-    },
-    {
-      id: 3,
-      name: "Jugador 3",
-      email: "jugador3@example.com",
-      score: 1950,
-      level: 10,
-      achievements: 5,
-      lastPlayed: "2024-01-13T09:20:00Z",
-      rank: 3
-    },
-    {
-      id: 4,
-      name: "Jugador 4",
-      email: "jugador4@example.com",
-      score: 1800,
-      level: 9,
-      achievements: 4,
-      lastPlayed: "2024-01-12T14:15:00Z",
-      rank: 4
-    },
-    {
-      id: 5,
-      name: "Jugador 5",
-      email: "jugador5@example.com",
-      score: 1650,
-      level: 8,
-      achievements: 3,
-      lastPlayed: "2024-01-11T11:30:00Z",
-      rank: 5
-    },
-    {
-      id: 6,
-      name: "Jugador 6",
-      email: "jugador6@example.com",
-      score: 1500,
-      level: 7,
-      achievements: 3,
-      lastPlayed: "2024-01-10T16:45:00Z",
-      rank: 6
-    },
-    {
-      id: 7,
-      name: "Jugador 7",
-      email: "jugador7@example.com",
-      score: 1350,
-      level: 6,
-      achievements: 2,
-      lastPlayed: "2024-01-09T13:20:00Z",
-      rank: 7
-    },
-    {
-      id: 8,
-      name: "Jugador 8",
-      email: "jugador8@example.com",
-      score: 1200,
-      level: 5,
-      achievements: 2,
-      lastPlayed: "2024-01-08T10:10:00Z",
-      rank: 8
-    },
-    {
-      id: 9,
-      name: "Jugador 9",
-      email: "jugador9@example.com",
-      score: 1050,
-      level: 4,
-      achievements: 1,
-      lastPlayed: "2024-01-07T12:30:00Z",
-      rank: 9
-    },
-    {
-      id: 10,
-      name: "Jugador 10",
-      email: "jugador10@example.com",
-      score: 900,
-      level: 3,
-      achievements: 1,
-      lastPlayed: "2024-01-06T08:45:00Z",
-      rank: 10
-    }
-  ]
+  const [leaderboard, setLeaderboard] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    fetchLeaderboard()
+  }, [])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -133,6 +40,54 @@ function Game() {
     }
   }
 
+  const fetchLeaderboard = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await highScoreService.getHighScores(1, 50)
+      let data = []
+      
+      if (Array.isArray(response)) {
+        data = response
+      } else if (response && response.data) {
+        data = response.data
+      } else if (response && Array.isArray(response.results)) {
+        data = response.results
+      }
+      
+      // Agregar ranking a los datos
+      const leaderboardWithRank = data.map((item, index) => ({
+        ...item,
+        rank: index + 1
+      }))
+      
+      setLeaderboard(leaderboardWithRank)
+    } catch (err) {
+      setError('Error al cargar leaderboard')
+      setLeaderboard([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <LoadingSpinner />
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} />
+  }
+
+  if (!leaderboard || leaderboard.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh]">
+        <Trophy className="w-12 h-12 text-gray-300 mb-4" />
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">No hay puntuaciones aún</h2>
+        <p className="text-gray-500">¡Juega para aparecer en la clasificación!</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -156,46 +111,39 @@ function Game() {
             <TableHeader>
               <TableRow>
                 <TableHead>Posición</TableHead>
-                <TableHead>Jugador</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Juego</TableHead>
                 <TableHead>Puntuación</TableHead>
-                <TableHead>Nivel</TableHead>
-                <TableHead>Logros</TableHead>
-                <TableHead>Última Partida</TableHead>
+                <TableHead>Fecha Logro</TableHead>
+                <TableHead>Índice</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {leaderboard.map((player) => (
-                <TableRow key={player.id} className="hover:bg-gray-50">
+              {leaderboard.map((score) => (
+                <TableRow key={score.id} className="hover:bg-gray-50">
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      {getRankIcon(player.rank)}
+                      {getRankIcon(score.rank)}
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium">{player.name}</TableCell>
-                  <TableCell className="text-gray-600">{player.email}</TableCell>
+                  <TableCell className="font-medium">-</TableCell>
+                  <TableCell className="text-gray-600">-</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="font-semibold">{player.score.toLocaleString()}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="font-medium">
-                      Nivel {player.level}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="w-4 h-4 text-purple-500" />
-                      <span>{player.achievements}</span>
+                      <span className="font-semibold">{score.high_score?.toLocaleString?.() ?? score.high_score}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDate(player.lastPlayed)}</span>
+                      <span>{score.achieved_at ? formatDate(score.achieved_at) : '-'}</span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-medium">
+                      {score.idx_high_score ?? '-'}
+                    </Badge>
                   </TableCell>
                 </TableRow>
               ))}

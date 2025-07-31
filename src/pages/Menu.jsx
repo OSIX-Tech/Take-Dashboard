@@ -1,27 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Filter,
-  Coffee,
-  Cake,
-  Wine,
-  Star,
-  Tag,
-  X,
-  Package
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { menuService, categoryService } from '@/services/menuService'
-import { useApiState } from '@/hooks/useApi'
+import { Plus, Edit, Trash2, Search, Filter, Coffee, Wine, Cake, Package, X } from 'lucide-react'
+import { menuService } from '@/services/menuService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
+import Modal from '@/components/common/Modal'
+import { useApiState } from '@/hooks/useApi'
 
 const Menu = () => {
   // API states
@@ -35,6 +22,8 @@ const Menu = () => {
 
   // Local states
   const [showForm, setShowForm] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState(null)
   const [editingItem, setEditingItem] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -46,27 +35,6 @@ const Menu = () => {
     is_available: true,
     image_url: ''
   })
-
-  // Modal component using portal
-  const Modal = ({ isOpen, onClose, children }) => {
-    if (!isOpen) return null
-
-    return createPortal(
-      <div 
-        className="fixed inset-0 z-50 overflow-y-auto"
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-      >
-        <div className="flex min-h-screen items-center justify-center p-4">
-          <div className="relative w-full max-w-md">
-            <div className="relative bg-white rounded-lg shadow-xl">
-              {children}
-            </div>
-          </div>
-        </div>
-      </div>,
-      document.body
-    )
-  }
 
   // Load data on component mount
   useEffect(() => {
@@ -115,21 +83,25 @@ const Menu = () => {
     e.preventDefault()
     
     try {
+      const formDataToSend = {
+        ...formData,
+        price: parseFloat(formData.price) || 0
+      }
+      
       if (editingItem) {
-        await saveItem(menuService.updateMenuItem, editingItem.id, formData)
+        await saveItem(menuService.updateItem, editingItem.id, formDataToSend)
         // Update item locally after successful save
         setItems(items.map(item => 
           item.id === editingItem.id 
-            ? { ...item, ...formData, price: parseFloat(formData.price) }
+            ? { ...item, ...formDataToSend }
             : item
         ))
       } else {
-        await saveItem(menuService.createMenuItem, formData)
+        await saveItem(menuService.addItem, formDataToSend)
         // Add item locally after successful save
         const newItem = {
           id: Date.now().toString(),
-          ...formData,
-          price: parseFloat(formData.price)
+          ...formDataToSend
         }
         setItems([...items, newItem])
       }
@@ -148,7 +120,7 @@ const Menu = () => {
     setFormData({
       name: item.name,
       description: item.description,
-      price: item.price.toString(),
+      price: item.price ? item.price.toString() : '',
       category_id: item.category_id,
       is_available: item.is_available,
       image_url: item.image_url || ''
@@ -157,16 +129,29 @@ const Menu = () => {
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
-      try {
-        await deleteItem(menuService.deleteMenuItem, id)
-        // Delete item locally after successful delete
-        setItems(items.filter(item => item.id !== id))
-        loadData() // Reload data after delete
-      } catch (error) {
-        console.error('Error deleting item:', error)
-      }
+    setItemToDelete(id)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return
+    
+    try {
+      await deleteItem(menuService.deleteItem, itemToDelete)
+      // Delete item locally after successful delete
+      setItems(items.filter(item => item.id !== itemToDelete))
+      loadData() // Reload data after delete
+    } catch (error) {
+      console.error('Error deleting item:', error)
+    } finally {
+      setShowDeleteModal(false)
+      setItemToDelete(null)
     }
+  }
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false)
+    setItemToDelete(null)
   }
 
   const resetForm = () => {
@@ -427,8 +412,9 @@ const Menu = () => {
               <Input
                 type="number"
                 step="0.01"
+                min="0"
                 value={formData.price}
-                onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value)})}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
                 placeholder="0.00"
                 required
               />
@@ -485,6 +471,40 @@ const Menu = () => {
               </Button>
             </div>
           </form>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+      >
+        <div className="p-6 text-center">
+          <Trash2 className="mx-auto h-12 w-12 text-red-500" />
+          <h3 className="mt-2 text-lg font-medium text-gray-900">
+            Eliminar Elemento
+          </h3>
+          <div className="mt-2 px-7 py-3">
+            <p className="text-sm text-gray-500">
+              ¿Estás seguro de que quieres eliminar este elemento? Esta acción no se puede deshacer.
+            </p>
+          </div>
+          <div className="items-center px-4 py-3">
+            <Button
+              variant="outline"
+              onClick={cancelDelete}
+              className="w-full text-gray-700"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDelete}
+              className="w-full text-white bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

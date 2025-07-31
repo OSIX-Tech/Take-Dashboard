@@ -15,7 +15,9 @@ class ApiService {
   // Get authorization headers
   getAuthHeaders() {
     const token = localStorage.getItem('authToken')
-    return token ? { 'Authorization': `Bearer ${token}` } : {}
+    const adminToken = localStorage.getItem('adminToken')
+    const tokenToUse = adminToken || token
+    return tokenToUse ? { 'Authorization': `Bearer ${tokenToUse}` } : {}
   }
 
   // Handle response

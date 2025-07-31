@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import Login from './pages/Login'
 import Menu from './pages/Menu'
 import Game from './pages/Game'
@@ -8,32 +8,154 @@ import Events from './pages/Events'
 import Layout from './components/layout/Layout'
 import { authService } from './services/authService'
 
+// Componente para manejar el callback de admin
+const AdminCallback = ({ onLogin }) => {
+  const [searchParams] = useSearchParams()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        const code = searchParams.get('code')
+        const error = searchParams.get('error')
+        
+        if (error) {
+          setError('Error en autenticación: ' + decodeURIComponent(error))
+          return
+        }
+        
+        if (!code) {
+          setError('No se recibió código de autorización')
+          return
+        }
+
+        const userData = await authService.handleAdminCallback(code)
+        onLogin(userData)
+        
+        // Redirigir al dashboard
+        window.location.href = '/menu'
+      } catch (err) {
+        console.error('Error en callback de admin:', err)
+        setError('Error procesando autenticación: ' + err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    handleCallback()
+  }, [searchParams, onLogin])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Procesando autenticación...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="text-red-500 text-lg font-semibold mb-2">Error de Autenticación</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="space-y-2 text-sm text-gray-500">
+            <p>• Verifica que tu email esté en la whitelist de administradores</p>
+            <p>• Asegúrate de usar la cuenta de Google correcta</p>
+            <p>• Contacta al administrador si el problema persiste</p>
+          </div>
+          <button 
+            onClick={() => window.location.href = '/login'} 
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+          >
+            Volver al Login
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+// Componente para manejar errores de autenticación en la ruta raíz
+const AuthErrorHandler = () => {
+  const [searchParams] = useSearchParams()
+  const error = searchParams.get('error')
+
+  useEffect(() => {
+    if (error) {
+      // Redirigir al login con el error
+      window.location.href = `/login?error=${encodeURIComponent(error)}`
+    }
+  }, [error])
+
+  return null
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState(null)
 
   // Check authentication status on app load
   useEffect(() => {
-    const checkAuth = () => {
-      const authenticated = authService.isAuthenticated()
-      setIsAuthenticated(authenticated)
-      setIsLoading(false)
+    const checkAuth = async () => {
+      try {
+        // Verificar si hay token en localStorage (user o admin)
+        if (authService.isAuthenticated() || authService.isAdminAuthenticated()) {
+          // Intentar verificar la sesión con el backend
+          try {
+            await authService.checkSession()
+            const user = authService.getCurrentUser()
+            setCurrentUser(user)
+            setIsAuthenticated(true)
+          } catch (error) {
+            // Si la sesión no es válida, limpiar
+            authService.clearAuth()
+            setIsAuthenticated(false)
+            setCurrentUser(null)
+          }
+        } else {
+          setIsAuthenticated(false)
+          setCurrentUser(null)
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error)
+        setIsAuthenticated(false)
+        setCurrentUser(null)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     checkAuth()
   }, [])
 
-  const handleLogin = () => {
+  const handleLogin = (userData) => {
     setIsAuthenticated(true)
+    setCurrentUser(userData)
   }
 
   const handleLogout = async () => {
     try {
-      await authService.logout()
+      // Intentar hacer logout en el backend (user o admin)
+      if (currentUser?.isAdmin) {
+        await authService.adminLogout()
+      } else {
+        await authService.logout()
+      }
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
+      // Limpiar estado local independientemente del resultado del backend
+      authService.clearAuth()
       setIsAuthenticated(false)
+      setCurrentUser(null)
     }
   }
 
@@ -53,14 +175,19 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Ruta por defecto - redirige al login si no está autenticado */}
+          {/* Ruta por defecto - maneja errores de autenticación */}
           <Route path="/" element={
-            isAuthenticated ? <Navigate to="/menu" replace /> : <Navigate to="/login" replace />
+            isAuthenticated ? <Navigate to="/menu" replace /> : <AuthErrorHandler />
           } />
           
           {/* Ruta del login */}
           <Route path="/login" element={
             isAuthenticated ? <Navigate to="/menu" replace /> : <Login onLogin={handleLogin} />
+          } />
+          
+          {/* Ruta del callback de admin */}
+          <Route path="/admin/callback" element={
+            <AdminCallback onLogin={handleLogin} />
           } />
           
           {/* Rutas protegidas - redirigen al login si no está autenticado */}

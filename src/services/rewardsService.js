@@ -1,34 +1,29 @@
 import { apiService } from './api.js'
 
 export const rewardsService = {
-  // Get all rewards
+  // Obtener todas las recompensas
   async getRewards() {
-    return apiService.get('rewards')
+    return apiService.get('reward')
   },
 
-  // Get reward by ID
+  // Obtener una recompensa por ID
   async getReward(id) {
-    return apiService.get(`rewards?id=eq.${id}`)
+    return apiService.get(`reward/${id}`)
   },
 
-  // Create new reward
+  // Crear una nueva recompensa
   async createReward(data) {
-    return apiService.post('rewards', data)
+    return apiService.post('reward', data)
   },
 
-  // Update reward
+  // Editar una recompensa
   async updateReward(id, data) {
-    return apiService.patch(`rewards?id=eq.${id}`, data)
+    return apiService.put(`reward/${id}`, data)
   },
 
-  // Delete reward
+  // Eliminar una recompensa
   async deleteReward(id) {
-    return apiService.delete(`rewards?id=eq.${id}`)
-  },
-
-  // Get rewards by required seals
-  async getRewardsBySeals(seals) {
-    return apiService.get(`rewards?required_seals=lte.${seals}`)
+    return apiService.delete(`reward/${id}`)
   }
 }
 

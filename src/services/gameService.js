@@ -1,71 +1,51 @@
 import { apiService } from './api.js'
 
 export const gameService = {
-  // Get all games
+  // Obtener todos los juegos
   async getGames() {
     return apiService.get('games')
   },
 
-  // Get game by ID
+  // Obtener un juego por ID
   async getGame(id) {
     return apiService.get(`games?id=eq.${id}`)
   },
 
-  // Create new game
+  // Crear un nuevo juego
   async createGame(data) {
     return apiService.post('games', data)
   },
 
-  // Update game
+  // Editar un juego
   async updateGame(id, data) {
-    return apiService.patch(`games?id=eq.${id}`, data)
+    return apiService.put(`games?id=eq.${id}`, data)
   },
 
-  // Delete game
+  // Eliminar un juego
   async deleteGame(id) {
     return apiService.delete(`games?id=eq.${id}`)
   }
 }
 
 export const highScoreService = {
-  // Get all high scores
-  async getHighScores() {
-    return apiService.get('high_scores?select=*,users(name),games(name)')
+  // Obtener high scores en un rango
+  async getHighScores(start = 1, end = 50) {
+    return apiService.get(`high_score?start=${start}&end=${end}`)
   },
 
-  // Get high scores by game
-  async getHighScoresByGame(gameId) {
-    return apiService.get(`high_scores?game_id=eq.${gameId}&select=*,users(name),games(name)&order=high_score.desc`)
-  },
-
-  // Get high scores by user
+  // Obtener high scores por usuario
   async getHighScoresByUser(userId) {
-    return apiService.get(`high_scores?user_id=eq.${userId}&select=*,users(name),games(name)&order=high_score.desc`)
+    return apiService.get(`high_score?user_id=eq.${userId}`)
   },
 
-  // Create new high score
-  async createHighScore(data) {
-    return apiService.post('high_scores', data)
+  // Obtener high scores por juego
+  async getHighScoresByGame(gameId) {
+    return apiService.get(`high_score?game_id=eq.${gameId}`)
   },
 
-  // Update high score
-  async updateHighScore(id, data) {
-    return apiService.patch(`high_scores?id=eq.${id}`, data)
-  },
-
-  // Delete high score
-  async deleteHighScore(id) {
-    return apiService.delete(`high_scores?id=eq.${id}`)
-  },
-
-  // Get top scores (leaderboard)
-  async getTopScores(limit = 10) {
-    return apiService.get(`high_scores?select=*,users(name),games(name)&order=high_score.desc&limit=${limit}`)
-  },
-
-  // Get user's best score for a game
+  // Obtener el mejor score de un usuario para un juego específico
   async getUserBestScore(userId, gameId) {
-    return apiService.get(`high_scores?user_id=eq.${userId}&game_id=eq.${gameId}&order=high_score.desc&limit=1`)
+    return apiService.get(`high_score?user_id=eq.${userId}&game_id=eq.${gameId}&order=high_score.desc&limit=1`)
   }
 }
 

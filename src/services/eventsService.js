@@ -6,7 +6,7 @@ export const eventsService = {
   // Get all events
   async getEvents() {
     try {
-      const response = await apiService.get('events')
+      const response = await apiService.get('event')
       return response.data || response
     } catch (error) {
       console.error('Error fetching events:', error)
@@ -19,7 +19,7 @@ export const eventsService = {
   // Get event by ID
   async getEvent(id) {
     try {
-      const response = await apiService.get(`events/${id}`)
+      const response = await apiService.get(`event/${id}`)
       return response.data || response
     } catch (error) {
       console.error('Error fetching event:', error)
@@ -27,10 +27,10 @@ export const eventsService = {
     }
   },
 
-  // Create new event - matches your POST /events endpoint
+  // Create new event - matches your POST /event endpoint
   async createEvent(data) {
     try {
-      const response = await apiService.post('events', data)
+      const response = await apiService.post('event', data)
       return response.data || response
     } catch (error) {
       console.error('Error creating event:', error)
@@ -38,10 +38,10 @@ export const eventsService = {
     }
   },
 
-  // Update event - matches your PATCH /events/{id} endpoint
+  // Update event - matches your PUT /event/{id} endpoint
   async updateEvent(id, data) {
     try {
-      const response = await apiService.patch(`events/${id}`, data)
+      const response = await apiService.put(`event/${id}`, data)
       return response.data || response
     } catch (error) {
       console.error('Error updating event:', error)
@@ -49,10 +49,10 @@ export const eventsService = {
     }
   },
 
-  // Delete event - matches your DELETE /events/{id} endpoint
+  // Delete event - matches your DELETE /event/{id} endpoint
   async deleteEvent(id) {
     try {
-      const response = await apiService.delete(`events/${id}`)
+      const response = await apiService.delete(`event/${id}`)
       return response.data || response
     } catch (error) {
       console.error('Error deleting event:', error)
