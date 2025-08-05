@@ -17,14 +17,70 @@ class ApiService {
     const token = localStorage.getItem('authToken')
     const adminToken = localStorage.getItem('adminToken')
     const tokenToUse = adminToken || token
+    
+    // Para usuarios demo, no enviar Authorization header (usar solo cookies)
+    if (tokenToUse && tokenToUse.includes('.demo.signature')) {
+      console.log('🎭 API - Demo user detected, not sending Authorization header')
+      return {}
+    }
+    
     return tokenToUse ? { 'Authorization': `Bearer ${tokenToUse}` } : {}
+  }
+
+  // Check if backend CORS is properly configured
+  async checkCorsStatus() {
+    try {
+      const response = await fetch(`${this.baseURL}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      })
+      return response.ok
+    } catch (error) {
+      console.log('⚠️ API - CORS not configured, using fallback mode')
+      return false
+    }
+  }
+
+  // Get credentials option based on CORS status
+  async getCredentialsOption() {
+    const corsOk = await this.checkCorsStatus()
+    return corsOk ? 'include' : 'omit'
   }
 
   // Handle response
   async handleResponse(response) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      
+      // Categorizar errores HTTP específicos
+      let errorMessage = errorData.message || `HTTP error! status: ${response.status}`
+      
+      switch (response.status) {
+        case 401:
+          errorMessage = 'No autorizado: Credenciales inválidas o expiradas'
+          break
+        case 403:
+          errorMessage = 'Acceso denegado: No tienes permisos para esta acción'
+          break
+        case 404:
+          errorMessage = 'Recurso no encontrado: El endpoint solicitado no existe'
+          break
+        case 500:
+          errorMessage = 'Error interno del servidor: Contacta al administrador'
+          break
+        case 503:
+          errorMessage = 'Servicio no disponible: El servidor está temporalmente fuera de servicio'
+          break
+        default:
+          if (response.status >= 400 && response.status < 500) {
+            errorMessage = 'Error del cliente: Verifica tu solicitud'
+          } else if (response.status >= 500) {
+            errorMessage = 'Error del servidor: Contacta al administrador'
+          }
+      }
+      
+      throw new Error(errorMessage)
     }
     
     // Try to parse JSON, if it fails return the text
@@ -38,62 +94,70 @@ class ApiService {
   // GET request
   async get(endpoint, params = {}) {
     try {
-      // If mock data is enabled or backend is not available, use mock data
-      if (this.useMockData) {
-        console.log(`🔧 Using mock data for: ${endpoint}`)
-        return this.getMockData(endpoint, params)
-      }
-
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
+      
+      // Agregar parámetros de consulta
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          url.searchParams.append(key, params[key])
+        }
+      })
 
       console.log(`🌐 Making GET request to: ${url.toString()}`)
-      
+      console.log(`🔑 Headers:`, this.getAuthHeaders())
+
+      // Detectar si CORS está configurado
+      const credentials = await this.getCredentialsOption()
+      console.log(`🔧 Using credentials: ${credentials}`)
+
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           ...this.getAuthHeaders()
-        }
+        },
+        credentials: credentials
       })
 
-      const result = await this.handleResponse(response)
-      console.log(`✅ GET ${endpoint} successful:`, result)
-      return result
+      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
+      return this.handleResponse(response, endpoint)
     } catch (error) {
       console.error(`❌ GET ${endpoint} failed:`, error)
-      // Fallback to mock data if backend is not available
-      console.log(`🔧 Falling back to mock data for: ${endpoint}`)
-      return this.getMockData(endpoint, params)
+      console.error(`❌ Error details:`, {
+        message: error.message,
+        stack: error.stack,
+        endpoint,
+        params
+      })
+      throw error
     }
   }
 
   // POST request
   async post(endpoint, data = {}) {
     try {
-      // If mock data is enabled, use mock data
-      if (this.useMockData) {
-        console.log(`🔧 Using mock data for: ${endpoint}`)
-        return this.getMockData(endpoint, data)
-      }
+      const url = new URL(`${this.baseURL}/${endpoint}`)
+      console.log(`🌐 Making POST request to: ${url.toString()}`)
+      console.log(`📦 Data:`, data)
 
-      console.log(`🌐 Making POST request to: ${this.baseURL}/${endpoint}`, data)
-      
-      const response = await fetch(`${this.baseURL}/${endpoint}`, {
+      // Detectar si CORS está configurado
+      const credentials = await this.getCredentialsOption()
+      console.log(`🔧 Using credentials: ${credentials}`)
+
+      const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...this.getAuthHeaders()
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        credentials: credentials
       })
 
-      const result = await this.handleResponse(response)
-      console.log(`✅ POST ${endpoint} successful:`, result)
-      return result
+      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
+      return this.handleResponse(response, endpoint)
     } catch (error) {
       console.error(`❌ POST ${endpoint} failed:`, error)
-      // For POST requests, we don't fallback to mock data, we throw the error
       throw error
     }
   }
@@ -101,26 +165,26 @@ class ApiService {
   // PUT request
   async put(endpoint, data = {}) {
     try {
-      // If mock data is enabled, use mock data
-      if (this.useMockData) {
-        console.log(`🔧 Using mock data for: ${endpoint}`)
-        return this.getMockData(endpoint, data)
-      }
+      const url = new URL(`${this.baseURL}/${endpoint}`)
+      console.log(`🌐 Making PUT request to: ${url.toString()}`)
+      console.log(`📦 Data:`, data)
 
-      console.log(`🌐 Making PUT request to: ${this.baseURL}/${endpoint}`, data)
-      
-      const response = await fetch(`${this.baseURL}/${endpoint}`, {
+      // Detectar si CORS está configurado
+      const credentials = await this.getCredentialsOption()
+      console.log(`🔧 Using credentials: ${credentials}`)
+
+      const response = await fetch(url.toString(), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           ...this.getAuthHeaders()
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        credentials: credentials
       })
 
-      const result = await this.handleResponse(response)
-      console.log(`✅ PUT ${endpoint} successful:`, result)
-      return result
+      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
+      return this.handleResponse(response, endpoint)
     } catch (error) {
       console.error(`❌ PUT ${endpoint} failed:`, error)
       throw error
@@ -130,26 +194,26 @@ class ApiService {
   // PATCH request
   async patch(endpoint, data = {}) {
     try {
-      // If mock data is enabled, use mock data
-      if (this.useMockData) {
-        console.log(`🔧 Using mock data for: ${endpoint}`)
-        return this.getMockData(endpoint, data)
-      }
+      const url = new URL(`${this.baseURL}/${endpoint}`)
+      console.log(`🌐 Making PATCH request to: ${url.toString()}`)
+      console.log(`📦 Data:`, data)
 
-      console.log(`🌐 Making PATCH request to: ${this.baseURL}/${endpoint}`, data)
-      
-      const response = await fetch(`${this.baseURL}/${endpoint}`, {
+      // Detectar si CORS está configurado
+      const credentials = await this.getCredentialsOption()
+      console.log(`🔧 Using credentials: ${credentials}`)
+
+      const response = await fetch(url.toString(), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           ...this.getAuthHeaders()
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        credentials: credentials
       })
 
-      const result = await this.handleResponse(response)
-      console.log(`✅ PATCH ${endpoint} successful:`, result)
-      return result
+      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
+      return this.handleResponse(response, endpoint)
     } catch (error) {
       console.error(`❌ PATCH ${endpoint} failed:`, error)
       throw error
@@ -159,25 +223,24 @@ class ApiService {
   // DELETE request
   async delete(endpoint) {
     try {
-      // If mock data is enabled, use mock data
-      if (this.useMockData) {
-        console.log(`🔧 Using mock data for: ${endpoint}`)
-        return this.getMockData(endpoint)
-      }
+      const url = new URL(`${this.baseURL}/${endpoint}`)
+      console.log(`🌐 Making DELETE request to: ${url.toString()}`)
 
-      console.log(`🌐 Making DELETE request to: ${this.baseURL}/${endpoint}`)
-      
-      const response = await fetch(`${this.baseURL}/${endpoint}`, {
+      // Detectar si CORS está configurado
+      const credentials = await this.getCredentialsOption()
+      console.log(`🔧 Using credentials: ${credentials}`)
+
+      const response = await fetch(url.toString(), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           ...this.getAuthHeaders()
-        }
+        },
+        credentials: credentials
       })
 
-      const result = await this.handleResponse(response)
-      console.log(`✅ DELETE ${endpoint} successful:`, result)
-      return result
+      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
+      return this.handleResponse(response, endpoint)
     } catch (error) {
       console.error(`❌ DELETE ${endpoint} failed:`, error)
       throw error

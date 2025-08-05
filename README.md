@@ -131,6 +131,34 @@ src/
 
 ## 🔧 Configuración
 
+### Variables de Entorno
+El proyecto requiere configuración mínima de variables de entorno. Copia `env.example` como `.env` y configura:
+
+```bash
+# Variable requerida
+VITE_API_BASE_URL=http://localhost:3000/api
+
+# Variables opcionales
+VITE_DEMO_MODE=true
+VITE_USE_MOCK_DATA=false
+```
+
+**Nota importante**: El frontend NO maneja credenciales de Google OAuth. El backend es responsable de toda la configuración de autenticación.
+
+### Validación de Configuración
+El sistema incluye validación automática de configuración:
+- ✅ Verificación de variables de entorno requeridas
+- ✅ Health checks del backend
+- ✅ Validación de endpoints de autenticación
+- ✅ Verificación de configuración CORS
+- ✅ Diagnóstico completo del sistema
+
+### Manejo de Errores Mejorado
+- 🔍 **Errores específicos**: Categorización por tipo (configuración, red, CORS, autorización)
+- 🏥 **Health checks**: Verificación automática del estado del sistema
+- 🔄 **Reintentos**: Funcionalidad de reintento para verificaciones fallidas
+- 📊 **Diagnóstico**: Panel de estado del sistema con detalles técnicos
+
 ### Tailwind CSS
 El proyecto está configurado con Tailwind CSS minimalista:
 - Paleta de colores blanco y negro

@@ -30,22 +30,27 @@ export const gameService = {
 export const highScoreService = {
   // Obtener high scores en un rango
   async getHighScores(start = 1, end = 50) {
-    return apiService.get(`high_score?start=${start}&end=${end}`)
+    return apiService.get(`high_score?order=high_score.desc&limit=${end-start+1}&offset=${start-1}`)
   },
 
   // Obtener high scores por usuario
   async getHighScoresByUser(userId) {
-    return apiService.get(`high_score?user_id=eq.${userId}`)
+    return apiService.get(`high_score?user_id=eq.${userId}&order=high_score.desc`)
   },
 
   // Obtener high scores por juego
   async getHighScoresByGame(gameId) {
-    return apiService.get(`high_score?game_id=eq.${gameId}`)
+    return apiService.get(`high_score?game_id=eq.${gameId}&order=high_score.desc`)
   },
 
   // Obtener el mejor score de un usuario para un juego específico
   async getUserBestScore(userId, gameId) {
     return apiService.get(`high_score?user_id=eq.${userId}&game_id=eq.${gameId}&order=high_score.desc&limit=1`)
+  },
+
+  // Obtener top scores (leaderboard)
+  async getTopScores(limit = 10) {
+    return apiService.get(`high_score?order=high_score.desc&limit=${limit}`)
   }
 }
 

@@ -1,26 +1,45 @@
 import { apiService } from './api.js'
+import { AUTH_CONFIG } from '@/config/auth'
 
 export const authService = {
-  // Autenticación con Google (Mobile user authentication)
-  async googleLogin(data) {
-    return apiService.post('auth/googleLogin', data)
-  },
-
-  // Cierre de sesión
-  async logout() {
-    return apiService.post('auth/logout')
-  },
-
-  // Verificar sesión del usuario
-  async checkSession() {
-    return apiService.get('auth/check-session')
-  },
+  // Admin authentication endpoints only
 
   // Admin authentication endpoints
   async adminLogin() {
-    // Inicia el flujo de autenticación de admin
-    // Redirige a Google OAuth
-    window.location.href = `${apiService.baseURL}/admin/auth/login`
+    try {
+      // Solo verificar que tengamos la URL del backend
+      if (!AUTH_CONFIG.API_BASE_URL) {
+        throw new Error('CONFIG_ERROR: API Base URL no configurado')
+      }
+
+      // Verificar conectividad básica con el backend
+      try {
+        const response = await fetch(`${AUTH_CONFIG.API_BASE_URL}/health`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error(`BACKEND_ERROR: Backend respondió con status ${response.status}`)
+        }
+      } catch (error) {
+        if (error.message.includes('fetch')) {
+          throw new Error('NETWORK_ERROR: No se puede conectar al servidor')
+        } else if (error.message.includes('CORS')) {
+          throw new Error('CORS_ERROR: Error de configuración CORS')
+        } else {
+          throw new Error(`BACKEND_ERROR: ${error.message}`)
+        }
+      }
+
+      // Inicia el flujo de autenticación de admin
+      // El backend maneja toda la configuración de Google OAuth
+      window.location.href = `${apiService.baseURL}/admin/auth/login`
+    } catch (error) {
+      console.error('❌ Error en adminLogin:', error)
+      throw error
+    }
   },
 
   async adminGoogleAuth() {
@@ -33,7 +52,15 @@ export const authService = {
   },
 
   async adminLogout() {
-    return apiService.post('admin/auth/logout')
+    console.log('🔍 adminLogout - Iniciando logout')
+    try {
+      const result = await apiService.post('admin/auth/logout')
+      console.log('✅ adminLogout - Logout exitoso:', result)
+      return result
+    } catch (error) {
+      console.error('❌ adminLogout - Error:', error)
+      throw error
+    }
   },
 
   async getAdminProfile() {
@@ -46,7 +73,7 @@ export const authService = {
 
   // Utility methods
   isAuthenticated() {
-    return !!localStorage.getItem('authToken')
+    return !!localStorage.getItem('adminToken')
   },
 
   isAdminAuthenticated() {
@@ -54,14 +81,13 @@ export const authService = {
   },
 
   getCurrentUser() {
-    const token = localStorage.getItem('authToken')
     const adminToken = localStorage.getItem('adminToken')
     
-    if (!token && !adminToken) return null
+    if (!adminToken) return null
     
     try {
-      // Intentar decodificar el token (admin o user)
-      const tokenToDecode = adminToken || token
+      // Intentar decodificar el token admin
+      const tokenToDecode = adminToken
       
       // Manejar token demo (formato: base64.demo.signature)
       if (tokenToDecode.includes('.demo.signature')) {
@@ -97,7 +123,6 @@ export const authService = {
   },
 
   clearAuth() {
-    localStorage.removeItem('authToken')
     localStorage.removeItem('adminToken')
   },
 

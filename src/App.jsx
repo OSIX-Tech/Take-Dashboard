@@ -26,6 +26,16 @@ const AdminCallback = ({ onLogin }) => {
         }
         
         if (!code) {
+          // Si no hay código, puede ser que el backend ya procesó el callback
+          // y redirigió de vuelta. Verificar si hay un token en localStorage
+          const adminToken = localStorage.getItem('adminToken')
+          if (adminToken) {
+            console.log('✅ Token encontrado, redirigiendo al dashboard')
+            onLogin(authService.getCurrentUser())
+            window.location.href = '/menu'
+            return
+          }
+          
           setError('No se recibió código de autorización')
           return
         }
@@ -91,7 +101,7 @@ function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Verificar si hay token en localStorage (user o admin)
+        // Verificar si hay token en localStorage (admin)
         const hasAuthToken = authService.isAuthenticated()
         const hasAdminToken = authService.isAdminAuthenticated()
         
@@ -118,9 +128,22 @@ function App() {
             }
           }
         } else {
-          // No hay tokens, no está autenticado
-          setIsAuthenticated(false)
-          setCurrentUser(null)
+          // No hay tokens en localStorage, pero verificar si hay sesión en el backend
+          try {
+            const userData = await authService.getAdminProfile()
+            if (userData) {
+              console.log('✅ Sesión válida encontrada en el backend')
+              setCurrentUser(userData)
+              setIsAuthenticated(true)
+            } else {
+              setIsAuthenticated(false)
+              setCurrentUser(null)
+            }
+          } catch (error) {
+            console.log('No hay sesión válida en el backend')
+            setIsAuthenticated(false)
+            setCurrentUser(null)
+          }
         }
       } catch (error) {
         console.error('Error checking authentication:', error)
@@ -143,12 +166,8 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      // Intentar hacer logout en el backend (user o admin)
-      if (currentUser?.isAdmin) {
-        await authService.adminLogout()
-      } else {
-        await authService.logout()
-      }
+      console.log('🔍 Logout - Llamando adminLogout()')
+      await authService.adminLogout()
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
@@ -183,10 +202,7 @@ function App() {
           {/* Ruta del login - siempre muestra login */}
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           
-          {/* Ruta del callback de admin */}
-          <Route path="/admin/callback" element={
-            <AdminCallback onLogin={handleLogin} />
-          } />
+          {/* El callback ahora va directamente a /menu */}
           
           {/* Rutas protegidas - permiten acceso si está autenticado */}
           <Route path="/menu" element={

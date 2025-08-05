@@ -1,19 +1,10 @@
 // Authentication Configuration
 export const AUTH_CONFIG = {
-  // Google OAuth Client ID
-  GOOGLE_CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'AQUI_TU_CLIENT_ID_DE_GOOGLE',
-  
-  // Google OAuth Client Secret (for admin)
-  GOOGLE_CLIENT_SECRET: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || 'AQUI_TU_CLIENT_SECRET_DE_GOOGLE',
-  
-  // API Base URL
+  // API Base URL (lo único que necesita el frontend)
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
   
   // Demo mode
   DEMO_MODE: import.meta.env.VITE_DEMO_MODE === 'true',
-  
-  // Admin email whitelist
-  ADMIN_EMAIL_WHITELIST: import.meta.env.VITE_ADMIN_EMAIL_WHITELIST?.split(',') || [],
   
   // JWT Secret (for demo tokens)
   JWT_SECRET: import.meta.env.VITE_JWT_SECRET || 'change-this-in-production'

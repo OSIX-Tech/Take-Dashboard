@@ -11,6 +11,7 @@ function Game() {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showFullTable, setShowFullTable] = useState(false)
 
   useEffect(() => {
     fetchLeaderboard()
@@ -44,7 +45,10 @@ function Game() {
     setLoading(true)
     setError(null)
     try {
+      console.log('🎮 Game - Cargando high scores...')
       const response = await highScoreService.getHighScores(1, 50)
+      console.log('🎮 Game - Respuesta del backend:', response)
+      
       let data = []
       
       if (Array.isArray(response)) {
@@ -55,14 +59,18 @@ function Game() {
         data = response.results
       }
       
+      console.log('🎮 Game - Datos procesados:', data)
+      
       // Agregar ranking a los datos
       const leaderboardWithRank = data.map((item, index) => ({
         ...item,
         rank: index + 1
       }))
       
+      console.log('🎮 Game - Leaderboard con ranking:', leaderboardWithRank)
       setLeaderboard(leaderboardWithRank)
     } catch (err) {
+      console.error('❌ Game - Error cargando leaderboard:', err)
       setError('Error al cargar leaderboard')
       setLeaderboard([])
     } finally {
@@ -96,6 +104,12 @@ function Game() {
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Juegos</h1>
           <p className="text-sm lg:text-base text-gray-600 mt-1">Clasificación y estadísticas de jugadores</p>
         </div>
+        <button
+          onClick={() => setShowFullTable(!showFullTable)}
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+        >
+          {showFullTable ? 'Vista Simplificada' : 'Vista Completa'}
+        </button>
       </div>
 
       {/* Leaderboard */}
@@ -107,48 +121,115 @@ function Game() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Posición</TableHead>
-                <TableHead>Usuario</TableHead>
-                <TableHead>Juego</TableHead>
-                <TableHead>Puntuación</TableHead>
-                <TableHead>Fecha Logro</TableHead>
-                <TableHead>Índice</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {leaderboard.map((score) => (
-                <TableRow key={score.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {getRankIcon(score.rank)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">-</TableCell>
-                  <TableCell className="text-gray-600">-</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="font-semibold">{score.high_score?.toLocaleString?.() ?? score.high_score}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{score.achieved_at ? formatDate(score.achieved_at) : '-'}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="font-medium">
-                      {score.idx_high_score ?? '-'}
-                    </Badge>
-                  </TableCell>
+          {showFullTable ? (
+            // Vista Completa - Todos los campos del backend
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Posición</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Juego</TableHead>
+                  <TableHead>Puntuación</TableHead>
+                  <TableHead>Fecha Logro</TableHead>
+                  <TableHead>Índice</TableHead>
+                  <TableHead>User ID</TableHead>
+                  <TableHead>Game ID</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {leaderboard.map((score) => (
+                  <TableRow key={score.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        {getRankIcon(score.rank)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-gray-500">
+                      {score.id || '-'}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {score.user || '-'}
+                    </TableCell>
+                    <TableCell className="text-gray-600">
+                      {score.game || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        <span className="font-semibold">{score.high_score?.toLocaleString?.() ?? score.high_score}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{score.achieved_at ? formatDate(score.achieved_at) : '-'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-medium">
+                        {score.idx_high_score ?? '-'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-gray-500">
+                      {score.user_id || '-'}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-gray-500">
+                      {score.game_id || '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            // Vista Simplificada - Solo campos principales
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Posición</TableHead>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Juego</TableHead>
+                  <TableHead>Puntuación</TableHead>
+                  <TableHead>Fecha Logro</TableHead>
+                  <TableHead>Índice</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leaderboard.map((score) => (
+                  <TableRow key={score.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        {getRankIcon(score.rank)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {score.user || '-'}
+                    </TableCell>
+                    <TableCell className="text-gray-600">
+                      {score.game || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        <span className="font-semibold">{score.high_score?.toLocaleString?.() ?? score.high_score}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{score.achieved_at ? formatDate(score.achieved_at) : '-'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-medium">
+                        {score.idx_high_score ?? '-'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
