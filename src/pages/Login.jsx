@@ -224,6 +224,7 @@ const Login = ({ onLogin }) => {
                 <Button 
                   onClick={handleAdminGoogleLogin}
                   disabled={isGoogleLoading}
+                  variant="outline"
                   className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:border-gray-400 px-6 py-3 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center space-x-3 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isGoogleLoading ? (

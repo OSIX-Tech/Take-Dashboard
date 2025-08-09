@@ -30,7 +30,7 @@ export const gameService = {
 export const highScoreService = {
   // Obtener high scores en un rango
   async getHighScores(start = 1, end = 50) {
-    return apiService.get(`high_score?order=high_score.desc&limit=${end-start+1}&offset=${start-1}`)
+    return apiService.get(`high_score?start=${start}&end=${end}`)
   },
 
   // Obtener high scores por usuario

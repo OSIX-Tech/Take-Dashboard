@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Edit, Trash2, Gift, Star, X } from 'lucide-react'
+import { Plus, Edit, Trash2, Gift, Star, X, Trophy, Coffee, Zap, Award } from 'lucide-react'
+import gsap from 'gsap'
 import { rewardsService } from '@/services/rewardsService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
@@ -32,6 +33,27 @@ const Rewards = () => {
   useEffect(() => {
     fetchRewards()
   }, [])
+
+  // Simple GSAP animation for reward cards
+  useEffect(() => {
+    if (rewards.length > 0) {
+      const cards = document.querySelectorAll('.reward-card')
+      
+      gsap.fromTo(cards,
+        { 
+          opacity: 0,
+          scale: 0.98
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.3,
+          stagger: 0.02,
+          ease: 'power2.out'
+        }
+      )
+    }
+  }, [rewards])
 
   const fetchRewards = async () => {
     setLoading(true)
@@ -103,22 +125,46 @@ const Rewards = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
+    
+    // Validar campos
+    if (!formData.name.trim()) {
+      alert('El nombre es requerido')
+      return
+    }
+    
+    if (!formData.required_seals || formData.required_seals < 1) {
+      alert('La cantidad de sellos debe ser mayor a 0')
+      return
+    }
+
     try {
-      if (editingReward) {
-        await rewardsService.updateReward(editingReward.id, formData)
-      } else {
-        await rewardsService.createReward(formData)
+      const payload = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        required_seals: parseInt(formData.required_seals)
       }
+
+      if (editingReward) {
+        const updatedReward = await rewardsService.updateReward(editingReward.id, payload)
+        setRewards(rewards.map(r => r.id === editingReward.id ? updatedReward : r))
+      } else {
+        const newReward = await rewardsService.createReward(payload)
+        setRewards([...rewards, newReward])
+      }
+      
       setShowForm(false)
       setEditingReward(null)
-      setFormData({ name: '', required_seals: '', description: '' })
-      await fetchRewards()
-    } catch (err) {
+      setFormData({ name: '', description: '', required_seals: '' })
+    } catch (error) {
+      console.error('Error saving reward:', error)
       setError('Error al guardar la recompensa')
-    } finally {
-      setLoading(false)
     }
+  }
+
+  const handleCancel = () => {
+    setShowForm(false)
+    setEditingReward(null)
+    setFormData({ name: '', description: '', required_seals: '' })
   }
 
   if (loading) {
@@ -129,154 +175,218 @@ const Rewards = () => {
     return <ErrorMessage message={error} />
   }
 
-  if (!rewards || rewards.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh]">
-        <Gift className="w-12 h-12 text-gray-300 mb-4" />
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">No hay recompensas aún</h2>
-        <p className="text-gray-500">¡Crea una recompensa para empezar!</p>
-        <Button onClick={handleCreate} className="mt-4">
-          <Plus className="w-4 h-4 mr-2" /> Crear Recompensa
-        </Button>
-        <Modal isOpen={showForm} onClose={() => setShowForm(false)}>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                {editingReward ? 'Editar Recompensa' : 'Crear Recompensa'}
-              </h2>
-              <Button variant="ghost" size="sm" onClick={() => setShowForm(false)} className="h-8 w-8 p-0 hover:bg-gray-100">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                <Input
-                  value={formData.name}
-                  onChange={e => handleInputChange('name', e.target.value)}
-                  placeholder="Nombre de la recompensa"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-                <Input
-                  value={formData.description}
-                  onChange={e => handleInputChange('description', e.target.value)}
-                  placeholder="Descripción de la recompensa"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sellos Requeridos</label>
-                <Input
-                  type="number"
-                  value={formData.required_seals}
-                  onChange={e => handleInputChange('required_seals', e.target.value)}
-                  placeholder="10"
-                  required
-                />
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <Button type="submit" className="flex-1">{editingReward ? 'Actualizar' : 'Crear'}</Button>
-                <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancelar</Button>
-              </div>
-            </form>
-          </div>
-        </Modal>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Recompensas</h1>
-          <p className="text-sm lg:text-base text-gray-600 mt-1">Gestiona las recompensas y sellos de los usuarios</p>
+          <p className="text-sm lg:text-base text-gray-600 mt-1">
+            Gestiona las recompensas del programa de fidelidad
+          </p>
         </div>
-        <Button onClick={handleCreate} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 lg:w-5 lg:h-5 mr-2" /> Crear Recompensa
+        <Button onClick={handleCreate} className="px-4 sm:px-6 py-2 text-sm lg:text-base">
+          <Plus className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
+          Nueva Recompensa
         </Button>
       </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="reward-card bg-white border border-gray-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Recompensas</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{rewards.length}</p>
+              </div>
+              <div className="p-3 bg-gray-100 rounded-full">
+                <Gift className="w-6 h-6 text-gray-700" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="reward-card bg-white border border-gray-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Promedio Sellos</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                  {rewards.length > 0 
+                    ? Math.round(rewards.reduce((acc, r) => acc + r.required_seals, 0) / rewards.length)
+                    : 0}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-100 rounded-full">
+                <Star className="w-6 h-6 text-gray-700" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="reward-card bg-white border border-gray-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Máximo Sellos</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                  {rewards.length > 0 
+                    ? Math.max(...rewards.map(r => r.required_seals))
+                    : 0}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-100 rounded-full">
+                <Trophy className="w-6 h-6 text-gray-700" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {rewards.map((reward) => (
-          <Card key={reward.id} className="group hover:shadow-xl transition-all duration-300 bg-white border border-gray-200 overflow-hidden transform hover:-translate-y-1">
-            <div className="p-4 lg:p-6">
-              <div className="flex items-center justify-between mb-3 lg:mb-4">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-gray-100 rounded-full">
-                    <Gift className="w-5 h-5 lg:w-6 lg:h-6 text-gray-600" />
-                  </div>
-                  <h3 className="text-base lg:text-lg font-bold text-gray-900">{reward.name}</h3>
+          <Card key={reward.id} className="reward-card bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-semibold">{reward.name}</CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">{reward.description}</p>
                 </div>
+                <Badge className="bg-gray-100 text-gray-700 border border-gray-200">
+                  {reward.required_seals} sellos
+                </Badge>
               </div>
-              <p className="text-sm lg:text-base text-gray-600 mb-4 line-clamp-2 leading-relaxed">{reward.description}</p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Star className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-500" />
-                  <span className="text-sm lg:text-base font-semibold text-gray-900">{reward.required_seals} sellos</span>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex items-center justify-between pt-3 border-t">
+                <div className="flex items-center space-x-1">
+                  {[...Array(Math.min(reward.required_seals, 5))].map((_, i) => (
+                    <Coffee key={i} className="w-4 h-4 text-gray-400" />
+                  ))}
+                  {reward.required_seals > 5 && (
+                    <span className="text-sm text-gray-500 ml-1">+{reward.required_seals - 5}</span>
+                  )}
                 </div>
                 <div className="flex space-x-1">
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(reward)} className="h-7 w-7 p-0 text-gray-600 hover:text-gray-900"><Edit className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(reward.id)} className="h-7 w-7 p-0 text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
+                  <Button
+                    onClick={() => handleEdit(reward)}
+                    size="sm"
+                    variant="ghost"
+                    className="p-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(reward.id)}
+                    size="sm"
+                    variant="ghost"
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-            </div>
+            </CardContent>
           </Card>
         ))}
       </div>
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)}>
+
+      {/* Empty State */}
+      {rewards.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <Gift className="w-16 h-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay recompensas</h3>
+          <p className="text-sm text-gray-600 text-center max-w-sm mb-4">
+            Crea tu primera recompensa para el programa de fidelidad
+          </p>
+          <Button onClick={handleCreate}>
+            <Plus className="w-4 h-4 mr-2" />
+            Crear Recompensa
+          </Button>
+        </div>
+      )}
+
+      {/* Add/Edit Form Modal */}
+      <Modal isOpen={showForm} onClose={handleCancel}>
         <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">{editingReward ? 'Editar Recompensa' : 'Crear Recompensa'}</h2>
-            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)} className="h-8 w-8 p-0 hover:bg-gray-100"><Trash2 className="w-4 h-4" /></Button>
-          </div>
+          <h2 className="text-xl font-bold mb-4">
+            {editingReward ? 'Editar Recompensa' : 'Nueva Recompensa'}
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre
+              </label>
               <Input
+                ref={nameInputRef}
+                type="text"
                 value={formData.name}
-                onChange={e => handleInputChange('name', e.target.value)}
-                placeholder="Nombre de la recompensa"
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Ej: Café Gratis"
                 required
+                className="w-full"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descripción
+              </label>
               <Input
+                ref={descriptionInputRef}
+                type="text"
                 value={formData.description}
-                onChange={e => handleInputChange('description', e.target.value)}
-                placeholder="Descripción de la recompensa"
-                required
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Ej: Un café gratis de tu elección"
+                className="w-full"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sellos Requeridos</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sellos Requeridos
+              </label>
               <Input
+                ref={sealsInputRef}
                 type="number"
                 value={formData.required_seals}
-                onChange={e => handleInputChange('required_seals', e.target.value)}
+                onChange={(e) => handleInputChange('required_seals', e.target.value)}
                 placeholder="10"
+                min="1"
                 required
+                className="w-full"
               />
             </div>
-            <div className="flex space-x-3 pt-4">
-              <Button type="submit" className="flex-1">{editingReward ? 'Actualizar' : 'Crear'}</Button>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancelar</Button>
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {editingReward ? 'Actualizar' : 'Crear'}
+              </Button>
             </div>
           </form>
         </div>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
       <Modal isOpen={showDeleteModal} onClose={cancelDelete}>
         <div className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Confirmar Eliminación</h2>
-          <p className="text-gray-700 mb-4">¿Estás seguro de que quieres eliminar esta recompensa?</p>
+          <h2 className="text-xl font-bold mb-4">Confirmar Eliminación</h2>
+          <p className="text-gray-600 mb-6">
+            ¿Estás seguro de que deseas eliminar esta recompensa?
+          </p>
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={cancelDelete} className="flex-1">Cancelar</Button>
-            <Button variant="destructive" onClick={confirmDelete} className="flex-1">Eliminar</Button>
+            <Button variant="outline" onClick={cancelDelete}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </Button>
           </div>
         </div>
       </Modal>
@@ -284,4 +394,4 @@ const Rewards = () => {
   )
 }
 
-export default Rewards 
+export default Rewards

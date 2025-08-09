@@ -1,28 +1,39 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Edit, Trash2, Search, Filter, Coffee, Wine, Cake, Package, X } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Filter, Coffee, Wine, Cake, Package, X, Settings } from 'lucide-react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { menuService } from '@/services/menuService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 import Modal from '@/components/common/Modal'
+import CategoryManager from '@/components/CategoryManager'
+import ImageUpload from '@/components/ImageUpload'
 import { useApiState } from '@/hooks/useApi'
+import { validatePrice, validateRequired } from '@/utils/validation'
+import { useGsapStagger } from '@/hooks/useGsap'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const Menu = () => {
   // API states
   const { data: menuData, loading: menuLoading, error: menuError, executeApiCall: fetchMenu } = useApiState({ items: [], categories: [] })
-  const { loading: saveLoading, error: saveError, executeApiCall: saveItem } = useApiState()
-  const { loading: deleteLoading, error: deleteError, executeApiCall: deleteItem } = useApiState()
+  
+  // GSAP refs
+  const cardsContainerRef = useRef(null)
 
-  // Local state for items and categories
+  // Local state for items, categories and allergens
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
+  const [allergens, setAllergens] = useState([])
 
   // Local states
   const [showForm, setShowForm] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [editingItem, setEditingItem] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -35,11 +46,17 @@ const Menu = () => {
     is_available: true,
     image_url: ''
   })
+  const [selectedImageFile, setSelectedImageFile] = useState(null)
 
-  // Load data on component mount
-  useEffect(() => {
-    loadData()
-  }, [])
+  // Memoized filtered items for better performance
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.description.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategory = !categoryFilter || item.category_id === categoryFilter
+      return matchesSearch && matchesCategory
+    })
+  }, [items, searchTerm, categoryFilter])
 
   const loadData = async () => {
     try {
@@ -47,19 +64,38 @@ const Menu = () => {
       if (menuResponse) {
         setItems(menuResponse.items || [])
         setCategories(menuResponse.categories || [])
+        setAllergens(menuResponse.allergens || [])
       }
     } catch (error) {
       console.error('Error loading data:', error)
     }
   }
 
-  // Filter items based on search and category
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = !categoryFilter || item.category_id === categoryFilter
-    return matchesSearch && matchesCategory
-  })
+  // Load data on component mount
+  useEffect(() => {
+    loadData()
+  }, [])
+  
+  // GSAP animations for cards only
+  useEffect(() => {
+    if (filteredItems.length > 0) {
+      const cards = document.querySelectorAll('.menu-card')
+      
+      gsap.fromTo(cards,
+        { 
+          opacity: 0,
+          scale: 0.98
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.4,
+          stagger: 0.03,
+          ease: 'power2.out'
+        }
+      )
+    }
+  }, [filteredItems])
 
   const getCategoryName = (categoryId) => {
     const category = categories.find(cat => cat.id === categoryId)
@@ -82,26 +118,69 @@ const Menu = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    // Validate required fields
+    const nameValidation = validateRequired(formData.name, 'Nombre')
+    if (!nameValidation.isValid) {
+      alert(nameValidation.error)
+      return
+    }
+    
+    const descValidation = validateRequired(formData.description, 'Descripción')
+    if (!descValidation.isValid) {
+      alert(descValidation.error)
+      return
+    }
+    
+    // Validate price
+    const priceValidation = validatePrice(formData.price)
+    if (!priceValidation.isValid) {
+      alert(priceValidation.error)
+      return
+    }
+    
     try {
-      const formDataToSend = {
+      const imageUrlNormalized = typeof formData.image_url === 'string'
+        ? (formData.image_url.trim() || null)
+        : (formData.image_url ?? null)
+
+      const normalized = {
         ...formData,
-        price: parseFloat(formData.price) || 0
+        name: nameValidation.value,
+        description: descValidation.value,
+        price: priceValidation.value,
+        image_url: imageUrlNormalized,
+        folder: 'menu-items'
       }
-      
+
       if (editingItem) {
-        await saveItem(menuService.updateItem, editingItem.id, formDataToSend)
+        let result
+        // Check if there's any image change
+        const hasImageChange = selectedImageFile || (editingItem.image_url !== normalized.image_url)
+        
+        if (hasImageChange) {
+          // Use multipart endpoint for any image change (new, update, or remove)
+          result = await menuService.updateItemWithImage(editingItem.id, normalized, selectedImageFile)
+        } else {
+          // Use regular endpoint only if no image changes at all
+          result = await menuService.updateItem(editingItem.id, normalized)
+        }
         // Update item locally after successful save
         setItems(items.map(item => 
           item.id === editingItem.id 
-            ? { ...item, ...formDataToSend }
+            ? { ...item, ...normalized, ...result }
             : item
         ))
       } else {
-        await saveItem(menuService.addItem, formDataToSend)
+        let result
+        if (selectedImageFile) {
+          result = await menuService.addItemWithImage(normalized, selectedImageFile)
+        } else {
+          result = await menuService.addItem(normalized)
+        }
         // Add item locally after successful save
-        const newItem = {
+        const newItem = result || {
           id: Date.now().toString(),
-          ...formDataToSend
+          ...normalized
         }
         setItems([...items, newItem])
       }
@@ -112,10 +191,11 @@ const Menu = () => {
       loadData() // Reload data after save
     } catch (error) {
       console.error('Error saving item:', error)
+      alert(`Error al ${editingItem ? 'actualizar' : 'crear'} el elemento: ${error.message}`)
     }
   }
 
-  const handleEdit = (item) => {
+  const handleEdit = useCallback((item) => {
     setEditingItem(item)
     setFormData({
       name: item.name,
@@ -125,24 +205,26 @@ const Menu = () => {
       is_available: item.is_available,
       image_url: item.image_url || ''
     })
+    setSelectedImageFile(null) // Reset selected image file when editing
     setShowForm(true)
-  }
+  }, [])
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback((id) => {
     setItemToDelete(id)
     setShowDeleteModal(true)
-  }
+  }, [])
 
   const confirmDelete = async () => {
     if (!itemToDelete) return
     
     try {
-      await deleteItem(menuService.deleteItem, itemToDelete)
+      await menuService.deleteItem(itemToDelete)
       // Delete item locally after successful delete
       setItems(items.filter(item => item.id !== itemToDelete))
       loadData() // Reload data after delete
     } catch (error) {
       console.error('Error deleting item:', error)
+      alert('Error al eliminar el elemento: ' + error.message)
     } finally {
       setShowDeleteModal(false)
       setItemToDelete(null)
@@ -163,6 +245,7 @@ const Menu = () => {
       is_available: true,
       image_url: ''
     })
+    setSelectedImageFile(null)
   }
 
   const handleCancel = () => {
@@ -186,21 +269,35 @@ const Menu = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 md:gap-4">
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Gestión del Menú</h1>
-          <p className="text-gray-600 mt-0.5 text-xs lg:text-sm">Gestiona los elementos del menú y categorías</p>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
+            Gestión del Menú
+          </h1>
+          <p className="text-gray-600 mt-0.5 text-xs lg:text-sm">
+            Gestiona los elementos del menú y categorías
+          </p>
         </div>
-        <Button 
-          onClick={() => setShowForm(true)} 
-          className="w-full sm:w-auto bg-black hover:bg-gray-800 px-3 sm:px-4 md:px-6 lg:px-6 py-1.5 sm:py-2 md:py-3 lg:py-3 text-xs sm:text-sm md:text-base lg:text-base focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation"
-        >
-          <Plus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-5 lg:h-5 mr-1.5" />
-          <span className="hidden sm:inline">Agregar Elemento</span>
-          <span className="sm:hidden">Agregar</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowCategoryManager(true)} 
+            variant="secondary"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
+          >
+            <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5" />
+            <span className="hidden sm:inline">Categorías</span>
+          </Button>
+          <Button 
+            onClick={() => setShowForm(true)} 
+            className="w-full sm:w-auto px-3 sm:px-4 md:px-6 lg:px-6 py-1.5 sm:py-2 md:py-3 lg:py-3 text-xs sm:text-sm md:text-base lg:text-base"
+          >
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-5 lg:h-5 mr-1.5" />
+            <span className="hidden sm:inline">Agregar Elemento</span>
+            <span className="sm:hidden">Agregar</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Search and Filter */}
-      <Card className="p-2 sm:p-3 md:p-4 lg:p-4 bg-white shadow-sm border border-gray-200">
+      {/* Search and Filter - Animated Section */}
+      <Card className="p-2 sm:p-3 md:p-4 lg:p-4 bg-white shadow-sm border border-gray-200 hover:shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 md:gap-4">
             <div className="flex-1 relative">
@@ -210,7 +307,7 @@ const Menu = () => {
                 placeholder="Buscar elementos del menú..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="!pl-8 w-full border-gray-300 focus:border-gray-400 focus:ring-gray-400 text-xs sm:text-sm md:text-sm"
+                className="!pl-8 w-full border-gray-300 focus:border-gray-400 focus:outline-none hover:border-gray-300 text-xs sm:text-sm md:text-sm"
                 style={{ height: '40px', minHeight: '40px' }}
               />
             </div>
@@ -218,7 +315,7 @@ const Menu = () => {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full px-2.5 sm:px-3 md:px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-xs sm:text-sm md:text-sm bg-white appearance-none cursor-pointer touch-manipulation hover:border-gray-400 transition-colors"
+                className="w-full px-2.5 sm:px-3 md:px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-xs sm:text-sm md:text-sm bg-white appearance-none cursor-pointer touch-manipulation hover:border-gray-300 transition-colors"
                 style={{ height: '40px', minHeight: '40px' }}
               >
                 <option value="">Todas las Categorías</option>
@@ -236,135 +333,192 @@ const Menu = () => {
         </CardContent>
       </Card>
 
-      {/* Menu Items Grid - Optimized for tablet */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-        {filteredItems.map((item) => (
-          <Card key={item.id} className="group hover:shadow-xl transition-all duration-300 bg-white border border-gray-200 overflow-hidden transform hover:-translate-y-1">
+      {/* Menu Items Grid - Enhanced visual design with GSAP animations */}
+      <div 
+        ref={cardsContainerRef}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6"
+      >
+        {filteredItems.map((item, index) => (
+          <Card key={item.id} className="menu-card group relative bg-white border-0 shadow-macos hover:shadow-macos-xl transition-all duration-500 overflow-hidden hover-lift">
+            {/* Decorative gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            
             {/* Image Section */}
             {item.image_url ? (
-              <div className="relative h-32 sm:h-36 md:h-40 overflow-hidden">
+              <div className="relative h-48 overflow-hidden bg-gray-100">
                 <img 
                   src={item.image_url} 
                   alt={item.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
+                
+                {/* Category badge overlay */}
+                <div className="absolute top-3 left-3">
+                  <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center space-x-1.5 shadow-lg">
+                    {getCategoryIcon(item.category_id)}
+                    <span className="text-xs font-semibold text-gray-800">
+                      {getCategoryName(item.category_id)}
+                    </span>
+                  </div>
+                </div>
+                
                 {/* Action buttons overlay */}
-                <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEdit(item)}
-                    className="h-7 w-7 sm:h-8 sm:w-8 bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-sm"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-lg rounded-full"
+                    aria-label="Editar elemento"
                   >
-                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(item.id)}
-                    className="h-7 w-7 sm:h-8 sm:w-8 bg-white/90 hover:bg-red-50 text-red-600 hover:text-red-700 p-0 shadow-sm"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-red-50 text-red-500 hover:text-red-700 p-0 shadow-lg rounded-full"
+                    aria-label="Eliminar elemento"
                   >
-                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="relative h-32 sm:h-36 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                <div className="text-gray-400">
-                  <Coffee className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
+              <div className="relative h-48 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 flex items-center justify-center">
+                {/* Pattern overlay */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,.05) 35px, rgba(0,0,0,.05) 70px)`
+                  }}></div>
                 </div>
+                
+                <div className="text-gray-300 transform group-hover:scale-110 transition-transform duration-500">
+                  <Coffee className="w-16 h-16" />
+                </div>
+                
+                {/* Category badge overlay */}
+                <div className="absolute top-3 left-3">
+                  <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center space-x-1.5 shadow-md">
+                    {getCategoryIcon(item.category_id)}
+                    <span className="text-xs font-semibold text-gray-800">
+                      {getCategoryName(item.category_id)}
+                    </span>
+                  </div>
+                </div>
+                
                 {/* Action buttons overlay */}
-                <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEdit(item)}
-                    className="h-7 w-7 sm:h-8 sm:w-8 bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-sm"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-lg rounded-full"
+                    aria-label="Editar elemento"
                   >
-                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(item.id)}
-                    className="h-7 w-7 sm:h-8 sm:w-8 bg-white/90 hover:bg-red-50 text-red-600 hover:text-red-700 p-0 shadow-sm"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-red-50 text-red-500 hover:text-red-700 p-0 shadow-lg rounded-full"
+                    aria-label="Eliminar elemento"
                   >
-                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             )}
 
             {/* Content Section */}
-            <div className="p-3 sm:p-4 md:p-5">
-              {/* Header with category and status */}
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="p-1.5 sm:p-2 bg-gray-100 rounded-full">
-                    {getCategoryIcon(item.category_id)}
-                  </div>
-                  <span className="text-xs sm:text-sm font-medium text-gray-600">
-                    {getCategoryName(item.category_id)}
-                  </span>
-                </div>
+            <div className="p-5">
+              {/* Status badge */}
+              <div className="flex justify-between items-start mb-3">
                 <Badge 
-                  variant={item.is_available ? "default" : "secondary"} 
-                  className={`text-xs px-2 py-1 font-medium ${
+                  className={`text-xs px-2.5 py-1 font-semibold rounded-full ${
                     item.is_available 
-                      ? 'bg-green-100 text-green-800 border-green-200' 
-                      : 'bg-gray-100 text-gray-600 border-gray-200'
+                      ? 'bg-green-50 text-green-700 border border-green-200' 
+                      : 'bg-gray-50 text-gray-600 border border-gray-200'
                   }`}
                 >
-                  {item.is_available ? 'Disponible' : 'No Disponible'}
+                  {item.is_available ? '✓ Disponible' : '× No Disponible'}
                 </Badge>
               </div>
 
               {/* Title and Description */}
-              <div className="mb-3 sm:mb-4">
-                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1 line-clamp-2 leading-tight">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-black transition-colors">
                   {item.name}
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                   {item.description}
                 </p>
               </div>
 
-              {/* Price Section */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-baseline space-x-1">
-                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                    €{item.price}
-                  </span>
-                  {item.price > 3 && (
-                    <span className="text-xs text-gray-500">Premium</span>
-                  )}
-                </div>
-                
-                {/* Quick actions for mobile */}
-                <div className="flex space-x-1 sm:hidden">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(item)}
-                    className="h-6 w-6 p-0 text-gray-600 hover:text-gray-900"
-                  >
-                    <Edit className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(item.id)}
-                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+              {/* Price Section with enhanced styling */}
+              <div className="pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-baseline space-x-2">
+                    <span className="text-2xl font-bold text-gray-900">
+                      €{item.price}
+                    </span>
+                    {item.price > 3 && (
+                      <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                        Premium
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Quick actions for mobile - now always visible on mobile */}
+                  <div className="flex space-x-2 sm:hidden">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(item)}
+                      className="h-8 w-8 p-0 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
+                      aria-label="Editar elemento"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(item.id)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
+                      aria-label="Eliminar elemento"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </Card>
         ))}
       </div>
+      
+      {/* Empty state when no items */}
+      {filteredItems.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <Coffee className="w-16 h-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay elementos en el menú</h3>
+          <p className="text-sm text-gray-600 text-center max-w-sm">
+            {searchTerm || categoryFilter 
+              ? 'No se encontraron elementos con los filtros aplicados' 
+              : 'Comienza agregando tu primer elemento al menú'}
+          </p>
+          {(searchTerm || categoryFilter) && (
+            <Button 
+              onClick={() => { setSearchTerm(''); setCategoryFilter(''); }}
+              className="mt-4 bg-gray-100 hover:bg-gray-200 text-gray-700"
+            >
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Add/Edit Form Modal */}
       <Modal
@@ -381,6 +535,7 @@ const Menu = () => {
               size="sm"
               onClick={handleCancel}
               className="h-8 w-8 p-0 hover:bg-gray-100"
+              aria-label="Cerrar modal"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -436,11 +591,28 @@ const Menu = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
-              <Input
-                value={formData.image_url}
-                onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                placeholder="https://example.com/image.jpg"
+              <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Producto</label>
+              <ImageUpload
+                key={editingItem?.id || 'new'} // Force re-render when switching items
+                currentImageUrl={formData.image_url || ''}
+                mode="deferred"
+                onFileSelected={(file) => {
+                  setSelectedImageFile(file)
+                  // Update preview URL when file is selected
+                  if (file) {
+                    // Don't update formData.image_url with the data URL
+                    // Just keep track of the file
+                    console.log('New file selected:', file.name)
+                  } else {
+                    // If file is removed, set a blank/placeholder image URL
+                    // Using a transparent 1x1 pixel or a placeholder image
+                    const blankImageUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+                    // Or use a placeholder service:
+                    // const blankImageUrl = 'https://via.placeholder.com/200x200/f0f0f0/cccccc?text=No+Image'
+                    setFormData(prev => ({...prev, image_url: blankImageUrl}))
+                  }
+                }}
+                folder="menu-items"
               />
             </div>
             
@@ -507,6 +679,20 @@ const Menu = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Category Manager Modal */}
+      {showCategoryManager && (
+        <CategoryManager
+          categories={categories}
+          allergens={allergens}
+          onDataChange={(data) => {
+            if (data.categories) setCategories(data.categories)
+            if (data.allergens) setAllergens(data.allergens)
+            loadData()
+          }}
+          onClose={() => setShowCategoryManager(false)}
+        />
+      )}
     </div>
   )
 }

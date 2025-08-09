@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
-import Login from './pages/Login'
-import Menu from './pages/Menu'
-import Game from './pages/Game'
-import Rewards from './pages/Rewards'
-import Events from './pages/Events'
 import Layout from './components/layout/Layout'
+import LoadingSpinner from './components/common/LoadingSpinner'
+import ErrorBoundary from './components/common/ErrorBoundary'
 import { authService } from './services/authService'
+
+// Lazy load pages for better performance
+const Login = lazy(() => import('./pages/Login'))
+const Menu = lazy(() => import('./pages/Menu'))
+const Game = lazy(() => import('./pages/Game'))
+const Rewards = lazy(() => import('./pages/Rewards'))
+const Events = lazy(() => import('./pages/Events'))
 
 // Componente para manejar el callback de admin
 const AdminCallback = ({ onLogin }) => {
@@ -191,54 +195,58 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          {/* Ruta por defecto - redirige a login o menu según autenticación */}
-          <Route path="/" element={
-            isAuthenticated ? <Navigate to="/menu" replace /> : <Navigate to="/login" replace />
-          } />
-          
-          {/* Ruta del login - siempre muestra login */}
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          
-          {/* El callback ahora va directamente a /menu */}
-          
-          {/* Rutas protegidas - permiten acceso si está autenticado */}
-          <Route path="/menu" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Menu />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
-          <Route path="/game" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Game />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
-          <Route path="/rewards" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Rewards />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
-          <Route path="/events" element={
-            isAuthenticated ? (
-              <Layout onLogout={handleLogout}>
-                <Events />
-              </Layout>
-            ) : <Navigate to="/login" replace />
-          } />
-          
-          {/* Ruta de fallback - redirige al login si la ruta no existe */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </div>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <div className="App">
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+            {/* Ruta por defecto - redirige a login o menu según autenticación */}
+            <Route path="/" element={
+              isAuthenticated ? <Navigate to="/menu" replace /> : <Navigate to="/login" replace />
+            } />
+            
+            {/* Ruta del login - siempre muestra login */}
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            
+            {/* El callback ahora va directamente a /menu */}
+            
+            {/* Rutas protegidas - permiten acceso si está autenticado */}
+            <Route path="/menu" element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout}>
+                  <Menu />
+                </Layout>
+              ) : <Navigate to="/login" replace />
+            } />
+            <Route path="/game" element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout}>
+                  <Game />
+                </Layout>
+              ) : <Navigate to="/login" replace />
+            } />
+            <Route path="/rewards" element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout}>
+                  <Rewards />
+                </Layout>
+              ) : <Navigate to="/login" replace />
+            } />
+            <Route path="/events" element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout}>
+                  <Events />
+                </Layout>
+              ) : <Navigate to="/login" replace />
+            } />
+            
+            {/* Ruta de fallback - redirige al login si la ruta no existe */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </Suspense>
+        </div>
+      </Router>
+    </ErrorBoundary>
   )
 }
 

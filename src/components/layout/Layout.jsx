@@ -2,6 +2,7 @@ import React from 'react'
 import { useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import AnimatedLayout from './AnimatedLayout'
 
 const Layout = ({ children, onLogout }) => {
   const location = useLocation()
@@ -29,9 +30,11 @@ const Layout = ({ children, onLogout }) => {
           onLogout={onLogout}
         />
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 lg:p-6">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <AnimatedLayout>
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </AnimatedLayout>
         </main>
         {/* Super small footer */}
         <footer className="bg-white border-t border-gray-200 px-3 py-2 text-center">

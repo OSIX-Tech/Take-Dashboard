@@ -1,58 +1,41 @@
 // Mock data para desarrollo mientras el backend se implementa
 export const mockData = {
-  // Menu items
-  menuItems: [
-    {
-      id: 1,
-      name: "Café Solo",
-      description: "Café espresso tradicional",
-      price: 1.30,
-      category_id: "cafe-clasico",
-      is_available: true,
-      image_url: null,
-      created_at: "2024-01-01T00:00:00Z",
-      updated_at: "2024-01-01T00:00:00Z"
-    },
-    {
-      id: 2,
-      name: "Café con Leche",
-      description: "Café con leche caliente",
-      price: 1.80,
-      category_id: "cafe-clasico",
-      is_available: true,
-      image_url: null,
-      created_at: "2024-01-01T00:00:00Z",
-      updated_at: "2024-01-01T00:00:00Z"
-    },
-    {
-      id: 3,
-      name: "Cappuccino",
-      description: "Café con espuma de leche",
-      price: 2.20,
-      category_id: "cafe-especial",
-      is_available: true,
-      image_url: null,
-      created_at: "2024-01-01T00:00:00Z",
-      updated_at: "2024-01-01T00:00:00Z"
-    }
-  ],
+  // Menu items - empty array (no test items)
+  menuItems: [],
 
   // Categories
   categories: [
     {
       id: "cafe-clasico",
       name: "Café Clásico",
-      description: "Cafés tradicionales"
+      description: "Cafés tradicionales",
+      type: "bebidas",
+      icon_url: null,
+      allergen_ids: []
     },
     {
       id: "cafe-especial",
       name: "Café Especial",
-      description: "Cafés gourmet"
+      description: "Cafés gourmet",
+      type: "bebidas",
+      icon_url: null,
+      allergen_ids: ["allergen1"]
     },
     {
       id: "bebidas-frias",
       name: "Bebidas Frías",
-      description: "Bebidas refrescantes"
+      description: "Bebidas refrescantes",
+      type: "bebidas",
+      icon_url: null,
+      allergen_ids: []
+    },
+    {
+      id: "snacks",
+      name: "Snacks",
+      description: "Aperitivos y bocadillos",
+      type: "snack",
+      icon_url: null,
+      allergen_ids: ["allergen2", "allergen3"]
     }
   ],
 
@@ -80,21 +63,71 @@ export const mockData = {
     }
   ],
 
+  // Allergens
+  allergens: [
+    {
+      id: "allergen1",
+      name: "Lactosa",
+      description: "Contiene productos lácteos",
+      icon_url: null
+    },
+    {
+      id: "allergen2",
+      name: "Gluten",
+      description: "Contiene gluten",
+      icon_url: null
+    },
+    {
+      id: "allergen3",
+      name: "Frutos Secos",
+      description: "Contiene frutos secos",
+      icon_url: null
+    },
+    {
+      id: "allergen4",
+      name: "Huevo",
+      description: "Contiene huevo",
+      icon_url: null
+    },
+    {
+      id: "allergen5",
+      name: "Soja",
+      description: "Contiene soja",
+      icon_url: null
+    }
+  ],
+
   // High scores
   highScores: [
     {
-      id: 1,
-      user_id: 1,
-      game_id: 1,
+      id: "hs1",
+      user_id: "user1",
+      user_name: "Juan Pérez",
+      game_id: "game1",
+      game_name: "Café Quiz",
       high_score: 1500,
       achieved_at: "2024-01-01T00:00:00Z",
-      user: {
-        name: "Juan Pérez",
-        email: "juan@example.com"
-      },
-      game: {
-        name: "Café Quiz"
-      }
+      idx_high_scores: 1
+    },
+    {
+      id: "hs2",
+      user_id: "user2",
+      user_name: "María García",
+      game_id: "game1",
+      game_name: "Café Quiz",
+      high_score: 1350,
+      achieved_at: "2024-01-02T00:00:00Z",
+      idx_high_scores: 2
+    },
+    {
+      id: "hs3",
+      user_id: "user3",
+      user_name: "Carlos López",
+      game_id: "game1",
+      game_name: "Café Quiz",
+      high_score: 1200,
+      achieved_at: "2024-01-03T00:00:00Z",
+      idx_high_scores: 3
     }
   ]
 }

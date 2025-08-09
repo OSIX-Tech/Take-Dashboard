@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
+import gsap from 'gsap'
 import { 
   Menu as MenuIcon, 
   Calendar, 
@@ -13,6 +14,9 @@ const Sidebar = () => {
   // On mobile, always collapsed. On desktop, can be toggled
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const sidebarRef = useRef(null)
+  const titleRef = useRef(null)
+  const navItemsRef = useRef([])
 
   // Check if we're on mobile and force collapsed state
   useEffect(() => {
@@ -28,6 +32,13 @@ const Sidebar = () => {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Set sidebar width based on collapsed state
+  useEffect(() => {
+    if (sidebarRef.current) {
+      sidebarRef.current.style.width = isCollapsed ? '64px' : '256px'
+    }
+  }, [isCollapsed])
 
   const menuItems = [
     { 
@@ -63,16 +74,22 @@ const Sidebar = () => {
   }
 
   return (
-    <div className={`bg-white border-r border-gray-200 h-screen transition-all duration-300 ease-in-out flex flex-col ${
-      // Mobile: always collapsed (w-14), Tablet: medium size, Desktop: can be toggled
-      isCollapsed ? 'w-14 md:w-16 lg:w-16' : 'w-56 md:w-64 lg:w-64 xl:w-72'
-    }`}>
-      {/* Header */}
-      <div className="p-2 md:p-3 lg:p-3 border-b border-gray-100 flex items-center justify-between">
-        <div className="flex items-center justify-center w-full">
+    <div 
+      ref={sidebarRef}
+      className={`glass-sidebar h-screen flex flex-col relative transition-all duration-300`}
+      style={{ width: '256px' }}
+    >
+      {/* Header with macOS window controls style */}
+      <div className="p-3 md:p-4 lg:p-4 border-b border-black/5 flex items-center justify-between">
+        <div className="flex items-center justify-center w-full overflow-hidden">
           {/* Only show title on desktop when not collapsed */}
           {!isCollapsed && (
-            <span className="font-bold text-base md:text-lg lg:text-lg tracking-wide text-black transition-all duration-300">Dashboard</span>
+            <span 
+              ref={titleRef}
+              className="font-bold text-base md:text-lg lg:text-lg tracking-wide text-black whitespace-nowrap"
+            >
+              Dashboard
+            </span>
           )}
         </div>
         {/* Only show collapse button on desktop */}
@@ -93,16 +110,17 @@ const Sidebar = () => {
         {menuItems.map((item, index) => (
           <NavLink
             key={index}
+            ref={el => navItemsRef.current[index] = el}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center px-2 md:px-3 py-2 md:py-3 lg:py-3 rounded-lg text-sm md:text-base lg:text-base font-semibold transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation
+              flex items-center px-2 md:px-3 py-2 md:py-3 lg:py-3 rounded-xl text-sm md:text-base lg:text-base font-medium transition-all duration-200 focus:outline-none touch-manipulation
               ${isCollapsed
                 ? 'justify-center'
                 : 'justify-start'
               }
               ${isActive
-                ? 'bg-black text-white shadow-sm'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-black'}
+                ? 'bg-gray-900 text-white shadow-macos'
+                : 'text-gray-700 hover:bg-white/50 hover:text-black hover:shadow-macos-sm'}
             `}
             title={item.label}
           >
@@ -115,7 +133,16 @@ const Sidebar = () => {
                 </div>
                 {/* Only show labels on desktop when not collapsed */}
                 {!isCollapsed && (
-                  <span className="ml-2 md:ml-3 lg:ml-3">{item.label}</span>
+                  <span 
+                    className="ml-2 md:ml-3 lg:ml-3 whitespace-nowrap"
+                    style={{
+                      opacity: isCollapsed ? 0 : 1,
+                      transform: isCollapsed ? 'translateX(-10px)' : 'translateX(0)',
+                      transition: 'all 0.2s ease-out'
+                    }}
+                  >
+                    {item.label}
+                  </span>
                 )}
               </>
             )}
