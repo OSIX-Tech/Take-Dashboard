@@ -8,24 +8,25 @@ export default {
   theme: {
   	extend: {
   		colors: {
+  			// Black & White with macOS design
   			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				light: '#374151',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
-  			'brand-yellow': {
-  				DEFAULT: '#F6E415',
-  				light: '#F8E93A',
-  				dark: '#E6D414'
+  				DEFAULT: '#000000',
+  				light: '#3A3A3C',
+  				dark: '#1C1C1E',
+  				foreground: '#FFFFFF'
   			},
   			gray: {
-  				light: '#F9FAFB',
-  				medium: '#E5E7EB',
-  				dark: '#6B7280'
-  			},
-  			text: {
-  				primary: '#000000',
-  				secondary: '#6B7280'
+  				50: '#F9FAFB',
+  				100: '#F2F2F7',
+  				200: '#E5E5EA',
+  				300: '#D1D1D6',
+  				400: '#C7C7CC',
+  				500: '#8E8E93',
+  				600: '#636366',
+  				700: '#48484A',
+  				800: '#3A3A3C',
+  				900: '#2C2C2E',
+  				950: '#1C1C1E'
   			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -66,12 +67,30 @@ export default {
   		},
   		fontFamily: {
   			sans: [
+  				'-apple-system',
+  				'BlinkMacSystemFont',
+  				'SF Pro Display',
+  				'SF Pro Text',
   				'Inter',
   				'system-ui',
   				'sans-serif'
   			]
   		},
+  		backdropBlur: {
+  			xs: '2px',
+  			sm: '8px',
+  			md: '12px',
+  			lg: '16px',
+  			xl: '24px',
+  			'2xl': '40px'
+  		},
   		boxShadow: {
+  			// macOS-style shadows
+  			'macos-sm': '0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.08)',
+  			'macos': '0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.1)',
+  			'macos-lg': '0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 10px 40px rgba(0, 0, 0, 0.15)',
+  			'macos-xl': '0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 20px 60px rgba(0, 0, 0, 0.2)',
+  			'macos-inset': 'inset 0 0 0 0.5px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
   			soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
   			medium: '0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
   			large: '0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 2px 10px -2px rgba(0, 0, 0, 0.04)'

@@ -1,19 +1,70 @@
 import * as React from "react"
+import { useRef, useEffect } from "react"
+import gsap from "gsap"
 
 import { cn } from "@/lib/utils"
 
-const Card = React.forwardRef(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
-    {...props} />
-))
+const Card = React.forwardRef(({ className, ...props }, ref) => {
+  const cardRef = useRef(null)
+  const combinedRef = ref || cardRef
+  
+  useEffect(() => {
+    const card = combinedRef?.current
+    if (!card) return
+    
+    // Initial fade-in animation - simple
+    gsap.fromTo(card,
+      { 
+        opacity: 0,
+        scale: 0.95
+      },
+      { 
+        opacity: 1,
+        scale: 1,
+        duration: 0.3,
+        ease: "power2.out"
+      }
+    )
+    
+    // Hover animations - simple scale
+    const handleMouseEnter = () => {
+      gsap.to(card, {
+        scale: 1.02,
+        duration: 0.2,
+        ease: "power2.out"
+      })
+    }
+    
+    const handleMouseLeave = () => {
+      gsap.to(card, {
+        scale: 1,
+        duration: 0.2,
+        ease: "power2.out"
+      })
+    }
+    
+    card.addEventListener('mouseenter', handleMouseEnter)
+    card.addEventListener('mouseleave', handleMouseLeave)
+    
+    return () => {
+      card.removeEventListener('mouseenter', handleMouseEnter)
+      card.removeEventListener('mouseleave', handleMouseLeave)
+    }
+  }, [combinedRef])
+  
+  return (
+    <div
+      ref={combinedRef}
+      className={cn("rounded-2xl card-macos hover:shadow-macos-lg", className)}
+      {...props} />
+  )
+})
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-4 sm:p-6", className)}
+    className={cn("flex flex-col space-y-1.5 p-4 sm:p-6 border-b border-black/5", className)}
     {...props} />
 ))
 CardHeader.displayName = "CardHeader"

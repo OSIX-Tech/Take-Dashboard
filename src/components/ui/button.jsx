@@ -1,24 +1,26 @@
 import * as React from "react"
+import { useRef, useEffect } from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority";
+import gsap from "gsap"
 
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 touch-manipulation",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-macos focus-macos disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 touch-manipulation",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "btn-macos-primary text-white shadow-macos hover:shadow-macos-lg active:scale-[0.98]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-red-600 text-white shadow-macos hover:bg-red-700 hover:shadow-macos-lg active:scale-[0.98]",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "btn-macos text-gray-900 hover:shadow-macos active:scale-[0.98]",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-gray-100 text-gray-900 shadow-macos-sm hover:bg-gray-200 hover:shadow-macos active:scale-[0.98]",
+        ghost: "hover:bg-gray-100/80 hover:text-gray-900",
+        link: "text-gray-900 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 sm:h-10 px-3 sm:px-4 py-2 text-sm sm:text-base",
@@ -36,10 +38,67 @@ const buttonVariants = cva(
 
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"
+  const buttonRef = useRef(null)
+  const combinedRef = ref || buttonRef
+  
+  useEffect(() => {
+    const button = combinedRef?.current
+    if (!button || asChild) return
+    
+    // Initial scale animation on mount - simple fade
+    gsap.fromTo(button,
+      { opacity: 0, scale: 0.95 },
+      { opacity: 1, scale: 1, duration: 0.2, ease: "power2.out" }
+    )
+    
+    // Click animation - slower
+    const handleClick = () => {
+      gsap.to(button, {
+        scale: 0.97,
+        duration: 0.15,
+        ease: "power2.in",
+        onComplete: () => {
+          gsap.to(button, {
+            scale: 1,
+            duration: 0.3,
+            ease: "power2.out"
+          })
+        }
+      })
+    }
+    
+    // Hover animations - simple scale
+    const handleMouseEnter = () => {
+      gsap.to(button, {
+        scale: 1.05,
+        duration: 0.15,
+        ease: "power2.out"
+      })
+    }
+    
+    const handleMouseLeave = () => {
+      gsap.to(button, {
+        scale: 1,
+        duration: 0.15,
+        ease: "power2.out"
+      })
+    }
+    
+    button.addEventListener('click', handleClick)
+    button.addEventListener('mouseenter', handleMouseEnter)
+    button.addEventListener('mouseleave', handleMouseLeave)
+    
+    return () => {
+      button.removeEventListener('click', handleClick)
+      button.removeEventListener('mouseenter', handleMouseEnter)
+      button.removeEventListener('mouseleave', handleMouseLeave)
+    }
+  }, [combinedRef, asChild])
+  
   return (
     <Comp
       className={cn(buttonVariants({ variant, size, className }))}
-      ref={ref}
+      ref={combinedRef}
       {...props} />
   );
 })
