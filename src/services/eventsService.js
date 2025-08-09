@@ -1,5 +1,6 @@
 import { apiService } from './api.js'
 import { mockApiService } from './mockData.js'
+import { uploadService } from './uploadService.js'
 
 // Events Service - Updated to match your backend endpoints exactly
 export const eventsService = {
@@ -38,6 +39,33 @@ export const eventsService = {
     }
   },
 
+  // Create event with image
+  async createEventWithImage(eventData, imageFile) {
+    try {
+      const formData = new FormData()
+      
+      // Add event fields directly (not as JSON)
+      formData.append('title', eventData.title)
+      formData.append('content', eventData.content)
+      
+      // Add published_at if provided
+      if (eventData.published_at) {
+        formData.append('published_at', eventData.published_at)
+      }
+      
+      // Add image file if provided
+      if (imageFile) {
+        formData.append('image', imageFile)
+      }
+      
+      const response = await apiService.postFormData('event', formData)
+      return response.data || response
+    } catch (error) {
+      console.error('Error creating event with image:', error)
+      throw error
+    }
+  },
+
   // Update event - matches your PUT /event/{id} endpoint
   async updateEvent(id, data) {
     try {
@@ -45,6 +73,33 @@ export const eventsService = {
       return response.data || response
     } catch (error) {
       console.error('Error updating event:', error)
+      throw error
+    }
+  },
+
+  // Update event with image
+  async updateEventWithImage(id, eventData, imageFile) {
+    try {
+      const formData = new FormData()
+      
+      // Add event fields directly (not as JSON)
+      formData.append('title', eventData.title)
+      formData.append('content', eventData.content)
+      
+      // Add published_at if provided
+      if (eventData.published_at) {
+        formData.append('published_at', eventData.published_at)
+      }
+      
+      // Add image file if provided
+      if (imageFile) {
+        formData.append('image', imageFile)
+      }
+      
+      const response = await apiService.putFormData(`event/${id}`, formData)
+      return response.data || response
+    } catch (error) {
+      console.error('Error updating event with image:', error)
       throw error
     }
   },

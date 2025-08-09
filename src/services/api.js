@@ -4,12 +4,15 @@ const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 
 // Import mock data
 import { mockApiService } from './mockData.js'
+import { getErrorMessageByStatus } from '@/utils/errorMessages'
 
 // API Service Class
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL
     this.useMockData = USE_MOCK_DATA
+    this.corsStatus = null // Cache CORS status
+    this.corsCheckPromise = null // Prevent multiple simultaneous checks
   }
 
   // Get authorization headers
@@ -27,22 +30,41 @@ class ApiService {
     return tokenToUse ? { 'Authorization': `Bearer ${tokenToUse}` } : {}
   }
 
-  // Check if backend CORS is properly configured
+  // Check if backend CORS is properly configured (cached)
   async checkCorsStatus() {
-    try {
-      const response = await fetch(`${this.baseURL}/health`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      })
-      return response.ok
-    } catch (error) {
-      console.log('⚠️ API - CORS not configured, using fallback mode')
-      return false
+    // Return cached result if available
+    if (this.corsStatus !== null) {
+      return this.corsStatus
     }
+
+    // If already checking, wait for that check to complete
+    if (this.corsCheckPromise) {
+      return this.corsCheckPromise
+    }
+
+    // Start new check
+    this.corsCheckPromise = (async () => {
+      try {
+        const response = await fetch(`${this.baseURL}/health`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        })
+        this.corsStatus = response.ok
+        return this.corsStatus
+      } catch (error) {
+        console.log('⚠️ API - CORS not configured, using fallback mode')
+        this.corsStatus = false
+        return false
+      } finally {
+        this.corsCheckPromise = null
+      }
+    })()
+
+    return this.corsCheckPromise
   }
 
-  // Get credentials option based on CORS status
+  // Get credentials option based on CORS status (cached)
   async getCredentialsOption() {
     const corsOk = await this.checkCorsStatus()
     return corsOk ? 'include' : 'omit'
@@ -53,32 +75,8 @@ class ApiService {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       
-      // Categorizar errores HTTP específicos
-      let errorMessage = errorData.message || `HTTP error! status: ${response.status}`
-      
-      switch (response.status) {
-        case 401:
-          errorMessage = 'No autorizado: Credenciales inválidas o expiradas'
-          break
-        case 403:
-          errorMessage = 'Acceso denegado: No tienes permisos para esta acción'
-          break
-        case 404:
-          errorMessage = 'Recurso no encontrado: El endpoint solicitado no existe'
-          break
-        case 500:
-          errorMessage = 'Error interno del servidor: Contacta al administrador'
-          break
-        case 503:
-          errorMessage = 'Servicio no disponible: El servidor está temporalmente fuera de servicio'
-          break
-        default:
-          if (response.status >= 400 && response.status < 500) {
-            errorMessage = 'Error del cliente: Verifica tu solicitud'
-          } else if (response.status >= 500) {
-            errorMessage = 'Error del servidor: Contacta al administrador'
-          }
-      }
+      // Use centralized error message or custom message from API
+      const errorMessage = errorData.message || getErrorMessageByStatus(response.status)
       
       throw new Error(errorMessage)
     }
@@ -162,6 +160,33 @@ class ApiService {
     }
   }
 
+  // POST request with FormData (multipart)
+  async postFormData(endpoint, formData) {
+    try {
+      const url = new URL(`${this.baseURL}/${endpoint}`)
+      console.log(`🌐 Making POST (multipart) request to: ${url.toString()}`)
+
+      const credentials = await this.getCredentialsOption()
+      console.log(`🔧 Using credentials: ${credentials}`)
+
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          // Do not set Content-Type explicitly; browser will set the correct boundary
+          ...this.getAuthHeaders()
+        },
+        body: formData,
+        credentials: credentials
+      })
+
+      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
+      return this.handleResponse(response, endpoint)
+    } catch (error) {
+      console.error(`❌ POST multipart ${endpoint} failed:`, error)
+      throw error
+    }
+  }
+
   // PUT request
   async put(endpoint, data = {}) {
     try {
@@ -187,6 +212,33 @@ class ApiService {
       return this.handleResponse(response, endpoint)
     } catch (error) {
       console.error(`❌ PUT ${endpoint} failed:`, error)
+      throw error
+    }
+  }
+
+  // PUT request with FormData (multipart)
+  async putFormData(endpoint, formData) {
+    try {
+      const url = new URL(`${this.baseURL}/${endpoint}`)
+      console.log(`🌐 Making PUT (multipart) request to: ${url.toString()}`)
+
+      const credentials = await this.getCredentialsOption()
+      console.log(`🔧 Using credentials: ${credentials}`)
+
+      const response = await fetch(url.toString(), {
+        method: 'PUT',
+        headers: {
+          // Do not set Content-Type explicitly; browser will set the correct boundary
+          ...this.getAuthHeaders()
+        },
+        body: formData,
+        credentials: credentials
+      })
+
+      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
+      return this.handleResponse(response, endpoint)
+    } catch (error) {
+      console.error(`❌ PUT multipart ${endpoint} failed:`, error)
       throw error
     }
   }
@@ -267,6 +319,16 @@ class ApiService {
       default:
         return { success: false, error: 'Mock endpoint not found' }
     }
+  }
+
+  // Alias for postFormData for compatibility
+  async postMultipart(endpoint, formData) {
+    return this.postFormData(endpoint, formData)
+  }
+
+  // Alias for putFormData for compatibility
+  async putMultipart(endpoint, formData) {
+    return this.putFormData(endpoint, formData)
   }
 
   // Upload file
