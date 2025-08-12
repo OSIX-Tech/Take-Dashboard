@@ -5,7 +5,8 @@ import {
   Menu as MenuIcon, 
   Calendar, 
   Gift, 
-  Trophy, 
+  Trophy,
+  Wallet,
   ChevronLeft, 
   ChevronRight
 } from 'lucide-react'
@@ -65,6 +66,12 @@ const Sidebar = () => {
       path: '/game',
       description: 'Ver clasificación'
     },
+    { 
+      icon: <Wallet className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
+      label: 'Wallet', 
+      path: '/wallet',
+      description: 'Gestionar Google Wallet'
+    },
   ]
 
   const handleToggleCollapse = () => {
@@ -95,7 +102,7 @@ const Sidebar = () => {
         {/* Only show collapse button on desktop */}
         <button
           onClick={handleToggleCollapse}
-          className="hidden lg:block p-1.5 md:p-2 lg:p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation"
+          className="hidden lg:block p-1.5 md:p-2 lg:p-2 text-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 touch-manipulation"
         >
           {isCollapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -119,8 +126,8 @@ const Sidebar = () => {
                 : 'justify-start'
               }
               ${isActive
-                ? 'bg-gray-900 text-white shadow-macos'
-                : 'text-gray-700 hover:bg-white/50 hover:text-black hover:shadow-macos-sm'}
+                ? 'bg-black text-white shadow-macos'
+                : 'text-gray-700'}
             `}
             title={item.label}
           >

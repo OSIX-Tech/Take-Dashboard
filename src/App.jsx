@@ -11,6 +11,8 @@ const Menu = lazy(() => import('./pages/Menu'))
 const Game = lazy(() => import('./pages/Game'))
 const Rewards = lazy(() => import('./pages/Rewards'))
 const Events = lazy(() => import('./pages/Events'))
+const Wallet = lazy(() => import('./pages/Wallet'))
+const TestScanner = lazy(() => import('./pages/TestScanner'))
 
 // Componente para manejar el callback de admin
 const AdminCallback = ({ onLogin }) => {
@@ -84,7 +86,7 @@ const AdminCallback = ({ onLogin }) => {
           </div>
           <button 
             onClick={() => window.location.href = '/login'} 
-            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded"
           >
             Volver al Login
           </button>
@@ -208,6 +210,9 @@ function App() {
             {/* Ruta del login - siempre muestra login */}
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             
+            {/* Test Scanner - public route for testing */}
+            <Route path="/test-scanner" element={<TestScanner />} />
+            
             {/* El callback ahora va directamente a /menu */}
             
             {/* Rutas protegidas - permiten acceso si está autenticado */}
@@ -236,6 +241,13 @@ function App() {
               isAuthenticated ? (
                 <Layout onLogout={handleLogout}>
                   <Events />
+                </Layout>
+              ) : <Navigate to="/login" replace />
+            } />
+            <Route path="/wallet" element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout}>
+                  <Wallet />
                 </Layout>
               ) : <Navigate to="/login" replace />
             } />
