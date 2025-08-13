@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Trophy, Medal, Star, TrendingUp, Users, Gamepad2, Crown, Flame, Zap } from 'lucide-react'
+import { Trophy, Medal, TrendingUp, Users, Gamepad2, Crown, Flame, Award } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { highScoreService } from '@/services/gameService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
@@ -38,7 +38,7 @@ function Game() {
   }
 
   const getRankStyle = (rank) => {
-    return 'bg-white hover:bg-gray-50'
+    return 'bg-white'
   }
 
   const fetchLeaderboard = async () => {
@@ -139,7 +139,7 @@ function Game() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-gray-50 to-white border-0 shadow-sm">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -153,7 +153,7 @@ function Game() {
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-gray-50 to-white border-0 shadow-sm">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -167,7 +167,7 @@ function Game() {
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-gray-50 to-white border-0 shadow-sm">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -175,7 +175,7 @@ function Game() {
                 <p className="text-3xl font-bold text-gray-900 mt-1">{topScore.toLocaleString()}</p>
               </div>
               <div className="p-3 bg-gray-100 rounded-full">
-                <Flame className="w-6 h-6 text-gray-700" />
+                <Trophy className="w-6 h-6 text-gray-700" />
               </div>
             </div>
           </CardContent>
@@ -186,117 +186,108 @@ function Game() {
       {filteredLeaderboard.length >= 3 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Second Place */}
-          <div className="card md:mt-8 bg-gradient-to-br from-gray-50 to-white rounded-2xl border-0 shadow-lg order-2 md:order-1">
-            <CardContent className="p-6 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-gray-100 rounded-full">
-                  <Medal className="w-10 h-10 text-gray-400" />
+          <div className="md:mt-8 order-2 md:order-1">
+            <Card className="bg-white border border-gray-200 rounded-2xl shadow-lg">
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Medal className="w-6 h-6 text-gray-600" />
                 </div>
-              </div>
-              <Badge className="mb-2 bg-gray-200 text-gray-700 border-0">2º Lugar</Badge>
-              <h3 className="text-xl font-bold text-gray-900 mt-3">{filteredLeaderboard[1].user_name || filteredLeaderboard[1].user || 'Jugador'}</h3>
-              <p className="text-sm text-gray-600 mt-1">{filteredLeaderboard[1].game_name || filteredLeaderboard[1].game || 'Juego'}</p>
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-3xl font-bold text-gray-900">
-                  {filteredLeaderboard[1].high_score?.toLocaleString() || 0}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">puntos</p>
-              </div>
-            </CardContent>
+                <div className="text-xs font-semibold text-gray-600 mb-2">2º LUGAR</div>
+                <h3 className="text-lg font-bold text-gray-900">{filteredLeaderboard[1].user_name || filteredLeaderboard[1].user || 'Jugador'}</h3>
+                <p className="text-xs text-gray-500 mt-1">{filteredLeaderboard[1].game_name || filteredLeaderboard[1].game || 'Juego'}</p>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {filteredLeaderboard[1].high_score?.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider">puntos</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* First Place */}
-          <div className="card bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl border-0 shadow-xl transform md:scale-105 order-1 md:order-2">
-            <CardContent className="p-6 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-yellow-100 rounded-full">
-                  <Crown className="w-12 h-12 text-yellow-500" />
+          <div className="order-1 md:order-2">
+            <Card className="bg-gradient-to-br from-yellow-50 to-white border-2 border-yellow-200 rounded-2xl shadow-xl transform md:scale-105">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Crown className="w-7 h-7 text-yellow-600" />
                 </div>
-              </div>
-              <Badge className="mb-2 bg-yellow-200 text-yellow-800 border-0">1º Lugar</Badge>
-              <h3 className="text-xl font-bold text-gray-900 mt-3">{filteredLeaderboard[0].user_name || filteredLeaderboard[0].user || 'Jugador'}</h3>
-              <p className="text-sm text-gray-600 mt-1">{filteredLeaderboard[0].game_name || filteredLeaderboard[0].game || 'Juego'}</p>
-              <div className="mt-4 pt-4 border-t border-yellow-200">
-                <p className="text-3xl font-bold text-gray-900">
-                  {filteredLeaderboard[0].high_score?.toLocaleString() || 0}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">puntos</p>
-              </div>
-            </CardContent>
+                <div className="text-xs font-semibold text-yellow-600 mb-2">1º LUGAR</div>
+                <h3 className="text-xl font-bold text-gray-900">{filteredLeaderboard[0].user_name || filteredLeaderboard[0].user || 'Jugador'}</h3>
+                <p className="text-xs text-gray-600 mt-1">{filteredLeaderboard[0].game_name || filteredLeaderboard[0].game || 'Juego'}</p>
+                <div className="mt-4 pt-4 border-t border-yellow-100">
+                  <p className="text-3xl font-bold text-gray-900">
+                    {filteredLeaderboard[0].high_score?.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider">puntos</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Third Place */}
-          <div className="card md:mt-8 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border-0 shadow-lg order-3">
-            <CardContent className="p-6 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-orange-100 rounded-full">
-                  <Medal className="w-10 h-10 text-amber-600" />
+          <div className="md:mt-8 order-3">
+            <Card className="bg-white border border-gray-200 rounded-2xl shadow-lg">
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Medal className="w-6 h-6 text-orange-600" />
                 </div>
-              </div>
-              <Badge className="mb-2 bg-orange-200 text-orange-800 border-0">3º Lugar</Badge>
-              <h3 className="text-xl font-bold text-gray-900 mt-3">{filteredLeaderboard[2].user_name || filteredLeaderboard[2].user || 'Jugador'}</h3>
-              <p className="text-sm text-gray-600 mt-1">{filteredLeaderboard[2].game_name || filteredLeaderboard[2].game || 'Juego'}</p>
-              <div className="mt-4 pt-4 border-t border-orange-200">
-                <p className="text-3xl font-bold text-gray-900">
-                  {filteredLeaderboard[2].high_score?.toLocaleString() || 0}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">puntos</p>
-              </div>
-            </CardContent>
+                <div className="text-xs font-semibold text-orange-600 mb-2">3º LUGAR</div>
+                <h3 className="text-lg font-bold text-gray-900">{filteredLeaderboard[2].user_name || filteredLeaderboard[2].user || 'Jugador'}</h3>
+                <p className="text-xs text-gray-500 mt-1">{filteredLeaderboard[2].game_name || filteredLeaderboard[2].game || 'Juego'}</p>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {filteredLeaderboard[2].high_score?.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider">puntos</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
 
       {/* Full Leaderboard */}
-      <div className="card-macos rounded-2xl border-0 shadow-sm">
-        <div className="border-b bg-gray-50 rounded-t-2xl p-4 sm:p-6">
-          <div className="flex items-center space-x-2 font-semibold text-lg">
-            <Trophy className="w-5 h-5" />
-            <span>Clasificación Completa</span>
+      <Card className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="border-b border-gray-100 bg-gray-50 p-4 sm:p-6">
+          <div className="flex items-center space-x-2">
+            <Trophy className="w-5 h-5 text-gray-700" />
+            <span className="font-semibold text-gray-900">Clasificación Completa</span>
           </div>
         </div>
-        <div className="p-0">
-          <div className="divide-y divide-gray-100">
-            {filteredLeaderboard.map((score, index) => (
-              <div
-                key={score.id}
-                className="flex items-center justify-between p-4 bg-white"
-              >
-                {/* Rank and Player Info */}
-                <div className="flex items-center space-x-4 flex-1">
-                  <div className="flex-shrink-0 w-12 flex justify-center">
-                    {getRankIcon(score.rank)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="text-sm font-semibold text-gray-900 truncate">
-                        {score.user_name || score.user || 'Jugador Anónimo'}
-                      </h4>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-0.5">
-                      {score.game_name || score.game || 'Juego'} • {formatDate(score.achieved_at)}
-                    </p>
-                  </div>
+        <div className="divide-y divide-gray-100">
+          {filteredLeaderboard.map((score, index) => (
+            <div
+              key={score.id}
+              className="flex items-center justify-between p-4"
+            >
+              {/* Rank and Player Info */}
+              <div className="flex items-center space-x-4 flex-1">
+                <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <span className="text-sm font-bold text-gray-700">{score.rank}</span>
                 </div>
-
-                {/* Score */}
-                <div className="flex items-center space-x-3">
-                  <div className="text-right">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-lg font-bold text-gray-900">
-                        {score.high_score?.toLocaleString() || 0}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">puntos</p>
-                  </div>
-                  
+                
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-gray-900 truncate">
+                    {score.user_name || score.user || 'Jugador Anónimo'}
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {score.game_name || score.game || 'Juego'} • {formatDate(score.achieved_at)}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Score */}
+              <div className="text-right">
+                <span className="text-lg font-bold text-gray-900">
+                  {score.high_score?.toLocaleString() || 0}
+                </span>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">pts</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

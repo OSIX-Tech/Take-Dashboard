@@ -208,7 +208,7 @@ const SystemStatus = ({
           <button
             onClick={onRetry}
             disabled={isLoading}
-            className="flex items-center space-x-2 px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center space-x-2 px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <RefreshCw className="w-3 h-3 animate-spin" />

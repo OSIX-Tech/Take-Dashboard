@@ -133,39 +133,9 @@ export const useGsapStagger = (selector, delay = 0.2) => {
   return ref;
 };
 
+// useGsapHover removed for tablet optimization
 export const useGsapHover = () => {
   const ref = useRef(null);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const handleMouseEnter = () => {
-      gsap.to(element, {
-        scale: 1.05,
-        y: -5,  // Slight lift
-        duration: 0.6,  // Slower hover
-        ease: "power2.out"
-      });
-    };
-
-    const handleMouseLeave = () => {
-      gsap.to(element, {
-        scale: 1,
-        y: 0,
-        duration: 0.6,  // Slower return
-        ease: "power2.out"
-      });
-    };
-
-    element.addEventListener('mouseenter', handleMouseEnter);
-    element.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      element.removeEventListener('mouseenter', handleMouseEnter);
-      element.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
-
+  // Hover effects disabled for tablet optimization
   return ref;
 };

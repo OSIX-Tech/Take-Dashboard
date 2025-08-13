@@ -17,7 +17,7 @@ const ErrorMessage = ({ error, onRetry, onClose, className = '' }) => {
           {onRetry && (
             <button
               onClick={onRetry}
-              className="text-xs sm:text-sm text-red-600 hover:text-red-800 transition-all duration-200 ease-in-out px-2 py-1 rounded touch-manipulation"
+              className="text-xs sm:text-sm text-red-600 px-2 py-1 rounded touch-manipulation"
             >
               Retry
             </button>
@@ -25,7 +25,7 @@ const ErrorMessage = ({ error, onRetry, onClose, className = '' }) => {
           {onClose && (
             <button
               onClick={onClose}
-              className="text-xs sm:text-sm text-red-600 hover:text-red-800 transition-all duration-200 ease-in-out px-2 py-1 rounded touch-manipulation"
+              className="text-xs sm:text-sm text-red-600 px-2 py-1 rounded touch-manipulation"
             >
               ×
             </button>

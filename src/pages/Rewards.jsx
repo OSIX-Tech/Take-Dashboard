@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Edit, Trash2, Gift, Star, X, Trophy, Coffee, Zap, Award } from 'lucide-react'
+import { Plus, Edit, Trash2, Gift, Star, X, Trophy, Coffee, Target, Award } from 'lucide-react'
 import gsap from 'gsap'
 import { rewardsService } from '@/services/rewardsService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
@@ -193,7 +193,7 @@ const Rewards = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="reward-card bg-white border border-gray-200 shadow-sm">
+        <Card className="reward-card bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -207,7 +207,7 @@ const Rewards = () => {
           </CardContent>
         </Card>
         
-        <Card className="reward-card bg-white border border-gray-200 shadow-sm">
+        <Card className="reward-card bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -225,7 +225,7 @@ const Rewards = () => {
           </CardContent>
         </Card>
         
-        <Card className="reward-card bg-white border border-gray-200 shadow-sm">
+        <Card className="reward-card bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -247,46 +247,58 @@ const Rewards = () => {
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {rewards.map((reward) => (
-          <Card key={reward.id} className="reward-card bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <Card key={reward.id} className="reward-card bg-white border border-gray-200 rounded-xl shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold">{reward.name}</CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">{reward.description}</p>
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    {reward.name}
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">{reward.description || 'Sin descripción'}</p>
                 </div>
-                <Badge className="bg-gray-100 text-gray-700 border border-gray-200">
-                  {reward.required_seals} sellos
-                </Badge>
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-gray-100 rounded-lg">
+                    <Award className="w-5 h-5 text-gray-700" />
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex items-center justify-between pt-3 border-t">
-                <div className="flex items-center space-x-1">
-                  {[...Array(Math.min(reward.required_seals, 5))].map((_, i) => (
-                    <Coffee key={i} className="w-4 h-4 text-gray-400" />
-                  ))}
-                  {reward.required_seals > 5 && (
-                    <span className="text-sm text-gray-500 ml-1">+{reward.required_seals - 5}</span>
-                  )}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="text-3xl font-bold text-gray-900">{reward.required_seals}</div>
+                  <div className="text-sm text-gray-500">sellos necesarios</div>
                 </div>
-                <div className="flex space-x-1">
-                  <Button
-                    onClick={() => handleEdit(reward)}
-                    size="sm"
-                    variant="ghost"
-                    className="p-2"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(reward.id)}
-                    size="sm"
-                    variant="ghost"
-                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+              </div>
+              
+              {/* Visual representation with coffee cups */}
+              <div className="flex items-center space-x-1 mb-4">
+                {[...Array(Math.min(reward.required_seals, 8))].map((_, i) => (
+                  <Coffee key={i} className="w-4 h-4 text-gray-400" />
+                ))}
+                {reward.required_seals > 8 && (
+                  <span className="text-sm text-gray-500 ml-1">+{reward.required_seals - 8}</span>
+                )}
+              </div>
+              
+              {/* Actions */}
+              <div className="flex justify-end space-x-2 pt-3 border-t border-gray-100">
+                <Button
+                  onClick={() => handleEdit(reward)}
+                  size="sm"
+                  variant="ghost"
+                  className="p-2 bg-gray-50 rounded-lg"
+                >
+                  <Edit className="w-4 h-4 text-gray-600" />
+                </Button>
+                <Button
+                  onClick={() => handleDelete(reward.id)}
+                  size="sm"
+                  variant="ghost"
+                  className="p-2 bg-gray-50 rounded-lg"
+                >
+                  <Trash2 className="w-4 h-4 text-gray-600" />
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -383,7 +395,7 @@ const Rewards = () => {
             <Button 
               variant="destructive" 
               onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600"
             >
               Eliminar
             </Button>

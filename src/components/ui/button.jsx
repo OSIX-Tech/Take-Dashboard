@@ -12,15 +12,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "btn-macos-primary text-white shadow-macos hover:shadow-macos-lg active:scale-[0.98]",
+          "btn-macos-primary text-white shadow-macos active:scale-[0.98]",
         destructive:
-          "bg-red-600 text-white shadow-macos hover:bg-red-700 hover:shadow-macos-lg active:scale-[0.98]",
+          "bg-red-600 text-white shadow-macos active:scale-[0.98]",
         outline:
-          "btn-macos text-gray-900 hover:shadow-macos active:scale-[0.98]",
+          "btn-macos text-gray-900 active:scale-[0.98]",
         secondary:
-          "bg-gray-100 text-gray-900 shadow-macos-sm hover:bg-gray-200 hover:shadow-macos active:scale-[0.98]",
-        ghost: "hover:bg-gray-100/80 hover:text-gray-900",
-        link: "text-gray-900 underline-offset-4 hover:underline",
+          "bg-gray-100 text-gray-900 shadow-macos-sm active:scale-[0.98]",
+        ghost: "",
+        link: "text-gray-900 underline-offset-4",
       },
       size: {
         default: "h-9 sm:h-10 px-3 sm:px-4 py-2 text-sm sm:text-base",
@@ -67,31 +67,10 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
       })
     }
     
-    // Hover animations - simple scale
-    const handleMouseEnter = () => {
-      gsap.to(button, {
-        scale: 1.05,
-        duration: 0.15,
-        ease: "power2.out"
-      })
-    }
-    
-    const handleMouseLeave = () => {
-      gsap.to(button, {
-        scale: 1,
-        duration: 0.15,
-        ease: "power2.out"
-      })
-    }
-    
     button.addEventListener('click', handleClick)
-    button.addEventListener('mouseenter', handleMouseEnter)
-    button.addEventListener('mouseleave', handleMouseLeave)
     
     return () => {
       button.removeEventListener('click', handleClick)
-      button.removeEventListener('mouseenter', handleMouseEnter)
-      button.removeEventListener('mouseleave', handleMouseLeave)
     }
   }, [combinedRef, asChild])
   

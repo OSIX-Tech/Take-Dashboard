@@ -1,27 +1,25 @@
-import { useState, useEffect, useRef } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useState, useEffect } from 'react';
 import ErrorMessage from '../components/common/ErrorMessage';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { 
-  QrCode, 
   Coffee, 
   Award, 
   CheckCircle, 
-  AlertCircle, 
-  Camera,
-  X,
-  Keyboard,
+  AlertCircle,
   Plus,
   TrendingUp,
   Users,
   Calendar,
   BarChart3,
-  ScanLine
+  ScanLine,
+  User,
+  X
 } from 'lucide-react';
 import walletService from '../services/walletService';
+import QRScanner from '../components/QRScanner';
 
 function Wallet() {
   const [stats, setStats] = useState(null);
@@ -42,20 +40,11 @@ function Wallet() {
   const [userInfo, setUserInfo] = useState(null);
   const [sealsToAdd, setSealsToAdd] = useState(1);
   const [notes, setNotes] = useState('');
-  const [scannerMode, setScannerMode] = useState(false);
-  const [manualMode, setManualMode] = useState(false);
   const [showReward, setShowReward] = useState(false);
-  const scannerRef = useRef(null);
-  const html5QrcodeScannerRef = useRef(null);
 
   useEffect(() => {
     loadStats();
     loadTransactions();
-    return () => {
-      if (html5QrcodeScannerRef.current) {
-        html5QrcodeScannerRef.current.clear();
-      }
-    };
   }, []);
 
   useEffect(() => {
@@ -95,47 +84,9 @@ function Wallet() {
   };
 
   // QR Scanner functions
-  const startScanner = () => {
-    setScannerMode(true);
-    setManualMode(false);
-    setError(null);
-    
-    setTimeout(() => {
-      if (scannerRef.current && !html5QrcodeScannerRef.current) {
-        html5QrcodeScannerRef.current = new Html5QrcodeScanner(
-          "qr-reader",
-          { 
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0,
-            showTorchButtonIfSupported: true,
-            showZoomSliderIfSupported: true,
-            defaultZoomValueIfSupported: 1.5,
-            formatsToSupport: ['QR_CODE']
-          },
-          false
-        );
-
-        html5QrcodeScannerRef.current.render(
-          (decodedText) => {
-            setQrToken(decodedText);
-            stopScanner();
-            handleScanQR(decodedText);
-          },
-          (error) => {
-            console.log('Scan error:', error);
-          }
-        );
-      }
-    }, 100);
-  };
-
-  const stopScanner = () => {
-    if (html5QrcodeScannerRef.current) {
-      html5QrcodeScannerRef.current.clear();
-      html5QrcodeScannerRef.current = null;
-    }
-    setScannerMode(false);
+  const handleScanSuccess = (decodedText) => {
+    setQrToken(decodedText);
+    handleScanQR(decodedText);
   };
 
   const handleScanQR = async (token = qrToken) => {
@@ -201,10 +152,7 @@ function Wallet() {
     setNotes('');
     setError(null);
     setSuccess(null);
-    setScannerMode(false);
-    setManualMode(false);
     setShowScanner(false);
-    stopScanner();
   };
 
   const formatDate = (dateString) => {
@@ -229,16 +177,138 @@ function Wallet() {
     return Array.from({ length: total }, (_, i) => i < current);
   };
 
+  const renderUserInfo = () => (
+    <>
+      <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-5 border border-gray-200 shadow-sm mb-4">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-black text-white rounded-lg">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">{userInfo.user?.name}</h3>
+              <p className="text-sm text-gray-600">{userInfo.user?.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={resetScanner}
+            className="text-sm text-gray-500 hover:text-black transition-colors md:hidden"
+          >
+            Cambiar
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="flex justify-between items-center mb-3">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">Sellos actuales</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-black">{userInfo.currentSeals}</span>
+                <span className="text-lg text-gray-400">/15</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">Faltan</p>
+              <Badge variant={userInfo.sealsRemaining <= 3 ? "default" : "outline"} className="text-lg px-3 py-1">
+                {userInfo.sealsRemaining}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="relative mb-3">
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-gray-800 to-black h-full rounded-full transition-all duration-700 relative"
+                style={{ width: `${getProgressPercentage()}%` }}
+              >
+                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+              </div>
+            </div>
+            {userInfo.sealsRemaining <= 3 && userInfo.sealsRemaining > 0 && (
+              <p className="absolute -top-6 right-0 text-xs font-medium text-orange-600">
+                ¡Casi lo consigues!
+              </p>
+            )}
+          </div>
+
+          {/* Visual Cups - Mobile Responsive */}
+          <div className="grid grid-cols-5 gap-1.5">
+            {getRemainingCups().map((filled, i) => (
+              <div
+                key={i}
+                className={`aspect-square rounded-lg flex items-center justify-center transition-all ${
+                  filled 
+                    ? 'bg-black shadow-sm' 
+                    : 'bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Coffee className={`w-3 h-3 sm:w-4 sm:h-4 ${filled ? 'text-white' : 'text-gray-400'}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Add Seals Section */}
+      <div className="border-t pt-4">
+        <p className="text-sm font-semibold mb-3">Añadir Sellos</p>
+        
+        <div className="grid grid-cols-5 gap-2 mb-3">
+          {[1, 2, 3, 5, 10].map((num) => (
+            <button
+              key={num}
+              onClick={() => setSealsToAdd(num)}
+              className={`py-2 rounded-lg font-semibold transition-all ${
+                sealsToAdd === num 
+                  ? 'bg-black text-white' 
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              {num}
+            </button>
+          ))}
+        </div>
+
+        <input
+          type="text"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3"
+          placeholder="Notas (opcional)"
+        />
+
+        <Button
+          onClick={handleAddSeals}
+          disabled={loading}
+          className="w-full"
+        >
+          {loading ? (
+            'Procesando...'
+          ) : (
+            <>
+              <Plus className="w-4 h-4 mr-2" />
+              Añadir {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
+            </>
+          )}
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4 sm:mb-0">Google Wallet</h1>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-1">Google Wallet</h1>
+          <p className="text-sm text-gray-600 hidden md:block">Gestiona los sellos y recompensas de los clientes</p>
+        </div>
         <Button
           onClick={() => setShowScanner(!showScanner)}
-          className="bg-black text-white hover:bg-gray-800"
+          className="bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2.5 md:px-8 md:py-3 rounded-lg md:rounded-xl group"
         >
-          <ScanLine className="w-4 h-4 mr-2" />
-          Escanear Cliente
+          <ScanLine className="w-4 h-4 md:w-5 md:h-5 mr-2 group-hover:scale-110 transition-transform" />
+          <span className="font-medium">Escanear Cliente</span>
         </Button>
       </div>
 
@@ -252,260 +322,85 @@ function Wallet() {
         </div>
       )}
 
-      {/* QR Scanner Section - Collapsible */}
-      {showScanner && (
-        <Card className="mb-6 border border-gray-200 shadow-lg rounded-xl overflow-hidden">
-          <CardHeader className="bg-black text-white py-4">
-            <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <QrCode className="w-5 h-5" />
-                <span className="font-semibold">Escanear Cliente</span>
-              </CardTitle>
-              <button
-                onClick={resetScanner}
-                className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {/* QR Scanner Modal Overlay for Desktop, Inline for Mobile */}
+      {showScanner && !userInfo && (
+        <>
+          {/* Desktop Modal Overlay */}
+          <div className="hidden md:fixed md:inset-0 md:bg-black/50 md:backdrop-blur-sm md:z-50 md:flex md:items-center md:justify-center md:p-4 animate-in fade-in duration-200" onClick={resetScanner}>
+            <div className="animate-in fade-in-up duration-300" onClick={(e) => e.stopPropagation()}>
+              <div className="max-w-lg w-full">
+                <QRScanner 
+                  onScan={handleScanSuccess}
+                  onClose={resetScanner}
+                  title="Escanear Cliente"
+                  isModal={true}
+                />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-5 pb-5 bg-white">
-            {!userInfo && !scannerMode && !manualMode && (
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
-                  <ScanLine className="w-6 h-6 text-gray-600" />
-                </div>
-                <h3 className="text-base font-semibold mb-1">Selecciona método de escaneo</h3>
-                <p className="text-xs text-gray-600 mb-4">Escanea el código QR del cliente para añadir sellos</p>
-                
-                <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
-                  <button
-                    onClick={startScanner}
-                    className="bg-black text-white p-3 rounded-lg hover:bg-gray-800 transition-all shadow-md"
-                  >
-                    <div className="flex flex-col items-center gap-1">
-                      <Camera className="w-5 h-5" />
-                      <p className="text-xs font-medium">Cámara</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setManualMode(true)}
-                    className="bg-white border border-gray-300 text-black p-3 rounded-lg hover:border-black transition-all shadow-md"
-                  >
-                    <div className="flex flex-col items-center gap-1">
-                      <Keyboard className="w-5 h-5" />
-                      <p className="text-xs font-medium">Manual</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Camera Scanner */}
-            {scannerMode && (
-              <div className="max-w-md mx-auto">
-                <div className="bg-white rounded-2xl p-4 border border-gray-200">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                      <h3 className="font-semibold">Escaneando...</h3>
-                    </div>
-                    <button
-                      onClick={stopScanner}
-                      className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div id="qr-reader" ref={scannerRef} className="rounded-xl overflow-hidden shadow-inner"></div>
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 text-center flex items-center justify-center gap-2">
-                      <Camera className="w-4 h-4" />
-                      Apunta al código QR del cliente
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Manual Input */}
-            {manualMode && !userInfo && (
-              <div className="max-w-md mx-auto">
-                <div className="bg-white rounded-2xl p-5 border border-gray-200">
-                  <div className="flex justify-between items-center mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gray-100 rounded-lg">
-                        <Keyboard className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-semibold">Introducir Código</h3>
-                    </div>
-                    <button
-                      onClick={() => setManualMode(false)}
-                      className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={qrToken}
-                        onChange={(e) => setQrToken(e.target.value)}
-                        className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-black transition-colors text-center text-lg font-mono"
-                        placeholder="ABC-123-XYZ"
-                        autoFocus
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <QrCode className="w-5 h-5 text-gray-400" />
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => handleScanQR()}
-                      disabled={loading || !qrToken.trim()}
-                      className="w-full py-3"
-                    >
-                      {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Buscando...
-                        </span>
-                      ) : (
-                        'Buscar Cliente'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* User Info */}
-            {userInfo && (
-              <div className="max-w-md mx-auto">
-                <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-5 border border-gray-200 shadow-sm mb-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-black text-white rounded-lg">
-                        <User className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg">{userInfo.user?.name}</h3>
-                        <p className="text-sm text-gray-600">{userInfo.user?.email}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={resetScanner}
-                      className="text-sm text-gray-500 hover:text-black transition-colors"
-                    >
-                      Cambiar
-                    </button>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-4 border border-gray-100">
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="text-center">
-                        <p className="text-xs text-gray-500 mb-1">Sellos actuales</p>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-3xl font-black">{userInfo.currentSeals}</span>
-                          <span className="text-lg text-gray-400">/15</span>
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-500 mb-1">Faltan</p>
-                        <Badge variant={userInfo.sealsRemaining <= 3 ? "default" : "outline"} className="text-lg px-3 py-1">
-                          {userInfo.sealsRemaining}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="relative mb-3">
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div 
-                          className="bg-gradient-to-r from-gray-800 to-black h-full rounded-full transition-all duration-700 relative"
-                          style={{ width: `${getProgressPercentage()}%` }}
-                        >
-                          <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                        </div>
-                      </div>
-                      {userInfo.sealsRemaining <= 3 && userInfo.sealsRemaining > 0 && (
-                        <p className="absolute -top-6 right-0 text-xs font-medium text-orange-600">
-                          ¡Casi lo consigues!
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Visual Cups - Mobile Responsive */}
-                    <div className="grid grid-cols-5 gap-1.5">
-                      {getRemainingCups().map((filled, i) => (
-                        <div
-                          key={i}
-                          className={`aspect-square rounded-lg flex items-center justify-center transition-all ${
-                            filled 
-                              ? 'bg-black shadow-sm' 
-                              : 'bg-gray-100 border border-gray-200'
-                          }`}
-                        >
-                          <Coffee className={`w-3 h-3 sm:w-4 sm:h-4 ${filled ? 'text-white' : 'text-gray-400'}`} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Add Seals Section */}
-                <div className="border-t pt-4">
-                  <p className="text-sm font-semibold mb-3">Añadir Sellos</p>
-                  
-                  <div className="grid grid-cols-5 gap-2 mb-3">
-                    {[1, 2, 3, 5, 10].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => setSealsToAdd(num)}
-                        className={`py-2 rounded-lg font-semibold transition-all ${
-                          sealsToAdd === num 
-                            ? 'bg-black text-white' 
-                            : 'bg-gray-100 hover:bg-gray-200'
-                        }`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-
-                  <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3"
-                    placeholder="Notas (opcional)"
-                  />
-
-                  <Button
-                    onClick={handleAddSeals}
-                    disabled={loading}
-                    className="w-full"
-                  >
-                    {loading ? (
-                      'Procesando...'
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Añadir {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+          
+          {/* Mobile Inline */}
+          <div className="md:hidden mb-6">
+            <QRScanner 
+              onScan={handleScanSuccess}
+              onClose={resetScanner}
+              title="Escanear Cliente"
+            />
+          </div>
+        </>
       )}
 
-      {/* Statistics Cards - Mobile Responsive Grid */}
+      {/* User Info Modal for Desktop, Inline for Mobile */}
+      {showScanner && userInfo && (
+        <>
+          {/* Desktop Modal */}
+          <div className="hidden md:fixed md:inset-0 md:bg-black/50 md:backdrop-blur-sm md:z-50 md:flex md:items-center md:justify-center md:p-4">
+            <div className="animate-in fade-in zoom-in duration-300 max-w-lg w-full">
+              <Card className="border border-gray-200 shadow-2xl rounded-xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-gray-900 to-black text-white py-4">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                      Cliente Escaneado
+                    </CardTitle>
+                    <button
+                      onClick={resetScanner}
+                      className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-5 pb-5 bg-white">
+                  <div className="max-w-md mx-auto">
+                    {renderUserInfo()}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          
+          {/* Mobile Inline */}
+          <div className="md:hidden mb-6">
+            <Card className="border border-gray-200 shadow-lg rounded-xl overflow-hidden">
+              <CardHeader className="bg-black text-white py-4">
+                <CardTitle className="text-base font-semibold">Cliente Escaneado</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5 pb-5 bg-white">
+                <div className="max-w-md mx-auto">
+                  {renderUserInfo()}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+
+
+      {/* Statistics Cards */}
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <Card>
+          <Card className="border-0 shadow-macos">
             <CardHeader className="pb-2 px-4">
               <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -519,7 +414,7 @@ function Wallet() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-macos">
             <CardHeader className="pb-2 px-4">
               <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-2">
                 <Award className="w-4 h-4" />
@@ -533,7 +428,7 @@ function Wallet() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-macos">
             <CardHeader className="pb-2 px-4">
               <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-2">
                 <Coffee className="w-4 h-4" />
@@ -547,7 +442,7 @@ function Wallet() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-macos">
             <CardHeader className="pb-2 px-4">
               <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-2">
                 <Award className="w-4 h-4" />
@@ -563,9 +458,9 @@ function Wallet() {
         </div>
       )}
 
-      {/* Weekly Stats - Mobile Responsive */}
+      {/* Weekly Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
-        <Card>
+        <Card className="border-0 shadow-macos">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
@@ -594,7 +489,7 @@ function Wallet() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-macos">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
@@ -622,8 +517,8 @@ function Wallet() {
         </Card>
       </div>
 
-      {/* Transactions Table - Mobile Responsive */}
-      <Card>
+      {/* Transactions Table */}
+      <Card className="border-0 shadow-macos">
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
             <CardTitle>Historial de Transacciones</CardTitle>
@@ -655,10 +550,29 @@ function Wallet() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {/* Mobile View */}
-          <div className="block lg:hidden space-y-3">
-            {transactions.map((transaction) => (
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Cargando transacciones...</p>
+              </div>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="p-4 bg-gray-100 rounded-full mb-4">
+                <TrendingUp className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay transacciones</h3>
+              <p className="text-sm text-gray-600 text-center max-w-sm">
+                Las transacciones aparecerán aquí cuando escanees códigos QR de clientes
+              </p>
+            </div>
+          ) : (
+            <>
+          {/* Mobile View - Enhanced Cards */}
+          <div className="block lg:hidden p-4 space-y-3">
+            {transactions.map((transaction, index) => (
               <div key={transaction.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
@@ -668,7 +582,7 @@ function Wallet() {
                   <Badge variant="outline">+{transaction.sealsAdded}</Badge>
                 </div>
                 {transaction.rewardGranted && (
-                  <Badge className="bg-green-600 text-white">Premio</Badge>
+                  <Badge className="bg-black text-white">Premio</Badge>
                 )}
                 <p className="text-xs text-gray-600">
                   {formatDate(transaction.createdAt)}
@@ -722,6 +636,8 @@ function Wallet() {
               </TableBody>
             </Table>
           </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

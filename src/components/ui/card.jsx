@@ -26,36 +26,14 @@ const Card = React.forwardRef(({ className, ...props }, ref) => {
       }
     )
     
-    // Hover animations - simple scale
-    const handleMouseEnter = () => {
-      gsap.to(card, {
-        scale: 1.02,
-        duration: 0.2,
-        ease: "power2.out"
-      })
-    }
+    return () => {}
     
-    const handleMouseLeave = () => {
-      gsap.to(card, {
-        scale: 1,
-        duration: 0.2,
-        ease: "power2.out"
-      })
-    }
-    
-    card.addEventListener('mouseenter', handleMouseEnter)
-    card.addEventListener('mouseleave', handleMouseLeave)
-    
-    return () => {
-      card.removeEventListener('mouseenter', handleMouseEnter)
-      card.removeEventListener('mouseleave', handleMouseLeave)
-    }
   }, [combinedRef])
   
   return (
     <div
       ref={combinedRef}
-      className={cn("rounded-2xl card-macos hover:shadow-macos-lg", className)}
+      className={cn("rounded-2xl card-macos", className)}
       {...props} />
   )
 })

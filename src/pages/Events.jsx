@@ -286,7 +286,7 @@ const Events = () => {
               <h3 className="text-base sm:text-lg font-medium mb-2">No hay eventos</h3>
               <p className="text-sm">Crea tu primer evento para empezar</p>
             </div>
-            <Button onClick={() => setShowForm(true)} className="bg-black hover:bg-gray-800">
+            <Button onClick={() => setShowForm(true)} className="bg-black">
               <Plus className="w-4 h-4 mr-2" />
               Crear Primer Evento
             </Button>
@@ -304,7 +304,7 @@ const Events = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleCancel}
-                className="h-8 w-8 p-0 hover:bg-gray-100"
+                className="h-8 w-8 p-0 bg-gray-50"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -418,7 +418,7 @@ const Events = () => {
           const month = eventDate.toLocaleDateString('es-ES', { month: 'short' })
           
           return (
-            <Card key={event.id} className="group relative bg-white border-0 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden">
+            <Card key={event.id} className="relative bg-white border-0 shadow-sm overflow-hidden">
               {/* Decorative accent line */}
               <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
                 isUpcoming 
@@ -432,7 +432,7 @@ const Events = () => {
                   <img
                     src={event.image_url}
                     alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
                   
@@ -456,13 +456,13 @@ const Events = () => {
                     </Badge>
                   </div>
                   
-                  {/* Action buttons */}
-                  <div className="absolute bottom-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  {/* Action buttons - Always visible on mobile/tablet */}
+                  <div className="absolute bottom-4 right-4 flex space-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(event)}
-                      className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-lg rounded-full"
+                      className="h-9 w-9 bg-white/95 backdrop-blur-sm text-gray-700 p-0 shadow-lg rounded-full"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -470,7 +470,7 @@ const Events = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(event.id)}
-                      className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-red-50 text-red-500 hover:text-red-700 p-0 shadow-lg rounded-full"
+                      className="h-9 w-9 bg-white/95 backdrop-blur-sm text-red-500 p-0 shadow-lg rounded-full"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -510,13 +510,13 @@ const Events = () => {
                     <Sparkles className="w-20 h-20 text-gray-200" />
                   </div>
                   
-                  {/* Action buttons */}
-                  <div className="absolute bottom-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  {/* Action buttons - Always visible on mobile/tablet */}
+                  <div className="absolute bottom-4 right-4 flex space-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(event)}
-                      className="h-9 w-9 bg-white/95 hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-lg rounded-full"
+                      className="h-9 w-9 bg-white/95 text-gray-700 p-0 shadow-lg rounded-full"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -524,7 +524,7 @@ const Events = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(event.id)}
-                      className="h-9 w-9 bg-white/95 hover:bg-red-50 text-red-500 hover:text-red-700 p-0 shadow-lg rounded-full"
+                      className="h-9 w-9 bg-white/95 text-red-500 p-0 shadow-lg rounded-full"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -534,7 +534,7 @@ const Events = () => {
               
               {/* Content Section */}
               <div className="p-5">
-                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-black transition-colors">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
                   {event.title}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed">
@@ -576,7 +576,7 @@ const Events = () => {
           </p>
           <Button 
             onClick={() => setShowForm(true)}
-            className="mt-4 bg-black hover:bg-gray-800"
+            className="mt-4 bg-black"
           >
             <Plus className="w-4 h-4 mr-2" />
             Crear Evento
@@ -596,7 +596,7 @@ const Events = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleCancel}
-                className="h-8 w-8 p-0 hover:bg-gray-100"
+                className="h-8 w-8 p-0 bg-gray-50"
               >
                 <X className="w-4 h-4" />
               </Button>

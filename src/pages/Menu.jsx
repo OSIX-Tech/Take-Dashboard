@@ -297,7 +297,7 @@ const Menu = () => {
       </div>
 
       {/* Search and Filter - Animated Section */}
-      <Card className="p-2 sm:p-3 md:p-4 lg:p-4 bg-white shadow-sm border border-gray-200 hover:shadow-sm">
+      <Card className="p-2 sm:p-3 md:p-4 lg:p-4 bg-white shadow-sm border border-gray-200">
         <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 md:gap-4">
             <div className="flex-1 relative">
@@ -307,7 +307,7 @@ const Menu = () => {
                 placeholder="Buscar elementos del menú..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="!pl-8 w-full border-gray-300 focus:border-gray-400 focus:outline-none hover:border-gray-300 text-xs sm:text-sm md:text-sm"
+                className="!pl-8 w-full border-gray-300 focus:border-gray-400 focus:outline-none text-xs sm:text-sm md:text-sm"
                 style={{ height: '40px', minHeight: '40px' }}
               />
             </div>
@@ -315,7 +315,7 @@ const Menu = () => {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full px-2.5 sm:px-3 md:px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-xs sm:text-sm md:text-sm bg-white appearance-none cursor-pointer touch-manipulation hover:border-gray-300 transition-colors"
+                className="w-full px-2.5 sm:px-3 md:px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-xs sm:text-sm md:text-sm bg-white appearance-none cursor-pointer touch-manipulation"
                 style={{ height: '40px', minHeight: '40px' }}
               >
                 <option value="">Todas las Categorías</option>
@@ -339,9 +339,7 @@ const Menu = () => {
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6"
       >
         {filteredItems.map((item, index) => (
-          <Card key={item.id} className="menu-card group relative bg-white border-0 shadow-macos hover:shadow-macos-xl transition-all duration-500 overflow-hidden hover-lift">
-            {/* Decorative gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+          <Card key={item.id} className="menu-card relative bg-white border-0 shadow-macos overflow-hidden">
             
             {/* Image Section */}
             {item.image_url ? (
@@ -349,7 +347,7 @@ const Menu = () => {
                 <img 
                   src={item.image_url} 
                   alt={item.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
                 
@@ -363,13 +361,13 @@ const Menu = () => {
                   </div>
                 </div>
                 
-                {/* Action buttons overlay */}
-                <div className="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                {/* Action buttons overlay - Always visible */}
+                <div className="absolute top-3 right-3 flex flex-col space-y-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEdit(item)}
-                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-lg rounded-full"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm text-gray-700 p-0 shadow-lg rounded-full"
                     aria-label="Editar elemento"
                   >
                     <Edit className="w-4 h-4" />
@@ -378,7 +376,7 @@ const Menu = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(item.id)}
-                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-red-50 text-red-500 hover:text-red-700 p-0 shadow-lg rounded-full"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm text-red-500 p-0 shadow-lg rounded-full"
                     aria-label="Eliminar elemento"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -394,7 +392,7 @@ const Menu = () => {
                   }}></div>
                 </div>
                 
-                <div className="text-gray-300 transform group-hover:scale-110 transition-transform duration-500">
+                <div className="text-gray-300">
                   <Coffee className="w-16 h-16" />
                 </div>
                 
@@ -408,13 +406,13 @@ const Menu = () => {
                   </div>
                 </div>
                 
-                {/* Action buttons overlay */}
-                <div className="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                {/* Action buttons overlay - Always visible */}
+                <div className="absolute top-3 right-3 flex flex-col space-y-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEdit(item)}
-                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-gray-900 p-0 shadow-lg rounded-full"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm text-gray-700 p-0 shadow-lg rounded-full"
                     aria-label="Editar elemento"
                   >
                     <Edit className="w-4 h-4" />
@@ -423,7 +421,7 @@ const Menu = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(item.id)}
-                    className="h-9 w-9 bg-white/95 backdrop-blur-sm hover:bg-red-50 text-red-500 hover:text-red-700 p-0 shadow-lg rounded-full"
+                    className="h-9 w-9 bg-white/95 backdrop-blur-sm text-red-500 p-0 shadow-lg rounded-full"
                     aria-label="Eliminar elemento"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -436,20 +434,23 @@ const Menu = () => {
             <div className="p-5">
               {/* Status badge */}
               <div className="flex justify-between items-start mb-3">
-                <Badge 
-                  className={`text-xs px-2.5 py-1 font-semibold rounded-full ${
-                    item.is_available 
+                <div
+                  className={`
+                    text-xs px-2.5 py-1 font-semibold rounded-full
+                    transition-all duration-200
+                    ${item.is_available 
                       ? 'bg-green-50 text-green-700 border border-green-200' 
                       : 'bg-gray-50 text-gray-600 border border-gray-200'
-                  }`}
+                    }
+                  `}
                 >
                   {item.is_available ? '✓ Disponible' : '× No Disponible'}
-                </Badge>
+                </div>
               </div>
 
               {/* Title and Description */}
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-black transition-colors">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">
                   {item.name}
                 </h3>
                 <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
@@ -477,7 +478,7 @@ const Menu = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(item)}
-                      className="h-8 w-8 p-0 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
+                      className="h-8 w-8 p-0 text-gray-600 bg-gray-50 rounded-full"
                       aria-label="Editar elemento"
                     >
                       <Edit className="w-4 h-4" />
@@ -486,7 +487,7 @@ const Menu = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(item.id)}
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
+                      className="h-8 w-8 p-0 text-red-500 bg-red-50 rounded-full"
                       aria-label="Eliminar elemento"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -512,7 +513,7 @@ const Menu = () => {
           {(searchTerm || categoryFilter) && (
             <Button 
               onClick={() => { setSearchTerm(''); setCategoryFilter(''); }}
-              className="mt-4 bg-gray-100 hover:bg-gray-200 text-gray-700"
+              className="mt-4 bg-black text-white"
             >
               Limpiar filtros
             </Button>
@@ -534,7 +535,7 @@ const Menu = () => {
               variant="ghost"
               size="sm"
               onClick={handleCancel}
-              className="h-8 w-8 p-0 hover:bg-gray-100"
+              className="h-8 w-8 p-0 bg-gray-50"
               aria-label="Cerrar modal"
             >
               <X className="w-4 h-4" />
@@ -672,7 +673,7 @@ const Menu = () => {
             <Button
               variant="danger"
               onClick={confirmDelete}
-              className="w-full text-white bg-red-600 hover:bg-red-700"
+              className="w-full text-white bg-red-600"
             >
               Eliminar
             </Button>

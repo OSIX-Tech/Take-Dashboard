@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Edit2, Trash2, Upload, X, Coffee, Pizza, AlertCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Coffee, Pizza, AlertCircle } from 'lucide-react'
 import { menuService } from '@/services/menuService'
 import Modal from '@/components/common/Modal'
 import ImageUpload from '@/components/ImageUpload'
@@ -249,35 +250,41 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     return type === 'bebidas' ? <Coffee className="w-4 h-4" /> : <Pizza className="w-4 h-4" />
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-7xl h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">Gestión de Menú</h2>
-          <Button onClick={onClose} className="p-2 hover:bg-gray-100">
-            <X className="w-5 h-5" />
+  return createPortal(
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl w-full max-w-7xl h-[90vh] flex flex-col shadow-xl">
+        {/* Header - Simple and clean */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Gestión de Menú</h2>
+            <p className="text-sm text-gray-500 mt-1">Administra categorías y alérgenos</p>
+          </div>
+          <Button 
+            onClick={onClose} 
+            className="p-2 bg-gray-50 rounded-lg"
+          >
+            <X className="w-5 h-5 text-gray-500" />
           </Button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex space-x-1 px-6 pt-4 border-b">
+        {/* Tabs - Clean style */}
+        <div className="flex space-x-1 px-6 pt-2 border-b border-gray-100">
           <button
             onClick={() => setActiveTab('categories')}
-            className={`px-4 py-2 font-medium transition-colors ${
+            className={`px-4 py-2.5 font-medium transition-colors rounded-t-lg ${
               activeTab === 'categories'
-                ? 'text-black border-b-2 border-black'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-gray-900 border-b-2 border-gray-900'
+                : 'text-gray-500'
             }`}
           >
             Categorías
           </button>
           <button
             onClick={() => setActiveTab('allergens')}
-            className={`px-4 py-2 font-medium transition-colors ${
+            className={`px-4 py-2.5 font-medium transition-colors rounded-t-lg ${
               activeTab === 'allergens'
-                ? 'text-black border-b-2 border-black'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-gray-900 border-b-2 border-gray-900'
+                : 'text-gray-500'
             }`}
           >
             Alérgenos
@@ -287,12 +294,12 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
         {/* Content area with scroll */}
         <div className="flex-1 overflow-y-auto p-6">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3 flex items-center">
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center">
               <AlertCircle className="w-4 h-4 text-red-600 mr-2 flex-shrink-0" />
               <span className="text-sm text-red-600">{error}</span>
               <button 
                 onClick={() => setError(null)}
-                className="ml-auto text-red-600 hover:text-red-800"
+                className="ml-auto text-red-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -309,7 +316,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                 {!showCategoryForm && (
                   <Button 
                     onClick={() => setShowCategoryForm(true)}
-                    className="bg-black text-white hover:bg-gray-800"
+                    className="bg-black text-white rounded-lg px-4 py-2"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Nueva Categoría
@@ -318,9 +325,9 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
               </div>
 
               {showCategoryForm && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle>
+                <Card className="mb-6 border border-gray-200 rounded-lg">
+                  <CardHeader className="border-b border-gray-100">
+                    <CardTitle className="text-lg">
                       {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
                     </CardTitle>
                   </CardHeader>
@@ -386,7 +393,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                           {localAllergens.map(allergen => (
                             <label
                               key={allergen.id}
-                              className="flex items-center space-x-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
+                              className="flex items-center space-x-2 p-2 border rounded-lg cursor-pointer"
                             >
                               <input
                                 type="checkbox"
@@ -409,14 +416,14 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                         <Button
                           type="button"
                           onClick={resetCategoryForm}
-                          className="bg-gray-200 text-gray-800 hover:bg-gray-300"
+                          className="bg-gray-200 text-gray-800"
                         >
                           Cancelar
                         </Button>
                         <Button
                           type="submit"
                           disabled={loading}
-                          className="bg-black text-white hover:bg-gray-800"
+                          className="bg-black text-white"
                         >
                           {loading ? 'Guardando...' : (editingCategory ? 'Actualizar' : 'Crear')}
                         </Button>
@@ -428,7 +435,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {localCategories.map((category) => (
-                  <Card key={category.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={category.id} className="border border-gray-200 rounded-lg">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -473,17 +480,17 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                         <div className="flex space-x-1 ml-3">
                           <Button
                             onClick={() => handleEditCategory(category)}
-                            className="p-2 bg-gray-100 hover:bg-gray-200"
+                            className="p-2 bg-white border border-gray-200 rounded-lg"
                             size="sm"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-4 h-4 text-gray-600" />
                           </Button>
                           <Button
                             onClick={() => handleDeleteCategory(category.id)}
-                            className="p-2 bg-red-100 hover:bg-red-200 text-red-600"
+                            className="p-2 bg-white border border-gray-200 rounded-lg"
                             size="sm"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 text-gray-600" />
                           </Button>
                         </div>
                       </div>
@@ -498,7 +505,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                       <p className="text-gray-600">No hay categorías registradas</p>
                       <Button 
                         onClick={() => setShowCategoryForm(true)}
-                        className="mt-4 bg-black text-white hover:bg-gray-800"
+                        className="mt-4 bg-black text-white"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Crear primera categoría
@@ -520,7 +527,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                 {!showAllergenForm && (
                   <Button 
                     onClick={() => setShowAllergenForm(true)}
-                    className="bg-black text-white hover:bg-gray-800"
+                    className="bg-black text-white rounded-lg px-4 py-2"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Nuevo Alérgeno
@@ -529,9 +536,9 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
               </div>
 
               {showAllergenForm && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle>
+                <Card className="mb-6 border border-gray-200 rounded-lg">
+                  <CardHeader className="border-b border-gray-100">
+                    <CardTitle className="text-lg">
                       {editingAllergen ? 'Editar Alérgeno' : 'Nuevo Alérgeno'}
                     </CardTitle>
                   </CardHeader>
@@ -569,7 +576,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                           {localCategories.map(category => (
                             <label
                               key={category.id}
-                              className="flex items-center space-x-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
+                              className="flex items-center space-x-2 p-2 border rounded-lg cursor-pointer"
                             >
                               <input
                                 type="checkbox"
@@ -595,14 +602,14 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                         <Button
                           type="button"
                           onClick={resetAllergenForm}
-                          className="bg-gray-200 text-gray-800 hover:bg-gray-300"
+                          className="bg-gray-200 text-gray-800"
                         >
                           Cancelar
                         </Button>
                         <Button
                           type="submit"
                           disabled={loading}
-                          className="bg-black text-white hover:bg-gray-800"
+                          className="bg-black text-white"
                         >
                           {loading ? 'Guardando...' : (editingAllergen ? 'Actualizar' : 'Crear')}
                         </Button>
@@ -619,7 +626,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                   )
                   
                   return (
-                    <Card key={allergen.id} className="hover:shadow-lg transition-shadow">
+                    <Card key={allergen.id} className="border border-gray-200 rounded-lg">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -645,17 +652,17 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                           <div className="flex space-x-1 ml-3">
                             <Button
                               onClick={() => handleEditAllergen(allergen)}
-                              className="p-2 bg-gray-100 hover:bg-gray-200"
+                              className="p-2 bg-white border border-gray-200 rounded-lg"
                               size="sm"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Edit2 className="w-4 h-4 text-gray-600" />
                             </Button>
                             <Button
                               onClick={() => handleDeleteAllergen(allergen.id)}
-                              className="p-2 bg-red-100 hover:bg-red-200 text-red-600"
+                              className="p-2 bg-white border border-gray-200 rounded-lg"
                               size="sm"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4 text-gray-600" />
                             </Button>
                           </div>
                         </div>
@@ -671,7 +678,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                       <p className="text-gray-600">No hay alérgenos registrados</p>
                       <Button 
                         onClick={() => setShowAllergenForm(true)}
-                        className="mt-4 bg-black text-white hover:bg-gray-800"
+                        className="mt-4 bg-black text-white"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Crear primer alérgeno
@@ -684,7 +691,8 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

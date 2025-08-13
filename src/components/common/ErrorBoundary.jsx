@@ -63,7 +63,7 @@ class ErrorBoundary extends React.Component {
                 {process.env.NODE_ENV === 'development' && this.state.error && (
                   <div className="w-full mb-6">
                     <details className="text-left">
-                      <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 mb-2">
+                      <summary className="cursor-pointer text-sm text-gray-500 mb-2">
                         Detalles del error (solo desarrollo)
                       </summary>
                       <div className="bg-gray-100 rounded p-3 text-xs font-mono text-gray-700 overflow-auto max-h-40">
@@ -88,7 +88,7 @@ class ErrorBoundary extends React.Component {
                   </Button>
                   <Button
                     onClick={this.handleReset}
-                    className="flex-1 bg-black hover:bg-gray-800"
+                    className="flex-1 bg-black"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Recargar

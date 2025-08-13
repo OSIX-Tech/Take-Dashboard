@@ -147,7 +147,7 @@ function ImageUpload({
         className={`
           relative border-2 ${!isTouchDevice ? 'border-dashed' : ''} rounded-lg transition-all duration-200
           ${isDragging ? 'border-black bg-gray-50' : 'border-gray-300'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-gray-400'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           ${previewUrl ? 'h-48' : 'h-32'}
         `}
         onClick={(e) => {
@@ -181,7 +181,7 @@ function ImageUpload({
                   e.stopPropagation()
                   handleRemoveImage()
                 }}
-                className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-lg"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -218,7 +218,7 @@ function ImageUpload({
         <label
           htmlFor={inputId}
           onClick={(e) => e.stopPropagation()}
-          className="w-full py-2 px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black cursor-pointer inline-flex items-center justify-center"
+          className="w-full py-2 px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-black cursor-pointer inline-flex items-center justify-center"
         >
           <Upload className="w-4 h-4 inline-block mr-2" />
           {previewUrl ? 'Cambiar imagen' : 'Seleccionar imagen'}
