@@ -213,6 +213,9 @@ function App() {
             {/* Test Scanner - public route for testing */}
             <Route path="/test-scanner" element={<TestScanner />} />
             
+            {/* OAuth callback route */}
+            <Route path="/auth/callback" element={<AdminCallback onLogin={handleLogin} />} />
+            
             {/* El callback ahora va directamente a /menu */}
             
             {/* Rutas protegidas - permiten acceso si está autenticado */}
