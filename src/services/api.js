@@ -45,7 +45,12 @@ class ApiService {
     // Start new check
     this.corsCheckPromise = (async () => {
       try {
-        const response = await fetch(`${this.baseURL}/health`, {
+        // Handle both cases: baseURL with or without /api
+        const healthUrl = this.baseURL.endsWith('/api') 
+          ? `${this.baseURL}/health`
+          : `${this.baseURL}/api/health`
+        
+        const response = await fetch(healthUrl, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'
