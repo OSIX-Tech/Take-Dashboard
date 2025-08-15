@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ErrorMessage from '../components/common/ErrorMessage';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -25,6 +26,7 @@ function Wallet() {
   const [stats, setStats] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [filters, setFilters] = useState({
@@ -43,8 +45,7 @@ function Wallet() {
   const [showReward, setShowReward] = useState(false);
 
   useEffect(() => {
-    loadStats();
-    loadTransactions();
+    loadInitialData();
   }, []);
 
   useEffect(() => {
@@ -53,6 +54,31 @@ function Wallet() {
       return () => clearTimeout(timer);
     }
   }, [showReward]);
+
+  const loadInitialData = async () => {
+    setInitialLoading(true);
+    try {
+      // Load stats and transactions in parallel
+      const [statsData, transactionsData] = await Promise.all([
+        walletService.getStats().catch(err => {
+          console.error('Error loading stats:', err);
+          return null;
+        }),
+        walletService.getTransactions({ limit: filters.limit }).catch(err => {
+          console.error('Error loading transactions:', err);
+          return { transactions: [] };
+        })
+      ]);
+
+      if (statsData) setStats(statsData);
+      setTransactions(transactionsData.transactions || []);
+    } catch (err) {
+      console.error('Error loading initial data:', err);
+      setError('Error al cargar los datos');
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const loadStats = async () => {
     try {
@@ -295,6 +321,11 @@ function Wallet() {
       </div>
     </>
   );
+
+  // Show initial loading state
+  if (initialLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">

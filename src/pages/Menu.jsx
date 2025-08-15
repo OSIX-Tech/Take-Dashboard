@@ -10,6 +10,7 @@ import { menuService } from '@/services/menuService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 import Modal from '@/components/common/Modal'
+import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
 import CategoryManager from '@/components/CategoryManager'
 import ImageUpload from '@/components/ImageUpload'
 import { useApiState } from '@/hooks/useApi'
@@ -643,38 +644,13 @@ const Menu = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={cancelDelete}
-      >
-        <div className="p-6 text-center">
-          <Trash2 className="mx-auto h-12 w-12 text-red-500" />
-          <h3 className="mt-2 text-lg font-medium text-gray-900">
-            Eliminar Elemento
-          </h3>
-          <div className="mt-2 px-7 py-3">
-            <p className="text-sm text-gray-500">
-              ¿Estás seguro de que quieres eliminar este elemento? Esta acción no se puede deshacer.
-            </p>
-          </div>
-          <div className="items-center px-4 py-3">
-            <Button
-              variant="outline"
-              onClick={cancelDelete}
-              className="w-full text-gray-700"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={confirmDelete}
-              className="w-full text-white bg-red-600"
-            >
-              Eliminar
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={confirmDelete}
+        message="¿Estás seguro de que deseas eliminar este elemento del menú? Esta acción no se puede deshacer."
+        confirmText="Eliminar elemento"
+      />
 
       {/* Category Manager Modal */}
       {showCategoryManager && (

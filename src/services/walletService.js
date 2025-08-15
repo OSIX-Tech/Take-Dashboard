@@ -5,22 +5,19 @@ const WALLET_BASE_URL = 'admin/wallet';
 export const walletService = {
   // Public endpoint - no auth required
   async validateQRToken(qrToken) {
-    const response = await apiService.get(`wallet/validate/${qrToken}`);
-    return response.data;
+    return apiService.get(`wallet/validate/${qrToken}`);
   },
 
   // Admin endpoints - require auth
   async scanQRToken(qrToken) {
-    const response = await apiService.get(`${WALLET_BASE_URL}/scan/${qrToken}`);
-    return response.data;
+    return apiService.get(`wallet/scan/${qrToken}`);
   },
 
   async addSeals(qrToken, seals, notes = '') {
-    const response = await apiService.post(`${WALLET_BASE_URL}/scan/${qrToken}/add`, {
+    return apiService.post(`wallet/scan/${qrToken}/add`, {
       seals,
       notes
     });
-    return response.data;
   },
 
   async getTransactions(params = {}) {
@@ -33,13 +30,11 @@ export const walletService = {
 
     const queryString = queryParams.toString();
     const url = `${WALLET_BASE_URL}/transactions${queryString ? `?${queryString}` : ''}`;
-    const response = await apiService.get(url);
-    return response.data;
+    return apiService.get(url);
   },
 
   async getStats() {
-    const response = await apiService.get(`${WALLET_BASE_URL}/stats`);
-    return response.data;
+    return apiService.get(`${WALLET_BASE_URL}/stats`);
   }
 };
 

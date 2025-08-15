@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { AlertCircle, Shield, RefreshCw, ScanLine } from 'lucide-react'
+import { AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { authService } from '@/services/authService'
@@ -156,17 +156,6 @@ const Login = ({ onLogin }) => {
                     </svg>
                   )}
                   <span>{isGoogleLoading ? 'Conectando...' : 'Continuar con Google'}</span>
-                </Button>
-              </div>
-              
-              {/* Test Scanner Button */}
-              <div className="mt-4">
-                <Button
-                  onClick={() => window.location.href = '/test-scanner'}
-                  className="w-full bg-black text-white hover:bg-gray-800"
-                >
-                  <ScanLine className="w-4 h-4 mr-2" />
-                  Probar Escáner
                 </Button>
               </div>
             </div>

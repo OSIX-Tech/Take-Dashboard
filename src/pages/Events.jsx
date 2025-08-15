@@ -14,6 +14,7 @@ import { eventsService } from '@/services/eventsService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 import Modal from '@/components/common/Modal'
+import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
 import ImageUpload from '@/components/ImageUpload'
 import { validateDate, validateRequired } from '@/utils/validation'
 
@@ -681,33 +682,13 @@ const Events = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <Modal isOpen={showDeleteModal} onClose={cancelDelete}>
-          <div className="p-6 text-center">
-            <h2 className="text-lg font-semibold mb-4">Confirmar Eliminación</h2>
-            <p className="text-gray-700 mb-4">
-              ¿Estás seguro de que quieres eliminar este evento? Esta acción no se puede deshacer.
-            </p>
-            <div className="flex justify-center space-x-3">
-              <Button
-                variant="outline"
-                onClick={cancelDelete}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDelete}
-                className="flex-1"
-                disabled={loading}
-              >
-                {loading ? 'Eliminando...' : 'Eliminar Evento'}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        message="¿Estás seguro de que quieres eliminar este evento? Esta acción no se puede deshacer."
+        confirmText="Eliminar evento"
+      />
     </div>
   )
 }

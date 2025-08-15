@@ -10,6 +10,7 @@ import { rewardsService } from '@/services/rewardsService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 import Modal from '@/components/common/Modal'
+import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
 
 const Rewards = () => {
   const [rewards, setRewards] = useState([])
@@ -382,26 +383,13 @@ const Rewards = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={showDeleteModal} onClose={cancelDelete}>
-        <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">Confirmar Eliminación</h2>
-          <p className="text-gray-600 mb-6">
-            ¿Estás seguro de que deseas eliminar esta recompensa?
-          </p>
-          <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={cancelDelete}>
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={confirmDelete}
-              className="bg-red-600"
-            >
-              Eliminar
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        message="¿Estás seguro de que deseas eliminar esta recompensa?"
+        confirmText="Eliminar recompensa"
+      />
     </div>
   )
 }
