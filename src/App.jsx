@@ -4,6 +4,7 @@ import Layout from './components/layout/Layout'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import { authService, extractTokenFromUrl } from './services/authService'
+import { AUTH_CONFIG } from './config/auth'
 
 // Lazy load pages for better performance
 const Login = lazy(() => import('./pages/Login'))
@@ -178,18 +179,71 @@ function App() {
         return
       }
       
+      // SEGUNDO: Si estamos en /menu y venimos de un login, intentar obtener sesión del backend
+      if (window.location.pathname === '/menu' && document.referrer.includes('accounts.google.com')) {
+        console.log('🔄 [App] Detectado retorno de Google OAuth, verificando sesión...')
+        try {
+          // Intentar obtener el perfil con las cookies que el backend debió establecer
+          const profile = await authService.getAdminProfile()
+          if (profile && profile.data) {
+            console.log('✅ [App] Sesión obtenida del backend después de OAuth')
+            setCurrentUser(profile.data)
+            setIsAuthenticated(true)
+            setIsLoading(false)
+            return
+          }
+        } catch (error) {
+          console.log('⚠️ [App] No se pudo obtener sesión después de OAuth:', error.message)
+        }
+      }
+      
       try {
         // Agregar un pequeño delay para dar tiempo a que las cookies se establezcan
         console.log('⏳ [App] Esperando 100ms para cookies...')
         await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // ANÁLISIS DE COOKIES Y CROSS-DOMAIN
+        console.log('🔒 [App] === ANÁLISIS DE COOKIES CROSS-DOMAIN ===')
+        console.log('🔒 [App] Dominio actual:', window.location.hostname)
+        console.log('🔒 [App] Origen actual:', window.location.origin)
+        console.log('🔒 [App] Backend URL:', AUTH_CONFIG.API_BASE_URL)
+        
+        // Analizar dominios
+        const currentDomain = window.location.hostname
+        const backendDomain = new URL(AUTH_CONFIG.API_BASE_URL).hostname
+        console.log('🌐 [App] Comparación de dominios:')
+        console.log('  - Frontend:', currentDomain)
+        console.log('  - Backend:', backendDomain)
+        console.log('  - ¿Son el mismo?:', currentDomain === backendDomain)
+        console.log('  - ¿Comparten dominio base?:', currentDomain.split('.').slice(-2).join('.') === backendDomain.split('.').slice(-2).join('.'))
+        
+        // ADVERTENCIA CROSS-DOMAIN
+        if (currentDomain !== backendDomain && !currentDomain.includes('localhost')) {
+          console.warn('⚠️ 🔴 [App] === PROBLEMA DETECTADO: CROSS-DOMAIN COOKIES ===')
+          console.warn('⚠️ [App] Frontend:', currentDomain)
+          console.warn('⚠️ [App] Backend:', backendDomain)
+          console.warn('⚠️ [App] Las cookies del backend NO son accesibles desde este dominio')
+          console.warn('⚠️ [App] Esto es una restricción de seguridad del navegador (SameSite)')
+          console.warn('💡 [App] SOLUCIONES POSIBLES:')
+          console.warn('  1️⃣  Usar subdominios: app.tudominio.com + api.tudominio.com')
+          console.warn('  2️⃣  Backend debe enviar token en URL de redirección')
+          console.warn('  3️⃣  Configurar proxy reverso en el mismo dominio')
+          console.warn('  4️⃣  Usar localStorage con token en lugar de cookies')
+          console.warn('🔴 [App] === FIN DEL ANÁLISIS ===')
+        } else if (currentDomain === backendDomain) {
+          console.log('✅ [App] Mismo dominio detectado, cookies deberían funcionar')
+        }
+        
+        // Verificar si las cookies pueden ser leídas
+        console.log('🍪 [App] document.cookie accesible:', typeof document.cookie)
+        console.log('🍪 [App] Contenido de document.cookie:', document.cookie || '(VACIO - No hay cookies accesibles)')
         
         // Primero, intentar leer la cookie adminInfo que el backend establece
         const cookies = document.cookie.split(';')
         const adminInfoCookie = cookies.find(c => c.trim().startsWith('adminInfo='))
         const adminTokenCookie = cookies.find(c => c.trim().startsWith('adminToken='))
         
-        console.log('🍪 [App] Todas las cookies:', document.cookie)
-        console.log('🍪 [App] Cookies parseadas:', cookies.map(c => c.split('=')[0].trim()))
+        console.log('🍪 [App] Cookies encontradas:', cookies.length > 1 || cookies[0] !== '' ? cookies.map(c => c.split('=')[0].trim()) : 'NINGUNA COOKIE ENCONTRADA')
         console.log('🍪 [App] adminTokenCookie encontrada:', !!adminTokenCookie)
         console.log('🍪 [App] adminInfoCookie encontrada:', !!adminInfoCookie)
         

@@ -202,23 +202,43 @@ export const authService = {
 // Función auxiliar para extraer token del callback URL
 export function extractTokenFromUrl() {
   console.log('🔍 [extractTokenFromUrl] Buscando token en URL...')
+  console.log('🔍 [extractTokenFromUrl] URL completa:', window.location.href)
+  console.log('🔍 [extractTokenFromUrl] Search:', window.location.search)
+  console.log('🔍 [extractTokenFromUrl] Hash:', window.location.hash)
   
   // Buscar en hash fragment (después de #)
   if (window.location.hash) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const token = hashParams.get('token')
-    if (token) {
+    const adminToken = hashParams.get('adminToken')
+    if (token || adminToken) {
       console.log('✅ [extractTokenFromUrl] Token encontrado en hash')
-      return token
+      return token || adminToken
     }
   }
   
   // Buscar en query params
   const urlParams = new URLSearchParams(window.location.search)
   const token = urlParams.get('token')
-  if (token) {
+  const adminToken = urlParams.get('adminToken')
+  const accessToken = urlParams.get('access_token')
+  
+  if (token || adminToken || accessToken) {
     console.log('✅ [extractTokenFromUrl] Token encontrado en query params')
-    return token
+    return token || adminToken || accessToken
+  }
+  
+  // Buscar adminInfo en params (podría venir encoded)
+  const adminInfo = urlParams.get('adminInfo')
+  if (adminInfo) {
+    try {
+      const decoded = JSON.parse(decodeURIComponent(adminInfo))
+      console.log('👥 [extractTokenFromUrl] AdminInfo encontrado:', decoded)
+      // Guardar info del admin aunque no tengamos token
+      localStorage.setItem('adminInfo', JSON.stringify(decoded))
+    } catch (e) {
+      console.error('Error decodificando adminInfo:', e)
+    }
   }
   
   console.log('❌ [extractTokenFromUrl] No se encontró token en URL')
