@@ -24,7 +24,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
   const [categoryFormData, setCategoryFormData] = useState({
     name: '',
     description: '',
-    type: 'bebidas',
+    type: 'drinks',
     icon_url: '',
     allergen_ids: []
   })
@@ -75,7 +75,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     setCategoryFormData({
       name: category.name || '',
       description: category.description || '',
-      type: category.type || 'bebidas',
+      type: category.type || 'drinks',
       icon_url: category.icon_url || '',
       allergen_ids: category.allergen_ids || []
     })
@@ -221,7 +221,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     setCategoryFormData({
       name: '',
       description: '',
-      type: 'bebidas',
+      type: 'drinks',
       icon_url: '',
       allergen_ids: []
     })
@@ -247,7 +247,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
   }
 
   const getTypeIcon = (type) => {
-    return type === 'bebidas' ? <Coffee className="w-4 h-4" /> : <Pizza className="w-4 h-4" />
+    return type === 'drinks' ? <Coffee className="w-4 h-4" /> : <Pizza className="w-4 h-4" />
   }
 
   return createPortal(
@@ -356,8 +356,8 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                             required
                           >
-                            <option value="bebidas">Bebidas</option>
-                            <option value="snack">Snack</option>
+                            <option value="drinks">Bebidas</option>
+                            <option value="snacks">Snacks</option>
                           </select>
                         </div>
                       </div>
@@ -448,13 +448,13 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                getTypeIcon(category.type || 'bebidas')
+                                getTypeIcon(category.type || 'drinks')
                               )}
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{category.name}</h3>
                               <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                                {category.type === 'snack' ? 'Snack' : 'Bebidas'}
+                                {category.type === 'snacks' ? 'Snacks' : 'Bebidas'}
                               </span>
                             </div>
                           </div>
@@ -585,7 +585,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                                 className="w-4 h-4 text-black focus:ring-black border-gray-300 rounded"
                               />
                               <div className="flex items-center space-x-1">
-                                {getTypeIcon(category.type || 'bebidas')}
+                                {getTypeIcon(category.type || 'drinks')}
                                 <span className="text-sm">{category.name}</span>
                               </div>
                             </label>
