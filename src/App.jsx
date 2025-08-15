@@ -22,51 +22,70 @@ const AdminCallback = ({ onLogin }) => {
 
   useEffect(() => {
     const handleCallback = async () => {
+      console.log('🔍 [AdminCallback] Iniciando handleCallback')
+      console.log('🔍 [AdminCallback] URL completa:', window.location.href)
+      console.log('🔍 [AdminCallback] Search params:', Object.fromEntries(searchParams))
+      
       try {
         const code = searchParams.get('code')
         const token = searchParams.get('token')
         const error = searchParams.get('error')
         
+        console.log('🔍 [AdminCallback] Parámetros extraídos:', { code: !!code, token: !!token, error })
+        
         if (error) {
+          console.error('❌ [AdminCallback] Error recibido en URL:', error)
           setError('Error en autenticación: ' + decodeURIComponent(error))
           return
         }
         
         // Si recibimos un token directamente del backend
         if (token) {
-          console.log('✅ Token recibido del backend')
+          console.log('✅ [AdminCallback] Token recibido directamente del backend')
           localStorage.setItem('adminToken', token)
+          console.log('💾 [AdminCallback] Token guardado en localStorage')
           
           // Obtener el usuario desde el token o hacer una llamada al backend
           const user = authService.getCurrentUser()
+          console.log('👤 [AdminCallback] Usuario obtenido:', user)
           onLogin(user)
+          console.log('🚀 [AdminCallback] Redirigiendo a /menu...')
           window.location.href = '/menu'
           return
         }
         
         if (!code) {
+          console.log('⚠️ [AdminCallback] No hay código en la URL')
           // Si no hay código ni token, verificar si hay un token en localStorage
           const adminToken = localStorage.getItem('adminToken')
+          console.log('🔍 [AdminCallback] Token en localStorage:', !!adminToken)
+          
           if (adminToken) {
-            console.log('✅ Token encontrado, redirigiendo al dashboard')
+            console.log('✅ [AdminCallback] Token encontrado en localStorage, redirigiendo')
             onLogin(authService.getCurrentUser())
             window.location.href = '/menu'
             return
           }
           
+          console.error('❌ [AdminCallback] No se recibió código de autorización')
           setError('No se recibió código de autorización')
           return
         }
 
+        console.log('🔄 [AdminCallback] Procesando código de autorización...')
         const userData = await authService.handleAdminCallback(code)
+        console.log('✅ [AdminCallback] Callback procesado, userData:', userData)
         onLogin(userData)
         
         // Redirigir al dashboard
+        console.log('🚀 [AdminCallback] Redirigiendo a /menu después del callback...')
         window.location.href = '/menu'
       } catch (err) {
-        console.error('Error en callback de admin:', err)
+        console.error('❌ [AdminCallback] Error en callback de admin:', err)
+        console.error('❌ [AdminCallback] Stack trace:', err.stack)
         setError('Error procesando autenticación: ' + err.message)
       } finally {
+        console.log('🏁 [AdminCallback] Finalizando loading')
         setLoading(false)
       }
     }
@@ -118,28 +137,40 @@ function App() {
   // Check authentication status on app load
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔐 [App] Iniciando checkAuth...')
+      console.log('🔐 [App] URL actual:', window.location.pathname)
+      
       try {
+        // Agregar un pequeño delay para dar tiempo a que las cookies se establezcan
+        console.log('⏳ [App] Esperando 100ms para cookies...')
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
         // Primero, intentar leer la cookie adminInfo que el backend establece
         const cookies = document.cookie.split(';')
         const adminInfoCookie = cookies.find(c => c.trim().startsWith('adminInfo='))
         const adminTokenCookie = cookies.find(c => c.trim().startsWith('adminToken='))
         
+        console.log('🍪 [App] Todas las cookies:', document.cookie)
+        console.log('🍪 [App] Cookies parseadas:', cookies.map(c => c.split('=')[0].trim()))
+        console.log('🍪 [App] adminTokenCookie encontrada:', !!adminTokenCookie)
+        console.log('🍪 [App] adminInfoCookie encontrada:', !!adminInfoCookie)
+        
         if (adminTokenCookie) {
           const token = adminTokenCookie.split('=')[1]
-          console.log('✅ Token encontrado en cookie')
+          console.log('✅ [App] Token encontrado en cookie, guardando en localStorage')
           localStorage.setItem('adminToken', token)
         }
         
         if (adminInfoCookie) {
           try {
             const adminInfo = JSON.parse(decodeURIComponent(adminInfoCookie.split('=')[1]))
-            console.log('✅ Admin info encontrado en cookie:', adminInfo)
+            console.log('✅ [App] Admin info parseado desde cookie:', adminInfo)
             setCurrentUser(adminInfo)
             setIsAuthenticated(true)
             setIsLoading(false)
             return
           } catch (e) {
-            console.log('Error parsing admin info cookie:', e)
+            console.error('❌ [App] Error parseando admin info cookie:', e)
           }
         }
         
@@ -147,23 +178,31 @@ function App() {
         const hasAuthToken = authService.isAuthenticated()
         const hasAdminToken = authService.isAdminAuthenticated()
         
+        console.log('🔍 [App] hasAuthToken:', hasAuthToken)
+        console.log('🔍 [App] hasAdminToken:', hasAdminToken)
+        console.log('🔍 [App] localStorage adminToken:', !!localStorage.getItem('adminToken'))
+        
         if (hasAuthToken || hasAdminToken) {
           // Si hay token, verificar si es demo o real
           const user = authService.getCurrentUser()
+          console.log('👤 [App] Usuario desde token:', user)
           
           if (user?.isDemo) {
-            // Token demo - no verificar con backend
+            console.log('🎭 [App] Usuario demo detectado, no verificando con backend')
             setCurrentUser(user)
             setIsAuthenticated(true)
           } else {
             // Token real - intentar verificar la sesión con el backend
+            console.log('🔄 [App] Token real, verificando sesión con backend...')
             try {
-              await authService.checkSession()
+              const sessionCheck = await authService.checkSession()
+              console.log('✅ [App] Sesión válida:', sessionCheck)
               setCurrentUser(user)
               setIsAuthenticated(true)
             } catch (error) {
               // Si la sesión no es válida, limpiar y redirigir a login
-              console.log('Sesión inválida, limpiando tokens')
+              console.error('❌ [App] Sesión inválida:', error.message)
+              console.log('🧹 [App] Limpiando tokens...')
               authService.clearAuth()
               setIsAuthenticated(false)
               setCurrentUser(null)
@@ -171,29 +210,36 @@ function App() {
           }
         } else {
           // No hay tokens en localStorage, pero verificar si hay sesión en el backend
+          console.log('⚠️ [App] No hay tokens locales, verificando sesión en backend...')
           try {
             const userData = await authService.getAdminProfile()
+            console.log('📡 [App] Respuesta de getAdminProfile:', userData)
             if (userData) {
-              console.log('✅ Sesión válida encontrada en el backend')
+              console.log('✅ [App] Sesión válida encontrada en el backend')
               setCurrentUser(userData)
               setIsAuthenticated(true)
             } else {
+              console.log('❌ [App] No hay datos de usuario del backend')
               setIsAuthenticated(false)
               setCurrentUser(null)
             }
           } catch (error) {
-            console.log('No hay sesión válida en el backend')
+            console.error('❌ [App] Error verificando sesión en backend:', error.message)
             setIsAuthenticated(false)
             setCurrentUser(null)
           }
         }
       } catch (error) {
-        console.error('Error checking authentication:', error)
+        console.error('❌ [App] Error general en checkAuth:', error)
+        console.error('❌ [App] Stack trace:', error.stack)
         // En caso de error, asumir que no está autenticado
         authService.clearAuth()
         setIsAuthenticated(false)
         setCurrentUser(null)
       } finally {
+        console.log('🏁 [App] checkAuth completado')
+        console.log('🏁 [App] Estado final - isAuthenticated:', isAuthenticated)
+        console.log('🏁 [App] Estado final - currentUser:', currentUser)
         setIsLoading(false)
       }
     }
