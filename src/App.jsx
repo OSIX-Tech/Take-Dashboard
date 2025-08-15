@@ -24,6 +24,7 @@ const AdminCallback = ({ onLogin }) => {
     const handleCallback = async () => {
       try {
         const code = searchParams.get('code')
+        const token = searchParams.get('token')
         const error = searchParams.get('error')
         
         if (error) {
@@ -31,9 +32,20 @@ const AdminCallback = ({ onLogin }) => {
           return
         }
         
+        // Si recibimos un token directamente del backend
+        if (token) {
+          console.log('✅ Token recibido del backend')
+          localStorage.setItem('adminToken', token)
+          
+          // Obtener el usuario desde el token o hacer una llamada al backend
+          const user = authService.getCurrentUser()
+          onLogin(user)
+          window.location.href = '/menu'
+          return
+        }
+        
         if (!code) {
-          // Si no hay código, puede ser que el backend ya procesó el callback
-          // y redirigió de vuelta. Verificar si hay un token en localStorage
+          // Si no hay código ni token, verificar si hay un token en localStorage
           const adminToken = localStorage.getItem('adminToken')
           if (adminToken) {
             console.log('✅ Token encontrado, redirigiendo al dashboard')
@@ -107,6 +119,30 @@ function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Primero, intentar leer la cookie adminInfo que el backend establece
+        const cookies = document.cookie.split(';')
+        const adminInfoCookie = cookies.find(c => c.trim().startsWith('adminInfo='))
+        const adminTokenCookie = cookies.find(c => c.trim().startsWith('adminToken='))
+        
+        if (adminTokenCookie) {
+          const token = adminTokenCookie.split('=')[1]
+          console.log('✅ Token encontrado en cookie')
+          localStorage.setItem('adminToken', token)
+        }
+        
+        if (adminInfoCookie) {
+          try {
+            const adminInfo = JSON.parse(decodeURIComponent(adminInfoCookie.split('=')[1]))
+            console.log('✅ Admin info encontrado en cookie:', adminInfo)
+            setCurrentUser(adminInfo)
+            setIsAuthenticated(true)
+            setIsLoading(false)
+            return
+          } catch (e) {
+            console.log('Error parsing admin info cookie:', e)
+          }
+        }
+        
         // Verificar si hay token en localStorage (admin)
         const hasAuthToken = authService.isAuthenticated()
         const hasAdminToken = authService.isAdminAuthenticated()
@@ -204,7 +240,7 @@ function App() {
             <Routes>
             {/* Ruta por defecto - redirige a login o menu según autenticación */}
             <Route path="/" element={
-              isAuthenticated ? <Navigate to="/menu" replace /> : <Navigate to="/login" replace />
+              isLoading ? <LoadingSpinner /> : (isAuthenticated ? <Navigate to="/menu" replace /> : <Navigate to="/login" replace />)
             } />
             
             {/* Ruta del login - siempre muestra login */}
