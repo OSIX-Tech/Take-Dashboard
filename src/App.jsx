@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useSearchParams } fro
 import Layout from './components/layout/Layout'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import ErrorBoundary from './components/common/ErrorBoundary'
-import { authService } from './services/authService'
+import { authService, extractTokenFromUrl } from './services/authService'
 
 // Lazy load pages for better performance
 const Login = lazy(() => import('./pages/Login'))
@@ -25,11 +25,31 @@ const AdminCallback = ({ onLogin }) => {
       console.log('🔍 [AdminCallback] Iniciando handleCallback')
       console.log('🔍 [AdminCallback] URL completa:', window.location.href)
       console.log('🔍 [AdminCallback] Search params:', Object.fromEntries(searchParams))
+      console.log('🍪 [AdminCallback] Cookies actuales:', document.cookie)
+      
+      // Esperar un momento para que las cookies se establezcan
+      await new Promise(resolve => setTimeout(resolve, 500))
+      console.log('🍪 [AdminCallback] Cookies después de esperar:', document.cookie)
       
       try {
         const code = searchParams.get('code')
         const token = searchParams.get('token')
         const error = searchParams.get('error')
+        
+        // También buscar token en las cookies que el backend pudo haber establecido
+        const cookies = document.cookie.split(';')
+        const adminTokenCookie = cookies.find(c => c.trim().startsWith('adminToken='))
+        if (adminTokenCookie && !token) {
+          const cookieToken = adminTokenCookie.split('=')[1]
+          console.log('🍪 [AdminCallback] Token encontrado en cookie:', !!cookieToken)
+          if (cookieToken) {
+            localStorage.setItem('adminToken', cookieToken)
+            const user = authService.getCurrentUser()
+            onLogin(user)
+            window.location.href = '/menu'
+            return
+          }
+        }
         
         console.log('🔍 [AdminCallback] Parámetros extraídos:', { code: !!code, token: !!token, error })
         
@@ -139,6 +159,24 @@ function App() {
     const checkAuth = async () => {
       console.log('🔐 [App] Iniciando checkAuth...')
       console.log('🔐 [App] URL actual:', window.location.pathname)
+      console.log('🔐 [App] URL completa:', window.location.href)
+      
+      // PRIMERO: Verificar si venimos de un callback con token
+      const tokenFromUrl = extractTokenFromUrl()
+      if (tokenFromUrl) {
+        console.log('🎆 [App] Token encontrado en URL, procesando...')
+        localStorage.setItem('adminToken', tokenFromUrl)
+        
+        // Limpiar la URL
+        window.history.replaceState({}, document.title, window.location.pathname)
+        
+        // Obtener datos del usuario y autenticar
+        const user = authService.getCurrentUser()
+        setCurrentUser(user)
+        setIsAuthenticated(true)
+        setIsLoading(false)
+        return
+      }
       
       try {
         // Agregar un pequeño delay para dar tiempo a que las cookies se establezcan
@@ -297,6 +335,11 @@ function App() {
             
             {/* OAuth callback route */}
             <Route path="/admin/auth/callback" element={<AdminCallback onLogin={handleLogin} />} />
+            
+            {/* Rutas adicionales para manejar redirecciones del backend */}
+            <Route path="/admin/auth/success" element={
+              isAuthenticated ? <Navigate to="/menu" replace /> : <AdminCallback onLogin={handleLogin} />
+            } />
             
             {/* El callback ahora va directamente a /menu */}
             

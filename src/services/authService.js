@@ -197,4 +197,30 @@ export const authService = {
       throw error
     }
   }
+}
+
+// Función auxiliar para extraer token del callback URL
+export function extractTokenFromUrl() {
+  console.log('🔍 [extractTokenFromUrl] Buscando token en URL...')
+  
+  // Buscar en hash fragment (después de #)
+  if (window.location.hash) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const token = hashParams.get('token')
+    if (token) {
+      console.log('✅ [extractTokenFromUrl] Token encontrado en hash')
+      return token
+    }
+  }
+  
+  // Buscar en query params
+  const urlParams = new URLSearchParams(window.location.search)
+  const token = urlParams.get('token')
+  if (token) {
+    console.log('✅ [extractTokenFromUrl] Token encontrado en query params')
+    return token
+  }
+  
+  console.log('❌ [extractTokenFromUrl] No se encontró token en URL')
+  return null
 } 
