@@ -14,7 +14,7 @@ export const authService = {
 
       // Verificar conectividad básica con el backend
       try {
-        const response = await fetch(`${AUTH_CONFIG.API_BASE_URL}/health`, {
+        const response = await fetch(`${AUTH_CONFIG.API_BASE_URL}/api/health`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'
