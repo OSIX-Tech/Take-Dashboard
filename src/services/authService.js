@@ -69,7 +69,7 @@ export const authService = {
 
   async refreshAdminToken() {
     return apiService.post('api/admin/auth/refresh')
-  }
+  },
 
   async checkSession() {
     try {
