@@ -214,7 +214,7 @@ function App() {
             <Route path="/test-scanner" element={<TestScanner />} />
             
             {/* OAuth callback route */}
-            <Route path="/auth/callback" element={<AdminCallback onLogin={handleLogin} />} />
+            <Route path="/admin/auth/callback" element={<AdminCallback onLogin={handleLogin} />} />
             
             {/* El callback ahora va directamente a /menu */}
             
