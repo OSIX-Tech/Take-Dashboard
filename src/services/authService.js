@@ -14,7 +14,7 @@ export const authService = {
 
       // Verificar conectividad básica con el backend
       try {
-        const response = await fetch(`${AUTH_CONFIG.API_BASE_URL}/api/health`, {
+        const response = await fetch(`${AUTH_CONFIG.API_BASE_URL}/health`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'
@@ -35,7 +35,7 @@ export const authService = {
 
       // Inicia el flujo de autenticación de admin
       // El backend maneja toda la configuración de Google OAuth
-      window.location.href = `${AUTH_CONFIG.API_BASE_URL}/api/admin/auth/login`
+      window.location.href = `${AUTH_CONFIG.API_BASE_URL}/admin/auth/login`
     } catch (error) {
       console.error('❌ Error en adminLogin:', error)
       throw error
@@ -44,17 +44,17 @@ export const authService = {
 
   async adminGoogleAuth() {
     // Redirige directamente a Google OAuth para admin
-    window.location.href = `${AUTH_CONFIG.API_BASE_URL}/api/admin/auth/google`
+    window.location.href = `${AUTH_CONFIG.API_BASE_URL}/admin/auth/google`
   },
 
   async adminGoogleCallback(code) {
-    return apiService.get(`api/admin/auth/google/callback?code=${code}`)
+    return apiService.get(`admin/auth/google/callback?code=${code}`)
   },
 
   async adminLogout() {
     console.log('🔍 adminLogout - Iniciando logout')
     try {
-      const result = await apiService.post('api/admin/auth/logout')
+      const result = await apiService.post('admin/auth/logout')
       console.log('✅ adminLogout - Logout exitoso:', result)
       return result
     } catch (error) {
@@ -64,16 +64,16 @@ export const authService = {
   },
 
   async getAdminProfile() {
-    return apiService.get('api/admin/auth/me')
+    return apiService.get('admin/auth/me')
   },
 
   async refreshAdminToken() {
-    return apiService.post('api/admin/auth/refresh')
+    return apiService.post('admin/auth/refresh')
   },
 
   async checkSession() {
     try {
-      const response = await apiService.get('api/admin/auth/me')
+      const response = await apiService.get('admin/auth/me')
       return response
     } catch (error) {
       console.error('Session check failed:', error)

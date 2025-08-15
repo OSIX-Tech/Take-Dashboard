@@ -1,7 +1,8 @@
 // Authentication Configuration
 export const AUTH_CONFIG = {
   // API Base URL (lo único que necesita el frontend)
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+  // Ensure the URL ends with /api
+  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').replace(/\/api$/, '') + '/api',
   
   // Demo mode
   DEMO_MODE: import.meta.env.VITE_DEMO_MODE === 'true',
