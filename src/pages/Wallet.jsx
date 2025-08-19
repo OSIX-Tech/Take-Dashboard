@@ -112,6 +112,7 @@ function Wallet() {
   // QR Scanner functions
   const handleScanSuccess = (decodedText) => {
     setQrToken(decodedText);
+    setShowScanner(true); // Keep scanner modal/section active to show user info
     handleScanQR(decodedText);
   };
 
@@ -127,12 +128,39 @@ function Wallet() {
     setUserInfo(null);
 
     try {
-      const data = await walletService.scanQRToken(token);
-      setUserInfo(data);
+      // Get user info from scan endpoint
+      const response = await walletService.scanQRToken(token);
+      console.log('🔍 Raw QR Scan Response:', response);
+      
+      // Extract data from response structure
+      const scanData = response.data || response;
+      console.log('📊 Extracted scan data:', scanData);
+      
+      // The response already has all the seal information we need
+      const userDataWithSeals = {
+        user: scanData.user,
+        currentSeals: scanData.currentSeals,
+        totalSeals: scanData.totalSeals,
+        sealsRemaining: scanData.sealsRemaining,
+        lastUpdated: scanData.lastUpdated
+      };
+      
+      console.log('📦 User data with seals:', {
+        userName: userDataWithSeals.user?.name,
+        userEmail: userDataWithSeals.user?.email,
+        currentSeals: userDataWithSeals.currentSeals,
+        sealsRemaining: userDataWithSeals.sealsRemaining,
+        totalSeals: userDataWithSeals.totalSeals
+      });
+      
+      setUserInfo(userDataWithSeals);
       setSealsToAdd(1);
       setNotes('');
-      setManualMode(false);
+      // Ensure we're showing the scanner section with user info
+      setShowScanner(true);
+      console.log('✅ User info set successfully');
     } catch (err) {
+      console.error('❌ Error in handleScanQR:', err);
       setError(err.message || 'Error al escanear el código QR');
     } finally {
       setLoading(false);
@@ -147,7 +175,9 @@ function Wallet() {
     setSuccess(null);
 
     try {
+      console.log('📌 Adding seals:', { qrToken, sealsToAdd, notes });
       const result = await walletService.addSeals(qrToken, sealsToAdd, notes);
+      console.log('✅ Add seals response:', result);
       
       if (result.rewardGranted) {
         setShowReward(true);
@@ -156,8 +186,23 @@ function Wallet() {
         setSuccess(`${sealsToAdd} sello${sealsToAdd > 1 ? 's' : ''} añadido${sealsToAdd > 1 ? 's' : ''} correctamente`);
       }
 
-      const updatedData = await walletService.scanQRToken(qrToken);
-      setUserInfo(updatedData);
+      // Get updated user info after adding seals by scanning again
+      const updatedResponse = await walletService.scanQRToken(qrToken);
+      console.log('🔄 Updated user data after adding seals:', updatedResponse);
+      
+      // Extract data from response structure
+      const updatedData = updatedResponse.data || updatedResponse;
+      
+      // Update user info with new seal count
+      const updatedUserData = {
+        user: updatedData.user,
+        currentSeals: updatedData.currentSeals,
+        totalSeals: updatedData.totalSeals,
+        sealsRemaining: updatedData.sealsRemaining,
+        lastUpdated: updatedData.lastUpdated
+      };
+      
+      setUserInfo(updatedUserData);
       setSealsToAdd(1);
       setNotes('');
       
@@ -193,17 +238,20 @@ function Wallet() {
 
   const getProgressPercentage = () => {
     if (!userInfo) return 0;
-    return Math.min((userInfo.currentSeals / 15) * 100, 100);
+    const seals = userInfo.currentSeals || 0;
+    return Math.min((seals / 15) * 100, 100);
   };
 
   const getRemainingCups = () => {
     if (!userInfo) return [];
     const total = 15;
-    const current = userInfo.currentSeals;
+    const current = userInfo.currentSeals || 0;
     return Array.from({ length: total }, (_, i) => i < current);
   };
 
-  const renderUserInfo = () => (
+  const renderUserInfo = () => {
+    console.log('🎨 Rendering user info with data:', userInfo);
+    return (
     <>
       <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-5 border border-gray-200 shadow-sm mb-4">
         <div className="flex justify-between items-start mb-4">
@@ -212,8 +260,8 @@ function Wallet() {
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-lg">{userInfo.user?.name}</h3>
-              <p className="text-sm text-gray-600">{userInfo.user?.email}</p>
+              <h3 className="font-bold text-lg">{userInfo.user?.name || userInfo.name || 'Cliente'}</h3>
+              <p className="text-sm text-gray-600">{userInfo.user?.email || userInfo.email || 'Sin email'}</p>
             </div>
           </div>
           <button
@@ -229,14 +277,14 @@ function Wallet() {
             <div className="text-center">
               <p className="text-xs text-gray-500 mb-1">Sellos actuales</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black">{userInfo.currentSeals}</span>
+                <span className="text-3xl font-black">{userInfo.currentSeals || 0}</span>
                 <span className="text-lg text-gray-400">/15</span>
               </div>
             </div>
             <div className="text-center">
               <p className="text-xs text-gray-500 mb-1">Faltan</p>
               <Badge variant={userInfo.sealsRemaining <= 3 ? "default" : "outline"} className="text-lg px-3 py-1">
-                {userInfo.sealsRemaining}
+                {userInfo.sealsRemaining || 0}
               </Badge>
             </div>
           </div>
@@ -251,7 +299,7 @@ function Wallet() {
                 <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
               </div>
             </div>
-            {userInfo.sealsRemaining <= 3 && userInfo.sealsRemaining > 0 && (
+            {(userInfo.sealsRemaining <= 3 && userInfo.sealsRemaining > 0) && (
               <p className="absolute -top-6 right-0 text-xs font-medium text-orange-600">
                 ¡Casi lo consigues!
               </p>
@@ -273,6 +321,24 @@ function Wallet() {
               </div>
             ))}
           </div>
+
+          {/* Additional Wallet Info */}
+          {(userInfo.lifetimeSeals !== undefined || userInfo.hasGoogleWallet !== undefined) && (
+            <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between text-xs">
+              {userInfo.lifetimeSeals !== undefined && (
+                <div>
+                  <span className="text-gray-500">Total histórico: </span>
+                  <span className="font-semibold">{userInfo.lifetimeSeals}</span>
+                </div>
+              )}
+              {userInfo.hasGoogleWallet !== undefined && (
+                <div>
+                  <span className="text-gray-500">Google Wallet: </span>
+                  <span className="font-semibold">{userInfo.hasGoogleWallet ? '✓' : '✗'}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -321,6 +387,7 @@ function Wallet() {
       </div>
     </>
   );
+  };
 
   // Show initial loading state
   if (initialLoading) {

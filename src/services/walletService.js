@@ -13,6 +13,16 @@ export const walletService = {
     return apiService.get(`wallet/scan/${qrToken}`);
   },
 
+  async getWalletStatus(qrToken) {
+    // Get wallet status for a specific QR token
+    if (qrToken) {
+      // Pass the qrToken as a query parameter
+      return apiService.get(`wallet/status?qrToken=${qrToken}`);
+    }
+    // Without qrToken, gets the status of the currently authenticated user
+    return apiService.get(`wallet/status`);
+  },
+
   async addSeals(qrToken, seals, notes = '') {
     return apiService.post(`wallet/scan/${qrToken}/add`, {
       seals,
