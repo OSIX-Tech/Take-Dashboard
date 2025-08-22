@@ -252,13 +252,13 @@ function Wallet() {
   const renderUserInfo = () => {
     console.log('🎨 Rendering user info with data:', userInfo);
     
-    // Desktop/Tablet Premium Design - Two columns for both
+    // Desktop/Tablet Premium Design - Responsive columns
     const renderDesktopLayout = () => (
-      <div className="grid md:grid-cols-[1.2fr,1fr] gap-3 md:gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.2fr,1fr] gap-3 md:gap-4 lg:gap-6">
         {/* Left Column - User & Progress */}
         <div className="space-y-3 md:space-y-4">
           {/* User Card with Avatar */}
-          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl md:rounded-2xl p-4 md:p-5 lg:p-6 border border-gray-200 shadow-sm">
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl md:rounded-xl lg:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
             <div className="flex items-start gap-3 md:gap-4">
               <div className="relative">
                 <div className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-black to-gray-700 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg">
@@ -294,7 +294,7 @@ function Wallet() {
           </div>
 
           {/* Progress Visualization */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
+          <div className="bg-white rounded-xl md:rounded-xl lg:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
             <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-3 md:mb-4">
               <div>
                 <h4 className="text-xs md:text-sm font-medium text-gray-600 mb-1">Progreso Actual</h4>
@@ -303,11 +303,6 @@ function Wallet() {
                   <span className="text-sm md:text-base lg:text-lg text-gray-400">/ 15</span>
                 </div>
               </div>
-              {userInfo.sealsRemaining <= 3 && userInfo.sealsRemaining > 0 && (
-                <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-semibold animate-pulse">
-                  ¡Solo {userInfo.sealsRemaining} más!
-                </div>
-              )}
               {userInfo.sealsRemaining === 0 && (
                 <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-semibold animate-bounce">
                   ¡PREMIO!
@@ -315,8 +310,8 @@ function Wallet() {
               )}
             </div>
 
-            {/* Circular Progress - Responsive for tablets */}
-            <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 mx-auto mb-3 md:mb-4">
+            {/* Circular Progress - Responsive */}
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-24 md:h-24 lg:w-32 lg:h-32 mx-auto mb-3 md:mb-4">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
                 <circle
                   cx="64"
@@ -348,47 +343,32 @@ function Wallet() {
               </div>
             </div>
 
-            {/* Linear Progress Bar */}
-            <div className="space-y-2">
-              <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-gray-600 via-gray-800 to-black rounded-full transition-all duration-700 ease-out"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                >
-                  <div className="absolute inset-0 bg-white/20 animate-shimmer" />
-                </div>
-              </div>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Inicio</span>
-                <span className="font-semibold">Café Gratis</span>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Right Column - Visual Stamps & Actions */}
         <div className="space-y-3 md:space-y-4">
           {/* Stamps Grid */}
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
+          <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl md:rounded-xl lg:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
             <h4 className="text-xs md:text-sm font-medium text-gray-600 mb-2 md:mb-3 lg:mb-4">Tarjeta de Sellos</h4>
-            <div className="grid grid-cols-5 gap-1 md:gap-1.5 lg:gap-2">
+            <div className="grid grid-cols-5 gap-1 md:gap-1.5 lg:gap-2 max-w-xs md:max-w-sm mx-auto lg:max-w-none">
               {getRemainingCups().map((filled, i) => (
                 <div
                   key={i}
                   className={`relative aspect-square rounded-lg md:rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 ${
                     filled 
-                      ? 'bg-gradient-to-br from-black to-gray-800 shadow-md md:shadow-lg' 
-                      : 'bg-white border md:border-2 border-dashed border-gray-300'
+                      ? 'bg-gradient-to-br from-black to-gray-800 shadow-sm md:shadow-md lg:shadow-lg' 
+                      : 'bg-white border lg:border-2 border-dashed border-gray-300'
                   }`}
                 >
                   {filled ? (
                     <>
-                      <Coffee className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-white z-10" />
+                      <Coffee className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-white z-10" />
                       <div className="absolute inset-0 bg-white/10 rounded-lg md:rounded-xl animate-pulse" />
                     </>
                   ) : (
                     <div className="text-gray-300">
-                      <Coffee className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5" />
+                      <Coffee className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5" />
                     </div>
                   )}
                   <span className="absolute bottom-0 right-0 md:bottom-0.5 md:right-0.5 lg:bottom-1 lg:right-1 text-[8px] md:text-[10px] lg:text-xs font-bold text-white/60">
@@ -400,10 +380,10 @@ function Wallet() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-2.5 md:p-3 lg:p-4 border border-gray-200 shadow-sm">
+          <div className="bg-white rounded-xl md:rounded-xl lg:rounded-2xl p-2.5 md:p-3 lg:p-4 border border-gray-200 shadow-sm">
             <h4 className="text-xs md:text-sm font-medium text-gray-600 mb-2 md:mb-3">Añadir Sellos Rápido</h4>
-            <div className="grid grid-cols-3 gap-1 md:gap-1.5 lg:gap-2">
-              {[1, 2, 3, 5, 10, 15].map((num) => (
+            <div className="grid grid-cols-5 md:grid-cols-5 lg:grid-cols-3 xl:grid-cols-3 gap-1 md:gap-1.5 lg:gap-2 max-w-xs md:max-w-sm mx-auto lg:max-w-none">
+              {[1, 2, 3, 5, 10].map((num) => (
                 <button
                   key={num}
                   onClick={() => setSealsToAdd(num)}
@@ -515,19 +495,6 @@ function Wallet() {
                 ))}
               </div>
               
-              {/* Progress Bar Below Stamps */}
-              <div className="mt-3">
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-gray-600 to-black rounded-full transition-all duration-700"
-                    style={{ width: `${getProgressPercentage()}%` }}
-                  />
-                </div>
-                {userInfo.sealsRemaining <= 3 && userInfo.sealsRemaining > 0 && (
-                  <p className="text-xs text-orange-500 font-medium text-center mt-2 animate-pulse">
-                    ¡Ya casi! Solo {userInfo.sealsRemaining} sellos más para tu café gratis
-                  </p>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -536,7 +503,7 @@ function Wallet() {
         <div className="mb-3">
           <p className="text-xs font-medium text-gray-600 mb-2">Sellos a añadir</p>
           <div className="flex gap-2 justify-between">
-            {[1, 2, 3, 5, 10, 15].map((num) => (
+            {[1, 2, 3, 5, 10].map((num) => (
               <button
                 key={num}
                 onClick={() => setSealsToAdd(num)}
@@ -561,18 +528,11 @@ function Wallet() {
           {renderDesktopLayout()}
           
           {/* Action Section for Desktop/Tablet */}
-          <div className="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-[2fr,1fr] gap-3 md:gap-4">
-            <input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="px-3 md:px-4 py-2.5 md:py-3 text-sm border border-gray-200 rounded-lg md:rounded-xl focus:outline-none focus:ring-2 focus:ring-black/20 bg-gray-50"
-              placeholder="Notas de la transacción (opcional)"
-            />
+          <div className="mt-4 md:mt-6 flex justify-center">
             <Button
               onClick={handleAddSeals}
               disabled={loading}
-              className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white font-semibold py-2.5 md:py-3 rounded-lg md:rounded-xl shadow-lg transform transition-all hover:scale-105 text-sm md:text-base"
+              className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white font-semibold px-8 md:px-12 py-2.5 md:py-3 rounded-lg md:rounded-xl shadow-lg transform transition-all hover:scale-105 text-sm md:text-base"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -675,23 +635,23 @@ function Wallet() {
         </>
       )}
 
-      {/* User Info Modal - Premium Desktop/Tablet Experience */}
+      {/* User Info Modal - Responsive Design */}
       {showScanner && userInfo && (
         <>
           {/* Desktop/Tablet Modal - Full Experience */}
           <div className="hidden md:fixed md:inset-0 md:bg-black/70 md:backdrop-blur-md md:z-50 md:flex md:items-center md:justify-center md:p-4 lg:p-6">
-            <div className="animate-in fade-in slide-in-from-bottom-6 duration-400 w-full max-w-2xl lg:max-w-4xl">
-              <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden bg-gradient-to-b from-white to-gray-50">
+            <div className="animate-in fade-in slide-in-from-bottom-6 duration-400 w-full max-w-2xl lg:max-w-4xl max-h-[90vh] md:max-h-[85vh] flex">
+              <Card className="border-0 shadow-2xl rounded-2xl lg:rounded-3xl overflow-hidden bg-gradient-to-b from-white to-gray-50 flex flex-col w-full">
                 {/* Premium Header */}
-                <CardHeader className="relative bg-gradient-to-r from-black via-gray-900 to-black text-white py-4 px-6 overflow-hidden">
+                <CardHeader className="relative bg-gradient-to-r from-black via-gray-900 to-black text-white py-3 md:py-4 px-5 md:px-6 overflow-hidden flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
                   <div className="relative flex justify-between items-center">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 md:gap-3">
                       <div className="relative">
-                        <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                        <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-green-400 rounded-full animate-pulse" />
                         <div className="absolute inset-0 bg-green-400 rounded-full animate-ping" />
                       </div>
-                      <CardTitle className="text-lg font-medium tracking-wide">
+                      <CardTitle className="text-base md:text-lg font-medium tracking-wide">
                         Sesión de Cliente Activa
                       </CardTitle>
                       <Badge className="bg-white/20 text-white border-white/30 text-xs">
@@ -700,15 +660,15 @@ function Wallet() {
                     </div>
                     <button
                       onClick={resetScanner}
-                      className="group p-2 hover:bg-white/10 rounded-xl transition-all duration-200"
+                      className="group p-1.5 md:p-2 hover:bg-white/10 rounded-xl transition-all duration-200"
                     >
-                      <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      <X className="w-4 md:w-5 h-4 md:h-5 group-hover:scale-110 transition-transform" />
                     </button>
                   </div>
                 </CardHeader>
                 
-                {/* Premium Content */}
-                <CardContent className="p-6 bg-gradient-to-b from-white via-gray-50/50 to-white">
+                {/* Premium Content - Scrollable */}
+                <CardContent className="p-4 md:p-5 lg:p-6 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-y-auto flex-1">
                   {renderUserInfo()}
                   
                   {/* Success Feedback Area */}
@@ -725,74 +685,68 @@ function Wallet() {
             </div>
           </div>
           
-          {/* Mobile Premium Bottom Sheet */}
-          <div className="md:hidden fixed inset-0 z-50 flex items-end">
-            {/* Backdrop */}
-            <div 
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
-              onClick={resetScanner} 
-            />
-            
-            {/* Bottom Sheet Container */}
-            <div className="relative w-full animate-in slide-in-from-bottom duration-300">
-              <Card className="relative rounded-t-3xl border-0 shadow-2xl overflow-hidden bg-gradient-to-b from-white to-gray-50 max-h-[85vh]">
-                {/* Gesture Handle */}
-                <div className="absolute top-0 inset-x-0 flex justify-center py-2 z-10">
-                  <div className="w-12 h-1.5 bg-gray-400 rounded-full" />
+          
+          {/* Mobile Full Screen Modal */}
+          <div className="md:hidden fixed inset-0 z-50 bg-white">
+            {/* Mobile Header Bar */}
+            <div className="sticky top-0 z-20 bg-gradient-to-r from-black via-gray-900 to-black text-white px-4 py-3 shadow-xl">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  </div>
+                  <h2 className="text-base font-semibold">Cliente Activo</h2>
+                  <Badge className="bg-white/20 text-white border-white/30 text-[10px] px-1.5 py-0.5">
+                    En vivo
+                  </Badge>
                 </div>
-                
-                {/* Close Button */}
                 <button
                   onClick={resetScanner}
-                  className="absolute top-4 right-4 z-20 p-2 bg-white/80 backdrop-blur rounded-full shadow-lg hover:bg-white transition-all"
+                  className="p-2 bg-white/10 backdrop-blur rounded-full active:bg-white/20 transition-all"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
+              </div>
+            </div>
+            
+            {/* Mobile Content - Full Screen Scrollable */}
+            <div className="h-[calc(100vh-56px)] overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+              <div className="p-4 pb-20">
+                {renderUserInfo()}
                 
-                {/* Content */}
-                <CardContent className="px-4 pt-6 pb-8 overflow-y-auto">
-                  {renderUserInfo()}
-                  
-                  {/* Mobile Action Section */}
-                  <div className="mt-4 space-y-3">
-                    <input
-                      type="text"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/20 bg-white"
-                      placeholder="Añadir nota (opcional)"
-                    />
-                    
-                    <Button
+                {/* Mobile Action Section - Fixed at Bottom */}
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl">
+                  <Button
                       onClick={handleAddSeals}
                       disabled={loading}
-                      className="w-full bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white font-semibold py-3 rounded-xl shadow-xl transform transition-all active:scale-95"
+                      className="w-full bg-gradient-to-r from-black to-gray-800 text-white font-bold py-4 rounded-xl shadow-xl transform transition-all active:scale-95"
                     >
                       {loading ? (
                         <div className="flex items-center justify-center">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                           Procesando...
                         </div>
                       ) : (
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center text-base">
                           <CheckCircle className="w-5 h-5 mr-2" />
                           Confirmar {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
                         </div>
                       )}
                     </Button>
-                    
-                    {/* Success Message for Mobile */}
-                    {success && (
-                      <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span className="text-sm text-green-700 font-medium">{success}</span>
-                        </div>
+                </div>
+                
+                {/* Success Message for Mobile - Toast Style */}
+                {success && (
+                  <div className="fixed top-16 left-4 right-4 z-30 animate-in slide-in-from-top-2 fade-in duration-300">
+                    <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl shadow-2xl">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="font-medium">{success}</span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             </div>
           </div>
         </>
