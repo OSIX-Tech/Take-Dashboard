@@ -267,25 +267,25 @@ function Wallet() {
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full border-2 border-white animate-pulse" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg md:text-lg lg:text-xl font-bold text-gray-900 truncate">
+                <h3 className="text-lg md:text-lg lg:text-xl font-bold text-gray-900 truncate" style={{ color: '#111827' }}>
                   {userInfo.user?.name || userInfo.name || 'Cliente'}
                 </h3>
-                <p className="text-xs md:text-sm text-gray-500 truncate mt-0.5 md:mt-1">
+                <p className="text-xs md:text-sm text-gray-500 truncate mt-0.5 md:mt-1" style={{ color: '#6b7280' }}>
                   {userInfo.user?.email || userInfo.email || 'Sin email'}
                 </p>
                 <div className="flex flex-wrap gap-2 md:gap-3 mt-2 md:mt-3">
                   {userInfo.lifetimeSeals !== undefined && (
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                      <span className="text-gray-500">Total histórico:</span>
-                      <span className="font-semibold">{userInfo.lifetimeSeals}</span>
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                      <span className="text-gray-500" style={{ color: '#6b7280' }}>Total histórico:</span>
+                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{userInfo.lifetimeSeals}</span>
                     </div>
                   )}
                   {userInfo.hasGoogleWallet !== undefined && (
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
-                      <span className="text-gray-500">Wallet:</span>
-                      <span className="font-semibold">{userInfo.hasGoogleWallet ? 'Activo' : 'Inactivo'}</span>
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                      <span className="text-gray-500" style={{ color: '#6b7280' }}>Wallet:</span>
+                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{userInfo.hasGoogleWallet ? 'Activo' : 'Inactivo'}</span>
                     </div>
                   )}
                 </div>
@@ -297,10 +297,10 @@ function Wallet() {
           <div className="bg-white rounded-xl md:rounded-xl lg:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
             <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-3 md:mb-4">
               <div>
-                <h4 className="text-xs md:text-sm font-medium text-gray-600 mb-1">Progreso Actual</h4>
+                <h4 className="text-sm md:text-base font-medium text-gray-600 mb-1">Progreso Actual</h4>
                 <div className="flex items-baseline gap-1 md:gap-2">
-                  <span className="text-2xl md:text-3xl lg:text-4xl font-black text-gray-900">{userInfo.currentSeals || 0}</span>
-                  <span className="text-sm md:text-base lg:text-lg text-gray-400">/ 15</span>
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-black text-gray-900" style={{ color: '#111827' }}>{userInfo.currentSeals || 0}</span>
+                  <span className="text-lg md:text-xl lg:text-2xl text-gray-400" style={{ color: '#9ca3af' }}>/ 15</span>
                 </div>
               </div>
               {userInfo.sealsRemaining === 0 && (
@@ -337,7 +337,7 @@ function Wallet() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <Coffee className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8 text-gray-700 mb-0.5" />
-                <span className="text-[10px] md:text-xs font-semibold text-gray-600">
+                <span className="text-sm md:text-base font-semibold text-gray-600" style={{ color: '#4b5563' }}>
                   {Math.round(getProgressPercentage())}%
                 </span>
               </div>
@@ -350,7 +350,7 @@ function Wallet() {
         <div className="space-y-3 md:space-y-4">
           {/* Stamps Grid */}
           <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl md:rounded-xl lg:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
-            <h4 className="text-xs md:text-sm font-medium text-gray-600 mb-2 md:mb-3 lg:mb-4">Tarjeta de Sellos</h4>
+            <h4 className="text-sm md:text-base font-medium text-gray-600 mb-2 md:mb-3 lg:mb-4">Tarjeta de Sellos</h4>
             <div className="grid grid-cols-5 gap-1 md:gap-1.5 lg:gap-2 max-w-xs md:max-w-sm mx-auto lg:max-w-none">
               {getRemainingCups().map((filled, i) => (
                 <div
@@ -371,7 +371,7 @@ function Wallet() {
                       <Coffee className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5" />
                     </div>
                   )}
-                  <span className={`absolute bottom-0 right-0 md:bottom-0.5 md:right-0.5 lg:bottom-1 lg:right-1 text-[8px] md:text-[10px] lg:text-xs font-bold ${
+                  <span className={`absolute bottom-0 right-0 md:bottom-0.5 md:right-0.5 lg:bottom-1 lg:right-1 text-xs md:text-sm lg:text-base font-bold ${
                     filled ? 'text-white' : 'text-gray-800'
                   }`}>
                     {i + 1}
