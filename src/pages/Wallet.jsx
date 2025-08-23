@@ -297,7 +297,7 @@ function Wallet() {
           <div className="bg-white rounded-xl md:rounded-xl lg:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-200 shadow-sm">
             <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-3 md:mb-4">
               <div>
-                <h4 className="text-sm md:text-base font-medium text-gray-600 mb-1">Progreso Actual</h4>
+                <h4 className="text-sm md:text-base font-medium text-gray-600 mb-1" style={{ color: '#4b5563' }}>Progreso Actual</h4>
                 <div className="flex items-baseline gap-1 md:gap-2">
                   <span className="text-3xl md:text-4xl lg:text-5xl font-black text-gray-900" style={{ color: '#111827' }}>{userInfo.currentSeals || 0}</span>
                   <span className="text-lg md:text-xl lg:text-2xl text-gray-400" style={{ color: '#9ca3af' }}>/ 15</span>

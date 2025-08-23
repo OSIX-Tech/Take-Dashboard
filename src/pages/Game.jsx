@@ -62,8 +62,8 @@ function Game() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Leaderboard</h1>
-        <p className="text-sm lg:text-base text-gray-600 mt-1">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900" style={{ color: '#111827' }}>Leaderboard</h1>
+        <p className="text-sm lg:text-base text-gray-600 mt-1" style={{ color: '#4b5563' }}>
           Clasificación de jugadores ({leaderboard.length} jugadores)
         </p>
       </div>
@@ -71,32 +71,32 @@ function Game() {
       {/* Leaderboard Table */}
       <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
         <CardHeader>
-          <CardTitle>Ranking Global</CardTitle>
+          <CardTitle style={{ color: '#111827' }}>Ranking Global</CardTitle>
         </CardHeader>
         <CardContent>
           {leaderboard.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              <p>No hay puntuaciones registradas</p>
+              <p style={{ color: '#6b7280' }}>No hay puntuaciones registradas</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">#</TableHead>
-                  <TableHead>Jugador</TableHead>
-                  <TableHead className="text-right">Puntuación</TableHead>
-                  <TableHead className="text-right">Fecha</TableHead>
+                  <TableHead className="w-16" style={{ color: '#111827' }}>#</TableHead>
+                  <TableHead style={{ color: '#111827' }}>Jugador</TableHead>
+                  <TableHead className="text-right" style={{ color: '#111827' }}>Puntuación</TableHead>
+                  <TableHead className="text-right" style={{ color: '#111827' }}>Fecha</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leaderboard.map((player) => (
                   <TableRow key={player.id}>
-                    <TableCell className="font-medium">{player.rank}</TableCell>
-                    <TableCell>{player.user}</TableCell>
-                    <TableCell className="text-right font-mono">
+                    <TableCell className="font-medium" style={{ color: '#111827' }}>{player.rank}</TableCell>
+                    <TableCell style={{ color: '#111827' }}>{player.user}</TableCell>
+                    <TableCell className="text-right font-mono" style={{ color: '#111827' }}>
                       {player.score.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right text-gray-500">
+                    <TableCell className="text-right text-gray-500" style={{ color: '#6b7280' }}>
                       {player.date ? new Date(player.date).toLocaleDateString('es-ES') : '-'}
                     </TableCell>
                   </TableRow>
