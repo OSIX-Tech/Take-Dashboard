@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Trophy, Medal, TrendingUp, Users, Gamepad2, Crown, Flame, Award } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Trophy, Crown } from 'lucide-react'
 import { highScoreService } from '@/services/gameService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
@@ -10,42 +9,16 @@ function Game() {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [selectedGame, setSelectedGame] = useState('all')
 
   useEffect(() => {
     fetchLeaderboard()
   }, [])
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now - date)
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    
-    if (diffDays === 0) return 'Hoy'
-    if (diffDays === 1) return 'Ayer'
-    if (diffDays < 7) return `Hace ${diffDays} días`
-    if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`
-    
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short'
-    })
-  }
-
-  const getRankIcon = (rank) => {
-    return <span className="text-base font-semibold text-gray-700">#{rank}</span>
-  }
-
-  const getRankStyle = (rank) => {
-    return 'bg-white'
-  }
-
   const fetchLeaderboard = async () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await highScoreService.getHighScores(1, 50)
+      const response = await highScoreService.getHighScoresRange(1, 50)
       
       let data = []
       
@@ -57,236 +30,98 @@ function Game() {
         data = response.results
       }
       
-      // Ordenar por high_score de mayor a menor
-      const sortedData = [...data].sort((a, b) => (b.high_score || 0) - (a.high_score || 0))
-      
-      // Asignar el ranking correcto basado en el orden
-      const leaderboardWithRank = sortedData.map((item, index) => ({
-        ...item,
-        rank: index + 1,
-        user: item.user_name || item.user,
-        game: item.game_name || item.game
+      // Mapear datos del backend
+      const leaderboardData = data.map((item, index) => ({
+        id: item.id,
+        rank: item.idx_high_scores || (index + 1),
+        user: item.user_name || 'Usuario',
+        score: item.high_score || 0,
+        date: item.achieved_at
       }))
       
-      setLeaderboard(leaderboardWithRank)
+      setLeaderboard(leaderboardData)
     } catch (err) {
       console.error('Error cargando leaderboard:', err)
       setError('Error al cargar el leaderboard')
-      setLeaderboard([])
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading) {
-    return <LoadingSpinner />
+  const getRankIcon = (rank) => {
+    if (rank === 1) return <Crown className="w-5 h-5 text-yellow-500" />
+    if (rank === 2) return <Trophy className="w-5 h-5 text-gray-400" />
+    if (rank === 3) return <Trophy className="w-5 h-5 text-amber-600" />
+    return <span className="text-sm font-semibold text-gray-600">#{rank}</span>
   }
 
-  if (error) {
-    return <ErrorMessage message={error} />
+  const getRankStyle = (rank) => {
+    if (rank === 1) return 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200'
+    if (rank === 2) return 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'
+    if (rank === 3) return 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
+    return 'bg-white border-gray-100'
   }
 
-  if (!leaderboard || leaderboard.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Gamepad2 className="w-20 h-20 text-gray-300 mb-6" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">No hay puntuaciones aún</h2>
-        <p className="text-gray-600 text-center max-w-md">
-          Los jugadores aparecerán aquí cuando comiencen a jugar y obtener puntuaciones
-        </p>
-      </div>
-    )
-  }
-
-  // Get unique games for filter
-  const uniqueGames = [...new Set(leaderboard.map(score => score.game_name || score.game).filter(Boolean))]
-  const filteredLeaderboard = selectedGame === 'all' 
-    ? leaderboard 
-    : leaderboard.filter(score => (score.game_name || score.game) === selectedGame)
-
-  // Calculate stats
-  const totalPlayers = new Set(leaderboard.map(score => score.user_id)).size
-  const averageScore = Math.round(
-    leaderboard.reduce((acc, score) => acc + (score.high_score || 0), 0) / leaderboard.length
-  )
-  const topScore = Math.max(...leaderboard.map(score => score.high_score || 0))
+  if (loading) return <LoadingSpinner />
+  if (error) return <ErrorMessage message={error} />
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Leaderboard</h1>
-          <p className="text-sm lg:text-base text-gray-600 mt-1">
-            Clasificación global de jugadores
-          </p>
-        </div>
-        
-        {/* Game Filter */}
-        {uniqueGames.length > 0 && (
-          <select
-            value={selectedGame}
-            onChange={(e) => setSelectedGame(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-400"
-          >
-            <option value="all">Todos los juegos</option>
-            {uniqueGames.map(game => (
-              <option key={game} value={game}>{game}</option>
-            ))}
-          </select>
-        )}
+      <div>
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Leaderboard</h1>
+        <p className="text-sm lg:text-base text-gray-600 mt-1">
+          Clasificación de jugadores ({leaderboard.length} jugadores)
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Jugadores</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{totalPlayers}</p>
+      {/* Leaderboard */}
+      <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="w-5 h-5" />
+            Ranking Global
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="space-y-1">
+            {leaderboard.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Trophy className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>No hay puntuaciones registradas</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <Users className="w-6 h-6 text-gray-700" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Puntuación Media</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{averageScore.toLocaleString()}</p>
-              </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <TrendingUp className="w-6 h-6 text-gray-700" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Récord Actual</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{topScore.toLocaleString()}</p>
-              </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <Trophy className="w-6 h-6 text-gray-700" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Top 3 Podium */}
-      {filteredLeaderboard.length >= 3 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Second Place */}
-          <div className="md:mt-8 order-2 md:order-1">
-            <Card className="bg-white border border-gray-200 rounded-2xl shadow-lg">
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Medal className="w-6 h-6 text-gray-600" />
+            ) : (
+              leaderboard.map((player) => (
+                <div
+                  key={player.id}
+                  className={`flex items-center justify-between px-6 py-4 border-l-4 ${getRankStyle(player.rank)} hover:shadow-sm transition-all`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center w-10">
+                      {getRankIcon(player.rank)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {player.user}
+                      </p>
+                      {player.date && (
+                        <p className="text-xs text-gray-500">
+                          {new Date(player.date).toLocaleDateString('es-ES')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-gray-900">
+                      {player.score.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500">puntos</p>
+                  </div>
                 </div>
-                <div className="text-xs font-semibold text-gray-600 mb-2">2º LUGAR</div>
-                <h3 className="text-lg font-bold text-gray-900">{filteredLeaderboard[1].user_name || filteredLeaderboard[1].user || 'Jugador'}</h3>
-                <p className="text-xs text-gray-500 mt-1">{filteredLeaderboard[1].game_name || filteredLeaderboard[1].game || 'Juego'}</p>
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {filteredLeaderboard[1].high_score?.toLocaleString() || 0}
-                  </p>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider">puntos</p>
-                </div>
-              </CardContent>
-            </Card>
+              ))
+            )}
           </div>
-
-          {/* First Place */}
-          <div className="order-1 md:order-2">
-            <Card className="bg-gradient-to-br from-yellow-50 to-white border-2 border-yellow-200 rounded-2xl shadow-xl transform md:scale-105">
-              <CardContent className="p-6 text-center">
-                <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Crown className="w-7 h-7 text-yellow-600" />
-                </div>
-                <div className="text-xs font-semibold text-yellow-600 mb-2">1º LUGAR</div>
-                <h3 className="text-xl font-bold text-gray-900">{filteredLeaderboard[0].user_name || filteredLeaderboard[0].user || 'Jugador'}</h3>
-                <p className="text-xs text-gray-600 mt-1">{filteredLeaderboard[0].game_name || filteredLeaderboard[0].game || 'Juego'}</p>
-                <div className="mt-4 pt-4 border-t border-yellow-100">
-                  <p className="text-3xl font-bold text-gray-900">
-                    {filteredLeaderboard[0].high_score?.toLocaleString() || 0}
-                  </p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">puntos</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Third Place */}
-          <div className="md:mt-8 order-3">
-            <Card className="bg-white border border-gray-200 rounded-2xl shadow-lg">
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Medal className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="text-xs font-semibold text-orange-600 mb-2">3º LUGAR</div>
-                <h3 className="text-lg font-bold text-gray-900">{filteredLeaderboard[2].user_name || filteredLeaderboard[2].user || 'Jugador'}</h3>
-                <p className="text-xs text-gray-500 mt-1">{filteredLeaderboard[2].game_name || filteredLeaderboard[2].game || 'Juego'}</p>
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {filteredLeaderboard[2].high_score?.toLocaleString() || 0}
-                  </p>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider">puntos</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* Full Leaderboard */}
-      <Card className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="border-b border-gray-100 bg-gray-50 p-4 sm:p-6">
-          <div className="flex items-center space-x-2">
-            <Trophy className="w-5 h-5 text-gray-700" />
-            <span className="font-semibold text-gray-900">Clasificación Completa</span>
-          </div>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {filteredLeaderboard.map((score, index) => (
-            <div
-              key={score.id}
-              className="flex items-center justify-between p-4"
-            >
-              {/* Rank and Player Info */}
-              <div className="flex items-center space-x-4 flex-1">
-                <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm font-bold text-gray-700">{score.rank}</span>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-semibold text-gray-900 truncate">
-                    {score.user_name || score.user || 'Jugador Anónimo'}
-                  </h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {score.game_name || score.game || 'Juego'} • {formatDate(score.achieved_at)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Score */}
-              <div className="text-right">
-                <span className="text-lg font-bold text-gray-900">
-                  {score.high_score?.toLocaleString() || 0}
-                </span>
-                <p className="text-xs text-gray-400 uppercase tracking-wider">pts</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        </CardContent>
       </Card>
     </div>
   )
