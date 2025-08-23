@@ -30,14 +30,19 @@ function Game() {
         data = response.results
       }
       
-      // Mapear datos del backend
-      const leaderboardData = data.map((item, index) => ({
-        id: item.id,
-        rank: item.idx_high_scores || (index + 1),
-        user: item.user_name || 'Usuario',
-        score: item.high_score || 0,
-        date: item.achieved_at
-      }))
+      // Mapear datos del backend y ordenar por puntuación (mayor a menor)
+      const leaderboardData = data
+        .map((item) => ({
+          id: item.id,
+          user: item.user_name || 'Usuario',
+          score: item.high_score || 0,
+          date: item.achieved_at
+        }))
+        .sort((a, b) => b.score - a.score) // Ordenar por score descendente
+        .map((item, index) => ({
+          ...item,
+          rank: index + 1 // Asignar ranking correcto después del ordenamiento
+        }))
       
       setLeaderboard(leaderboardData)
     } catch (err) {
