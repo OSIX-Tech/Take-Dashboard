@@ -4,7 +4,10 @@
       "Bash(git add:*)",
       "Bash(curl:*)",
       "Bash(grep:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx browserslist:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

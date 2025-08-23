@@ -371,7 +371,9 @@ function Wallet() {
                       <Coffee className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5" />
                     </div>
                   )}
-                  <span className="absolute bottom-0 right-0 md:bottom-0.5 md:right-0.5 lg:bottom-1 lg:right-1 text-[8px] md:text-[10px] lg:text-xs font-bold text-white/60">
+                  <span className={`absolute bottom-0 right-0 md:bottom-0.5 md:right-0.5 lg:bottom-1 lg:right-1 text-[8px] md:text-[10px] lg:text-xs font-bold ${
+                    filled ? 'text-white' : 'text-gray-800'
+                  }`}>
                     {i + 1}
                   </span>
                 </div>

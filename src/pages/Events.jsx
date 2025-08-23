@@ -321,7 +321,7 @@ const Events = () => {
                   placeholder="Título del evento"
                   required
                   disabled={submitting}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 />
               </div>
               
@@ -330,7 +330,7 @@ const Events = () => {
                 <textarea
                   value={formData.content}
                   onChange={(e) => handleInputChange('content', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-500"
                   rows="4"
                   placeholder="Descripción del evento"
                   required
@@ -346,7 +346,7 @@ const Events = () => {
                   onChange={(e) => handleInputChange('published_at', e.target.value)}
                   required
                   disabled={submitting}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
               </div>
               
@@ -620,7 +620,7 @@ const Events = () => {
                 <textarea
                   value={formData.content}
                   onChange={(e) => handleInputChange('content', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-500"
                   rows="4"
                   placeholder="Descripción del evento"
                   required

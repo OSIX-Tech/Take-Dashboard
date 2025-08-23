@@ -65,6 +65,10 @@ export const authService = {
     return response
   },
 
+  async adminAuthError() {
+    return apiService.get('admin/auth/error')
+  },
+
   async adminLogout() {
     console.log('🔍 adminLogout - Iniciando logout')
     try {
