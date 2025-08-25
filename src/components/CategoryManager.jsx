@@ -48,27 +48,16 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
       let response
       
       if (editingCategory) {
-        // Check if there's any image change
-        const hasImageChange = selectedCategoryFile || (editingCategory.icon_url !== categoryData.icon_url)
-        
-        if (hasImageChange) {
-          // Use multipart endpoint for any image change
-          response = await menuService.updateCategoryWithImage(editingCategory.id, categoryData, selectedCategoryFile)
-        } else {
-          // Use regular endpoint only if no image changes
-          response = await menuService.updateCategory(editingCategory.id, categoryData)
-        }
+        // Always use multipart endpoint for categories (with or without image)
+        response = await menuService.updateCategoryWithImage(editingCategory.id, categoryData, selectedCategoryFile)
         
         const updatedCategories = localCategories.map(cat => 
           cat.id === editingCategory.id ? { ...cat, ...categoryData, ...response } : cat
         )
         setLocalCategories(updatedCategories)
       } else {
-        if (selectedCategoryFile) {
-          response = await menuService.addCategoryWithImage(categoryData, selectedCategoryFile)
-        } else {
-          response = await menuService.addCategory(categoryData)
-        }
+        // Always use multipart endpoint for categories (with or without image)
+        response = await menuService.addCategoryWithImage(categoryData, selectedCategoryFile)
         const newCategory = response.data || response
         
         const updatedCategories = [...localCategories, newCategory]
