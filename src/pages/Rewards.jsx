@@ -25,7 +25,7 @@ const Rewards = () => {
     name: '',
     description: '',
     required_seals: '',
-    icon_url: ''
+    image_url: ''
   })
   const [selectedImageFile, setSelectedImageFile] = useState(null)
   
@@ -85,7 +85,7 @@ const Rewards = () => {
       name: '',
       required_seals: '',
       description: '',
-      icon_url: '',
+      image_url: '',
       active: true
     })
     setSelectedImageFile(null)
@@ -102,7 +102,7 @@ const Rewards = () => {
       name: reward.name || '',
       description: reward.description || '',
       required_seals: reward.required_seals || '',
-      icon_url: reward.icon_url || ''
+      image_url: reward.image_url || ''
     })
     setSelectedImageFile(null)
     setShowForm(true)
@@ -182,7 +182,7 @@ const Rewards = () => {
       
       setShowForm(false)
       setEditingReward(null)
-      setFormData({ name: '', description: '', required_seals: '', icon_url: '' })
+      setFormData({ name: '', description: '', required_seals: '', image_url: '' })
       setSelectedImageFile(null)
     } catch (error) {
       console.error('Error saving reward:', error)
@@ -193,7 +193,7 @@ const Rewards = () => {
   const handleCancel = () => {
     setShowForm(false)
     setEditingReward(null)
-    setFormData({ name: '', description: '', required_seals: '', icon_url: '' })
+    setFormData({ name: '', description: '', required_seals: '', image_url: '' })
     setSelectedImageFile(null)
   }
 
@@ -280,9 +280,9 @@ const Rewards = () => {
           <Card key={reward.id} className="reward-card bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
             {/* Imagen destacada */}
             <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 relative">
-              {reward.icon_url ? (
+              {reward.image_url ? (
                 <img 
-                  src={reward.icon_url} 
+                  src={reward.image_url} 
                   alt={reward.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -292,7 +292,7 @@ const Rewards = () => {
                   }}
                 />
               ) : null}
-              <div className={`fallback-icon absolute inset-0 flex items-center justify-center ${reward.icon_url ? 'hidden' : ''}`}>
+              <div className={`fallback-icon absolute inset-0 flex items-center justify-center ${reward.image_url ? 'hidden' : ''}`}>
                 <div className="p-6 bg-white/80 backdrop-blur rounded-full">
                   <Award className="w-16 h-16 text-gray-600" />
                 </div>
@@ -419,7 +419,7 @@ const Rewards = () => {
               </label>
               <ImageUpload
                 key={editingReward?.id || 'new'}
-                currentImageUrl={formData.icon_url || ''}
+                currentImageUrl={formData.image_url || ''}
                 mode="deferred"
                 onFileSelected={(file) => {
                   console.log('🎯 File selected in Rewards:', file)
@@ -427,7 +427,7 @@ const Rewards = () => {
                 }}
                 onImageUploaded={(url) => {
                   console.log('📍 Image URL updated:', url)
-                  setFormData(prev => ({...prev, icon_url: url}))
+                  setFormData(prev => ({...prev, image_url: url}))
                 }}
                 folder="rewards"
               />
