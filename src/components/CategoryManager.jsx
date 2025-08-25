@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Edit2, Trash2, X, Coffee, Pizza, AlertCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Coffee, Pizza, AlertCircle, CheckCircle, Loader2, Image } from 'lucide-react'
 import { menuService } from '@/services/menuService'
 import Modal from '@/components/common/Modal'
 import ImageUpload from '@/components/ImageUpload'
@@ -18,8 +18,10 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('categories')
+  const [savingCategory, setSavingCategory] = useState(false)
   
   const [categoryFormData, setCategoryFormData] = useState({
     name: '',
@@ -41,7 +43,8 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
   const handleCategorySubmit = async (e) => {
     e.preventDefault()
     setError(null)
-    setLoading(true)
+    setSuccess(null)
+    setSavingCategory(true)
     
     try {
       let categoryData = { ...categoryFormData }
@@ -65,12 +68,16 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
       }
       
       onDataChange({ categories: localCategories, allergens: localAllergens })
-      resetCategoryForm()
+      setSuccess(editingCategory ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente')
+      setTimeout(() => {
+        resetCategoryForm()
+        setSuccess(null)
+      }, 1500)
     } catch (err) {
       console.error('Error saving category:', err)
-      setError('Error al guardar la categoría')
+      setError(err.message || 'Error al guardar la categoría')
     } finally {
-      setLoading(false)
+      setSavingCategory(false)
     }
   }
 
@@ -299,16 +306,24 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
 
         {/* Content area with scroll */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* Notifications */}
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center">
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center animate-fadeIn">
               <AlertCircle className="w-4 h-4 text-red-600 mr-2 flex-shrink-0" />
               <span className="text-sm text-red-600">{error}</span>
               <button 
                 onClick={() => setError(null)}
-                className="ml-auto text-red-600"
+                className="ml-auto text-red-600 hover:bg-red-100 rounded p-1"
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+          )}
+          
+          {success && (
+            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center animate-fadeIn">
+              <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" />
+              <span className="text-sm text-green-600">{success}</span>
             </div>
           )}
 
@@ -331,57 +346,31 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
               </div>
 
               {showCategoryForm && (
-                <Card className="mb-6 border border-gray-200 rounded-lg">
-                  <CardHeader className="border-b border-gray-100">
-                    <CardTitle className="text-lg">
-                      {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
-                    </CardTitle>
+                <Card className="mb-6 border-2 border-gray-900 rounded-xl shadow-lg">
+                  <CardHeader className="bg-gray-900 text-white">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {editingCategory ? (
+                          <><Edit2 className="w-5 h-5" /> Editar Categoría</>
+                        ) : (
+                          <><Plus className="w-5 h-5" /> Nueva Categoría</>
+                        )}
+                      </CardTitle>
+                      <button
+                        type="button"
+                        onClick={resetCategoryForm}
+                        className="text-white hover:bg-gray-800 rounded-lg p-1"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleCategorySubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre *
-                          </label>
-                          <Input
-                            type="text"
-                            value={categoryFormData.name}
-                            onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                            required
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tipo *
-                          </label>
-                          <select
-                            value={categoryFormData.type}
-                            onChange={(e) => setCategoryFormData({ ...categoryFormData, type: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                            required
-                          >
-                            <option value="drinks">Bebidas</option>
-                            <option value="snacks">Snacks</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Descripción
-                        </label>
-                        <textarea
-                          value={categoryFormData.description}
-                          onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                          rows="2"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <CardContent className="p-6">
+                    <form onSubmit={handleCategorySubmit} className="space-y-6">
+                      {/* Imagen destacada al inicio */}
+                      <div className="mb-6">
+                        <label className="block text-sm font-semibold text-gray-800 mb-3">
+                          <Image className="w-4 h-4 inline mr-2" />
                           Imagen de la Categoría
                         </label>
                         <ImageUpload
@@ -393,47 +382,119 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Alérgenos asociados
-                        </label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 border rounded-lg">
-                          {localAllergens.map(allergen => (
-                            <label
-                              key={allergen.id}
-                              className="flex items-center space-x-2 p-2 border rounded-lg cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={categoryFormData.allergen_ids.includes(allergen.id)}
-                                onChange={() => toggleAllergen(allergen.id)}
-                                className="w-4 h-4 text-black focus:ring-black border-gray-300 rounded"
-                              />
-                              <span className="text-sm">{allergen.name}</span>
-                            </label>
-                          ))}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-800 mb-2">
+                            Nombre *
+                          </label>
+                          <Input
+                            type="text"
+                            value={categoryFormData.name}
+                            onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                            placeholder="Ej: Cafés Especiales"
+                            className="border-2 focus:border-gray-900"
+                            required
+                            disabled={savingCategory}
+                          />
                         </div>
-                        {localAllergens.length === 0 && (
-                          <p className="text-sm text-gray-500 mt-2">
-                            No hay alérgenos disponibles. Ve a la pestaña "Alérgenos" para crear algunos.
-                          </p>
-                        )}
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-800 mb-2">
+                            Tipo
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setCategoryFormData({ ...categoryFormData, type: 'drinks' })}
+                              className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
+                                categoryFormData.type === 'drinks' 
+                                  ? 'bg-gray-900 text-white border-gray-900' 
+                                  : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                              }`}
+                              disabled={savingCategory}
+                            >
+                              <Coffee className="w-4 h-4 inline mr-2" />
+                              Bebidas
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCategoryFormData({ ...categoryFormData, type: 'snacks' })}
+                              className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
+                                categoryFormData.type === 'snacks' 
+                                  ? 'bg-gray-900 text-white border-gray-900' 
+                                  : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                              }`}
+                              disabled={savingCategory}
+                            >
+                              <Pizza className="w-4 h-4 inline mr-2" />
+                              Snacks
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex justify-end space-x-3">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-800 mb-2">
+                          Descripción
+                        </label>
+                        <textarea
+                          value={categoryFormData.description}
+                          onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-gray-900"
+                          placeholder="Describe brevemente esta categoría..."
+                          rows="3"
+                          disabled={savingCategory}
+                        />
+                      </div>
+
+                      {localAllergens.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-800 mb-2">
+                            Alérgenos asociados
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-3 border-2 border-gray-200 rounded-lg bg-gray-50">
+                            {localAllergens.map(allergen => (
+                              <label
+                                key={allergen.id}
+                                className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-all ${
+                                  categoryFormData.allergen_ids.includes(allergen.id)
+                                    ? 'bg-gray-900 text-white'
+                                    : 'bg-white border border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={categoryFormData.allergen_ids.includes(allergen.id)}
+                                  onChange={() => toggleAllergen(allergen.id)}
+                                  className="sr-only"
+                                  disabled={savingCategory}
+                                />
+                                <span className="text-sm font-medium">{allergen.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end space-x-3 pt-4 border-t">
                         <Button
                           type="button"
                           onClick={resetCategoryForm}
-                          className="bg-gray-200 text-gray-800"
+                          className="px-6 py-2 bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                          disabled={savingCategory}
                         >
                           Cancelar
                         </Button>
                         <Button
                           type="submit"
-                          disabled={loading}
-                          className="bg-black text-white"
+                          disabled={savingCategory || !categoryFormData.name}
+                          className="px-6 py-2 bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {loading ? 'Guardando...' : (editingCategory ? 'Actualizar' : 'Crear')}
+                          {savingCategory ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando...</>
+                          ) : (
+                            editingCategory ? 'Actualizar Categoría' : 'Crear Categoría'
+                          )}
                         </Button>
                       </div>
                     </form>
