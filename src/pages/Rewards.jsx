@@ -146,19 +146,15 @@ const Rewards = () => {
     }
 
     try {
-      const imageUrlNormalized = typeof formData.icon_url === 'string'
-        ? (formData.icon_url.trim() || null)
-        : (formData.icon_url ?? null)
-
+      // No enviar icon_url al backend, solo los datos básicos
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        required_seals: parseInt(formData.required_seals),
-        icon_url: imageUrlNormalized,
-        folder: 'rewards'
+        required_seals: parseInt(formData.required_seals)
       }
 
       console.log('🚀 Submitting reward data:', payload)
+      console.log('📸 Image file:', selectedImageFile)
 
       if (editingReward) {
         console.log('📝 Updating reward:', editingReward.id)
@@ -166,10 +162,10 @@ const Rewards = () => {
         const response = await rewardsService.updateRewardWithImage(editingReward.id, payload, selectedImageFile)
         console.log('✅ Reward updated:', response)
 
-        // Update reward locally after successful save
+        // Update reward locally after successful save (use response which has the icon_url)
         setRewards(rewards.map(reward =>
           reward.id === editingReward.id
-            ? { ...reward, ...payload, ...response }
+            ? response.data || response
             : reward
         ))
         setEditingReward(null)
@@ -426,15 +422,11 @@ const Rewards = () => {
                 currentImageUrl={formData.icon_url || ''}
                 mode="deferred"
                 onFileSelected={(file) => {
+                  console.log('🎯 File selected in Rewards:', file)
                   setSelectedImageFile(file)
-                  if (file) {
-                    console.log('New file selected:', file.name)
-                  } else {
-                    const blankImageUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-                    setFormData(prev => ({...prev, icon_url: blankImageUrl}))
-                  }
                 }}
                 onImageUploaded={(url) => {
+                  console.log('📍 Image URL updated:', url)
                   setFormData(prev => ({...prev, icon_url: url}))
                 }}
                 folder="rewards"

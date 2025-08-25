@@ -29,7 +29,16 @@ export const rewardsService = {
       
       // Add image file if provided
       if (imageFile) {
+        console.log('🖼️ Adding image to FormData:', imageFile.name, imageFile.size, imageFile.type)
         formData.append('image', imageFile)
+      } else {
+        console.log('⚠️ No image file provided for reward creation')
+      }
+      
+      // Log FormData contents
+      console.log('📦 FormData contents:')
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value)
       }
       
       const response = await apiService.postFormData('reward', formData)
@@ -64,7 +73,16 @@ export const rewardsService = {
       
       // Add image file if provided
       if (imageFile) {
+        console.log('🖼️ Adding image to FormData:', imageFile.name, imageFile.size, imageFile.type)
         formData.append('image', imageFile)
+      } else {
+        console.log('⚠️ No image file provided for reward update')
+      }
+      
+      // Log FormData contents
+      console.log('📦 FormData contents for update:')
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value)
       }
       
       const response = await apiService.putFormData(`reward/${id}`, formData)
