@@ -396,10 +396,11 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                           Imagen de la Categoría
                         </label>
                         <ImageUpload
-                          imageUrl={categoryFormData.icon_url}
-                          onImageChange={(url) => setCategoryFormData({ ...categoryFormData, icon_url: url })}
-                          onFileSelect={setSelectedCategoryFile}
+                          currentImageUrl={categoryFormData.icon_url}
+                          onImageUploaded={(url) => setCategoryFormData({ ...categoryFormData, icon_url: url })}
+                          onFileSelected={setSelectedCategoryFile}
                           folder="categories"
+                          mode="deferred"
                         />
                       </div>
 
