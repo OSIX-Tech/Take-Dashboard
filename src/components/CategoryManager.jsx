@@ -28,6 +28,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     icon_url: '',
     allergen_ids: []
   })
+  const [selectedCategoryFile, setSelectedCategoryFile] = useState(null)
 
   const [allergenFormData, setAllergenFormData] = useState({
     name: '',
@@ -44,16 +45,30 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     
     try {
       let categoryData = { ...categoryFormData }
+      let response
       
       if (editingCategory) {
-        await menuService.updateCategory(editingCategory.id, categoryData)
+        // Check if there's any image change
+        const hasImageChange = selectedCategoryFile || (editingCategory.icon_url !== categoryData.icon_url)
+        
+        if (hasImageChange) {
+          // Use multipart endpoint for any image change
+          response = await menuService.updateCategoryWithImage(editingCategory.id, categoryData, selectedCategoryFile)
+        } else {
+          // Use regular endpoint only if no image changes
+          response = await menuService.updateCategory(editingCategory.id, categoryData)
+        }
         
         const updatedCategories = localCategories.map(cat => 
-          cat.id === editingCategory.id ? { ...cat, ...categoryData } : cat
+          cat.id === editingCategory.id ? { ...cat, ...categoryData, ...response } : cat
         )
         setLocalCategories(updatedCategories)
       } else {
-        const response = await menuService.addCategory(categoryData)
+        if (selectedCategoryFile) {
+          response = await menuService.addCategoryWithImage(categoryData, selectedCategoryFile)
+        } else {
+          response = await menuService.addCategory(categoryData)
+        }
         const newCategory = response.data || response
         
         const updatedCategories = [...localCategories, newCategory]
@@ -80,6 +95,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
       allergen_ids: category.allergen_ids || []
     })
     setPreviewUrl(category.icon_url)
+    setSelectedCategoryFile(null)
     setShowCategoryForm(true)
   }
 
@@ -228,6 +244,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     setEditingCategory(null)
     setShowCategoryForm(false)
     setSelectedFile(null)
+    setSelectedCategoryFile(null)
     setPreviewUrl(null)
     setError(null)
   }
@@ -376,11 +393,12 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Icono de la Categoría
+                          Imagen de la Categoría
                         </label>
                         <ImageUpload
-                          currentImageUrl={categoryFormData.icon_url}
-                          onImageUploaded={(url) => setCategoryFormData({ ...categoryFormData, icon_url: url })}
+                          imageUrl={categoryFormData.icon_url}
+                          onImageChange={(url) => setCategoryFormData({ ...categoryFormData, icon_url: url })}
+                          onFileSelect={setSelectedCategoryFile}
                           folder="categories"
                         />
                       </div>

@@ -17,9 +17,33 @@ export const menuService = {
     return apiService.post('menu/category', data)
   },
 
+  // Añadir categoría con imagen (multipart)
+  async addCategoryWithImage(data, file) {
+    const formData = new FormData()
+    formData.append('name', data.name)
+    if (data.description) formData.append('description', data.description)
+    if (data.type) formData.append('type', data.type)
+    if (file) {
+      formData.append('image', file)
+    }
+    return apiService.postFormData('menu/category', formData)
+  },
+
   // Editar una categoría
   async updateCategory(id, data) {
     return apiService.put(`menu/category/${id}`, data)
+  },
+
+  // Editar categoría con imagen (multipart)
+  async updateCategoryWithImage(id, data, file) {
+    const formData = new FormData()
+    formData.append('name', data.name)
+    formData.append('description', data.description || '')
+    if (data.type) formData.append('type', data.type)
+    if (file) {
+      formData.append('image', file)
+    }
+    return apiService.putFormData(`menu/category/${id}`, formData)
   },
 
   // Eliminar una categoría

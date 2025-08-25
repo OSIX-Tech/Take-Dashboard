@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Edit, Trash2, Gift, Star, X, Trophy, Coffee, Target, Award, Image } from 'lucide-react'
+import { Plus, Edit, Trash2, Gift, Star, X, Trophy, Coffee, Target, Award } from 'lucide-react'
 import gsap from 'gsap'
 import { rewardsService } from '@/services/rewardsService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 import Modal from '@/components/common/Modal'
 import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
-import ImageUpload from '@/components/ImageUpload'
 
 const Rewards = () => {
   const [rewards, setRewards] = useState([])
@@ -24,10 +23,8 @@ const Rewards = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    required_seals: '',
-    icon_url: ''
+    required_seals: ''
   })
-  const [selectedImageFile, setSelectedImageFile] = useState(null)
   
   // Refs para mantener el foco
   const nameInputRef = useRef(null)
@@ -85,10 +82,8 @@ const Rewards = () => {
       name: '',
       required_seals: '',
       description: '',
-      icon_url: '',
       active: true
     })
-    setSelectedImageFile(null)
     setShowForm(true)
   }
 
@@ -101,10 +96,8 @@ const Rewards = () => {
     setFormData({
       name: reward.name || '',
       description: reward.description || '',
-      required_seals: reward.required_seals || '',
-      icon_url: reward.icon_url || ''
+      required_seals: reward.required_seals || ''
     })
-    setSelectedImageFile(null)
     setShowForm(true)
   }
 
@@ -146,45 +139,23 @@ const Rewards = () => {
     }
 
     try {
-      const imageUrlNormalized = typeof formData.icon_url === 'string'
-        ? (formData.icon_url.trim() || null)
-        : (formData.icon_url ?? null)
-
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        required_seals: parseInt(formData.required_seals),
-        icon_url: imageUrlNormalized,
-        folder: 'rewards'
+        required_seals: parseInt(formData.required_seals)
       }
 
       if (editingReward) {
-        let response
-        // Check if there's any image change
-        const hasImageChange = selectedImageFile || (editingReward.icon_url !== payload.icon_url)
-        
-        if (hasImageChange) {
-          // Use multipart endpoint for any image change (new, update, or remove)
-          response = await rewardsService.updateRewardWithImage(editingReward.id, payload, selectedImageFile)
-        } else {
-          // Use regular endpoint only if no image changes at all
-          response = await rewardsService.updateReward(editingReward.id, payload)
-        }
-        setRewards(rewards.map(r => r.id === editingReward.id ? { ...r, ...payload, ...response } : r))
+        const updatedReward = await rewardsService.updateReward(editingReward.id, payload)
+        setRewards(rewards.map(r => r.id === editingReward.id ? updatedReward : r))
       } else {
-        let response
-        if (selectedImageFile) {
-          response = await rewardsService.createRewardWithImage(payload, selectedImageFile)
-        } else {
-          response = await rewardsService.createReward(payload)
-        }
-        setRewards([...rewards, response])
+        const newReward = await rewardsService.createReward(payload)
+        setRewards([...rewards, newReward])
       }
       
       setShowForm(false)
       setEditingReward(null)
-      setFormData({ name: '', description: '', required_seals: '', icon_url: '' })
-      setSelectedImageFile(null)
+      setFormData({ name: '', description: '', required_seals: '' })
     } catch (error) {
       console.error('Error saving reward:', error)
       setError('Error al guardar la recompensa')
@@ -194,8 +165,7 @@ const Rewards = () => {
   const handleCancel = () => {
     setShowForm(false)
     setEditingReward(null)
-    setFormData({ name: '', description: '', required_seals: '', icon_url: '' })
-    setSelectedImageFile(null)
+    setFormData({ name: '', description: '', required_seals: '' })
   }
 
   if (loading) {
@@ -288,17 +258,9 @@ const Rewards = () => {
                   <p className="text-sm text-gray-600 mt-1">{reward.description || 'Sin descripción'}</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  {reward.icon_url ? (
-                    <img 
-                      src={reward.icon_url} 
-                      alt={reward.name}
-                      className="w-12 h-12 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <Award className="w-5 h-5 text-gray-700" />
-                    </div>
-                  )}
+                  <div className="p-2 bg-gray-100 rounded-lg">
+                    <Award className="w-5 h-5 text-gray-700" />
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -406,17 +368,6 @@ const Rewards = () => {
                 min="1"
                 required
                 className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Icono
-              </label>
-              <ImageUpload
-                imageUrl={formData.icon_url}
-                onImageChange={(url) => handleInputChange('icon_url', url)}
-                onFileSelect={setSelectedImageFile}
-                folder="rewards"
               />
             </div>
             <div className="flex justify-end space-x-3 pt-4">
