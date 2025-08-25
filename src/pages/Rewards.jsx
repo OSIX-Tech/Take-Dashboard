@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 import Modal from '@/components/common/Modal'
 import DeleteConfirmationModal from '@/components/common/DeleteConfirmationModal'
+import ImageUpload from '@/components/ImageUpload'
 
 const Rewards = () => {
   const [rewards, setRewards] = useState([])
@@ -23,8 +24,10 @@ const Rewards = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    required_seals: ''
+    required_seals: '',
+    icon_url: ''
   })
+  const [selectedImageFile, setSelectedImageFile] = useState(null)
   
   // Refs para mantener el foco
   const nameInputRef = useRef(null)
@@ -82,8 +85,10 @@ const Rewards = () => {
       name: '',
       required_seals: '',
       description: '',
+      icon_url: '',
       active: true
     })
+    setSelectedImageFile(null)
     setShowForm(true)
   }
 
@@ -96,8 +101,10 @@ const Rewards = () => {
     setFormData({
       name: reward.name || '',
       description: reward.description || '',
-      required_seals: reward.required_seals || ''
+      required_seals: reward.required_seals || '',
+      icon_url: reward.icon_url || ''
     })
+    setSelectedImageFile(null)
     setShowForm(true)
   }
 
@@ -139,23 +146,48 @@ const Rewards = () => {
     }
 
     try {
+      const imageUrlNormalized = typeof formData.icon_url === 'string'
+        ? (formData.icon_url.trim() || null)
+        : (formData.icon_url ?? null)
+
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        required_seals: parseInt(formData.required_seals)
+        required_seals: parseInt(formData.required_seals),
+        icon_url: imageUrlNormalized,
+        folder: 'rewards'
       }
 
+      console.log('🚀 Submitting reward data:', payload)
+
       if (editingReward) {
-        const updatedReward = await rewardsService.updateReward(editingReward.id, payload)
-        setRewards(rewards.map(r => r.id === editingReward.id ? updatedReward : r))
+        console.log('📝 Updating reward:', editingReward.id)
+        // Always use multipart endpoint for rewards
+        const response = await rewardsService.updateRewardWithImage(editingReward.id, payload, selectedImageFile)
+        console.log('✅ Reward updated:', response)
+
+        // Update reward locally after successful save
+        setRewards(rewards.map(reward =>
+          reward.id === editingReward.id
+            ? { ...reward, ...payload, ...response }
+            : reward
+        ))
+        setEditingReward(null)
       } else {
-        const newReward = await rewardsService.createReward(payload)
+        console.log('➕ Creating new reward')
+        // Always use multipart endpoint for rewards
+        const response = await rewardsService.createRewardWithImage(payload, selectedImageFile)
+        console.log('✅ Reward created:', response)
+        
+        // Add new reward to list
+        const newReward = response.data || response
         setRewards([...rewards, newReward])
       }
       
       setShowForm(false)
       setEditingReward(null)
-      setFormData({ name: '', description: '', required_seals: '' })
+      setFormData({ name: '', description: '', required_seals: '', icon_url: '' })
+      setSelectedImageFile(null)
     } catch (error) {
       console.error('Error saving reward:', error)
       setError('Error al guardar la recompensa')
@@ -165,7 +197,8 @@ const Rewards = () => {
   const handleCancel = () => {
     setShowForm(false)
     setEditingReward(null)
-    setFormData({ name: '', description: '', required_seals: '' })
+    setFormData({ name: '', description: '', required_seals: '', icon_url: '' })
+    setSelectedImageFile(null)
   }
 
   if (loading) {
@@ -258,7 +291,19 @@ const Rewards = () => {
                   <p className="text-sm text-gray-600 mt-1">{reward.description || 'Sin descripción'}</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-gray-100 rounded-lg">
+                  {reward.icon_url ? (
+                    <img 
+                      src={reward.icon_url} 
+                      alt={reward.name}
+                      className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`p-2 bg-gray-100 rounded-lg ${reward.icon_url ? 'hidden' : ''}`}>
                     <Award className="w-5 h-5 text-gray-700" />
                   </div>
                 </div>
@@ -368,6 +413,29 @@ const Rewards = () => {
                 min="1"
                 required
                 className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Icono
+              </label>
+              <ImageUpload
+                key={editingReward?.id || 'new'}
+                currentImageUrl={formData.icon_url || ''}
+                mode="deferred"
+                onFileSelected={(file) => {
+                  setSelectedImageFile(file)
+                  if (file) {
+                    console.log('New file selected:', file.name)
+                  } else {
+                    const blankImageUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+                    setFormData(prev => ({...prev, icon_url: blankImageUrl}))
+                  }
+                }}
+                onImageUploaded={(url) => {
+                  setFormData(prev => ({...prev, icon_url: url}))
+                }}
+                folder="rewards"
               />
             </div>
             <div className="flex justify-end space-x-3 pt-4">
