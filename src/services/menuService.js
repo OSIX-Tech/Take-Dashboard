@@ -19,14 +19,33 @@ export const menuService = {
 
   // Añadir categoría con imagen (multipart)
   async addCategoryWithImage(data, file) {
-    const formData = new FormData()
-    formData.append('name', data.name)
-    if (data.description) formData.append('description', data.description)
-    if (data.type) formData.append('type', data.type)
-    if (file) {
-      formData.append('image', file)
+    try {
+      const formData = new FormData()
+      
+      // Campos requeridos
+      formData.append('name', data.name)
+      
+      // Description es opcional según tu API
+      if (data.description) {
+        formData.append('description', data.description)
+      }
+      
+      // Type es opcional con enum ['drinks','snacks']
+      if (data.type) {
+        formData.append('type', data.type)
+      }
+      
+      // Image es opcional
+      if (file) {
+        formData.append('image', file)
+      }
+      
+      const response = await apiService.postFormData('menu/category', formData)
+      return response.data || response
+    } catch (error) {
+      console.error('Error creating category with image:', error)
+      throw error
     }
-    return apiService.postFormData('menu/category', formData)
   },
 
   // Editar una categoría
@@ -36,14 +55,29 @@ export const menuService = {
 
   // Editar categoría con imagen (multipart)
   async updateCategoryWithImage(id, data, file) {
-    const formData = new FormData()
-    formData.append('name', data.name)
-    formData.append('description', data.description || '')
-    if (data.type) formData.append('type', data.type)
-    if (file) {
-      formData.append('image', file)
+    try {
+      const formData = new FormData()
+      
+      // Campos requeridos para PUT
+      formData.append('name', data.name)
+      formData.append('description', data.description || '')
+      
+      // Type es opcional
+      if (data.type) {
+        formData.append('type', data.type)
+      }
+      
+      // Image es opcional
+      if (file) {
+        formData.append('image', file)
+      }
+      
+      const response = await apiService.putFormData(`menu/category/${id}`, formData)
+      return response.data || response
+    } catch (error) {
+      console.error('Error updating category with image:', error)
+      throw error
     }
-    return apiService.putFormData(`menu/category/${id}`, formData)
   },
 
   // Eliminar una categoría
