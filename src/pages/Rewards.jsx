@@ -281,7 +281,33 @@ const Rewards = () => {
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {rewards.map((reward) => (
-          <Card key={reward.id} className="reward-card bg-white border border-gray-200 rounded-xl shadow-sm">
+          <Card key={reward.id} className="reward-card bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+            {/* Imagen destacada */}
+            <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 relative">
+              {reward.icon_url ? (
+                <img 
+                  src={reward.icon_url} 
+                  alt={reward.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                    e.target.parentElement.querySelector('.fallback-icon').style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={`fallback-icon absolute inset-0 flex items-center justify-center ${reward.icon_url ? 'hidden' : ''}`}>
+                <div className="p-6 bg-white/80 backdrop-blur rounded-full">
+                  <Award className="w-16 h-16 text-gray-600" />
+                </div>
+              </div>
+              {/* Badge de sellos requeridos */}
+              <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full flex items-center gap-1">
+                <Coffee className="w-4 h-4" />
+                <span className="font-bold">{reward.required_seals}</span>
+              </div>
+            </div>
+            
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -290,33 +316,9 @@ const Rewards = () => {
                   </CardTitle>
                   <p className="text-sm text-gray-600 mt-1">{reward.description || 'Sin descripción'}</p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {reward.icon_url ? (
-                    <img 
-                      src={reward.icon_url} 
-                      alt={reward.name}
-                      className="w-12 h-12 rounded-lg object-cover border border-gray-200"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`p-2 bg-gray-100 rounded-lg ${reward.icon_url ? 'hidden' : ''}`}>
-                    <Award className="w-5 h-5 text-gray-700" />
-                  </div>
-                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <div className="text-3xl font-bold text-gray-900">{reward.required_seals}</div>
-                  <div className="text-sm text-gray-500">sellos necesarios</div>
-                </div>
-              </div>
-              
               {/* Visual representation with coffee cups */}
               <div className="flex items-center space-x-1 mb-4">
                 {[...Array(Math.min(reward.required_seals, 8))].map((_, i) => (
