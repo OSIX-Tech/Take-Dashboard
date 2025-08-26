@@ -1,17 +1,13 @@
 // API Service Configuration
 // Ensure the URL always ends with /api
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').replace(/\/api$/, '') + '/api'
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 
-// Import mock data
-import { mockApiService } from './mockData.js'
 import { getErrorMessageByStatus } from '@/utils/errorMessages'
 
 // API Service Class
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL
-    this.useMockData = USE_MOCK_DATA
     this.corsStatus = null // Cache CORS status
     this.corsCheckPromise = null // Prevent multiple simultaneous checks
   }
@@ -307,21 +303,17 @@ class ApiService {
 
   // Get mock data based on endpoint
   async getMockData(endpoint, params = {}) {
+    // Return empty data structures for different endpoints
     switch (endpoint) {
       case 'menu':
-        return mockApiService.getMenuItems()
       case 'menu/items':
-        return mockApiService.getMenuItems()
       case 'menu/categories':
-        return mockApiService.getCategories()
       case 'events':
-        return mockApiService.getEvents()
-      case 'rewards':
-        return mockApiService.getRewards()
       case 'games':
-        return mockApiService.getGames()
       case 'games/leaderboard':
-        return mockApiService.getLeaderboard()
+        return { success: true, data: [] }
+      case 'rewards':
+        return { success: true, data: [], stats: {} }
       default:
         return { success: false, error: 'Mock endpoint not found' }
     }
@@ -339,10 +331,6 @@ class ApiService {
 
   // Upload file
   async upload(endpoint, file, onProgress = null) {
-    if (this.useMockData) {
-      console.log(`🔧 Using mock data for upload: ${endpoint}`)
-      return { success: true, url: 'mock-upload-url' }
-    }
 
     const formData = new FormData()
     formData.append('file', file)

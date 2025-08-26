@@ -1,5 +1,4 @@
 import { apiService } from './api.js'
-import { mockApiService } from './mockData.js'
 import { uploadService } from './uploadService.js'
 
 // Events Service - Updated to match your backend endpoints exactly
@@ -13,7 +12,7 @@ export const eventsService = {
       console.error('Error fetching events:', error)
       // Fallback to mock data if backend is not available
       console.log('🔧 Falling back to mock data for events')
-      return mockApiService.getEvents()
+      return { success: true, data: [] }
     }
   },
 
