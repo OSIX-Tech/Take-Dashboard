@@ -331,6 +331,18 @@ const Events = () => {
               </div>
               
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Link del Evento (opcional)</label>
+                <input
+                  type="url"
+                  value={formData.link_ev}
+                  onChange={(e) => handleInputChange('link_ev', e.target.value)}
+                  placeholder="https://example.com/evento"
+                  disabled={submitting}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                />
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Contenido *</label>
                 <textarea
                   value={formData.content}
@@ -352,18 +364,6 @@ const Events = () => {
                   required
                   disabled={submitting}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Link del Evento (opcional)</label>
-                <input
-                  type="url"
-                  value={formData.link_ev}
-                  onChange={(e) => handleInputChange('link_ev', e.target.value)}
-                  placeholder="https://example.com/evento"
-                  disabled={submitting}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 />
               </div>
               
