@@ -641,6 +641,17 @@ const Events = () => {
               </div>
               
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Link del Evento (opcional)</label>
+                <Input
+                  type="url"
+                  value={formData.link_ev}
+                  onChange={(e) => handleInputChange('link_ev', e.target.value)}
+                  placeholder="https://example.com/evento"
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Contenido *</label>
                 <textarea
                   value={formData.content}
