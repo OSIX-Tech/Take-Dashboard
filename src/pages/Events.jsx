@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Edit, Trash2, Calendar, Clock, X, MapPin, Users, Sparkles } from 'lucide-react'
+import { Plus, Edit, Trash2, Calendar, Clock, X, MapPin, Users, Sparkles, ExternalLink } from 'lucide-react'
 import { eventsService } from '@/services/eventsService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
@@ -32,6 +32,7 @@ const Events = () => {
     title: '',
     content: '',
     image_url: '',
+    link_ev: '',
     published_at: new Date().toISOString().slice(0, 16)
   })
   const [selectedImageFile, setSelectedImageFile] = useState(null)
@@ -114,6 +115,7 @@ const Events = () => {
         content: contentValidation.value,
         published_at: dateValidation.value,
         image_url: imageUrlNormalized,
+        link_ev: formData.link_ev?.trim() || null,
         folder: 'events'
       }
       
@@ -165,6 +167,7 @@ const Events = () => {
         title: '',
         content: '',
         image_url: '',
+        link_ev: '',
         published_at: new Date().toISOString().slice(0, 16)
       })
       setSelectedImageFile(null)
@@ -191,6 +194,7 @@ const Events = () => {
       title: event.title || '',
       content: event.content || '',
       image_url: event.image_url || '',
+      link_ev: event.link_ev || '',
       published_at: event.published_at ? new Date(event.published_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)
     })
     setSelectedImageFile(null) // Reset selected image file when editing
@@ -225,6 +229,7 @@ const Events = () => {
       title: '',
       content: '',
       image_url: '',
+      link_ev: '',
       published_at: new Date().toISOString().slice(0, 16)
     })
     setSelectedImageFile(null)
@@ -347,6 +352,18 @@ const Events = () => {
                   required
                   disabled={submitting}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Link del Evento (opcional)</label>
+                <input
+                  type="url"
+                  value={formData.link_ev}
+                  onChange={(e) => handleInputChange('link_ev', e.target.value)}
+                  placeholder="https://example.com/evento"
+                  disabled={submitting}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 />
               </div>
               
@@ -558,6 +575,14 @@ const Events = () => {
                     <div className="flex items-center text-xs text-gray-500">
                       <Users className="w-4 h-4 mr-2" />
                       <span>{event.attendees} asistentes</span>
+                    </div>
+                  )}
+                  {event.link_ev && (
+                    <div className="flex items-center text-xs text-gray-500">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <a href={event.link_ev} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline line-clamp-1">
+                        Ver más información
+                      </a>
                     </div>
                   )}
                 </div>

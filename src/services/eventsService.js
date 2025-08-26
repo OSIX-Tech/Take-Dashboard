@@ -53,6 +53,11 @@ export const eventsService = {
         formData.append('published_at', eventData.published_at)
       }
       
+      // Add link_ev if provided
+      if (eventData.link_ev) {
+        formData.append('link_ev', eventData.link_ev)
+      }
+      
       // Add image file if provided
       if (imageFile) {
         formData.append('image', imageFile)
@@ -89,6 +94,11 @@ export const eventsService = {
       // Add published_at if provided
       if (eventData.published_at) {
         formData.append('published_at', eventData.published_at)
+      }
+      
+      // Add link_ev if provided
+      if (eventData.link_ev) {
+        formData.append('link_ev', eventData.link_ev)
       }
       
       // Add image file if provided
