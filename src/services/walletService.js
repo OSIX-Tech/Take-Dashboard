@@ -40,11 +40,13 @@ export const walletService = {
 
     const queryString = queryParams.toString();
     const url = `${WALLET_BASE_URL}/transactions${queryString ? `?${queryString}` : ''}`;
-    return apiService.get(url);
+    const response = await apiService.get(url);
+    return response.data || response;
   },
 
   async getStats() {
-    return apiService.get(`${WALLET_BASE_URL}/stats`);
+    const response = await apiService.get(`${WALLET_BASE_URL}/stats`);
+    return response.data || response;
   }
 };
 

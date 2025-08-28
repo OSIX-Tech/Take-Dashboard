@@ -71,7 +71,7 @@ function Wallet() {
       ]);
 
       if (statsData) setStats(statsData);
-      setTransactions(transactionsData.transactions || []);
+      setTransactions(transactionsData.transactions || transactionsData || []);
     } catch (err) {
       console.error('Error loading initial data:', err);
       setError('Error al cargar los datos');
@@ -100,7 +100,7 @@ function Wallet() {
       params.limit = filters.limit;
 
       const data = await walletService.getTransactions(params);
-      setTransactions(data.transactions || []);
+      setTransactions(data.transactions || data || []);
     } catch (err) {
       console.error('Error loading transactions:', err);
       setError('Error al cargar las transacciones');
