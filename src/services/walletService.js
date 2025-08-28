@@ -44,22 +44,32 @@ export const walletService = {
       const response = await apiService.get(url);
       console.log('📋 Raw wallet transactions response:', response);
       
-      // Handle wrapped response
-      if (response && response.data) {
+      // IMPORTANT: Check for unexpected structures first
+      if (response && response.success && response.data) {
+        const data = response.data;
+        
+        // Check for unexpected {seals, rewards} structure
+        if (data.seals !== undefined || data.rewards !== undefined) {
+          console.error('❌ Transactions endpoint returned {seals, rewards} structure!');
+          console.error('❌ This is not the expected structure for transactions');
+          // Return empty transactions to prevent rendering error
+          return { transactions: [], count: 0 };
+        }
+        
         // If data has transactions array
-        if (response.data.transactions) {
+        if (data.transactions) {
           console.log('📋 Found transactions in response.data.transactions');
-          return { transactions: response.data.transactions, count: response.data.count || 0 };
+          return { transactions: data.transactions, count: data.count || data.transactions.length };
         }
         
         // If data is an array of transactions directly
-        if (Array.isArray(response.data)) {
+        if (Array.isArray(data)) {
           console.log('📋 Response.data is transactions array');
-          return { transactions: response.data, count: response.data.length };
+          return { transactions: data, count: data.length };
         }
       }
       
-      // If response has transactions directly
+      // If response has transactions directly (without success wrapper)
       if (response && response.transactions) {
         console.log('📋 Found transactions in response.transactions');
         return { transactions: response.transactions, count: response.count || response.transactions.length };
@@ -84,22 +94,33 @@ export const walletService = {
       const response = await apiService.get(`${WALLET_BASE_URL}/stats`);
       console.log('📊 Raw wallet stats response:', response);
       
-      // If response has the expected structure
-      if (response && response.data) {
-        // Check if data has the wallet stats structure
-        if (response.data.wallets || response.data.today || response.data.thisWeek) {
-          console.log('📊 Found wallet stats in response.data');
-          return response.data;
+      // IMPORTANT: Don't blindly return response.data
+      // Check the structure first
+      
+      // If response has success and data structure
+      if (response && response.success && response.data) {
+        const data = response.data;
+        
+        // Check if data has the correct wallet stats structure
+        if (data.wallets || data.today || data.thisWeek) {
+          console.log('📊 Found valid wallet stats in response.data');
+          return data;
         }
         
-        // If data is the stats object directly
-        if (response.data && typeof response.data === 'object') {
-          console.log('📊 Response.data might be stats object');
-          return response.data;
+        // Check if data has unexpected structure like {seals, rewards}
+        if (data.seals !== undefined || data.rewards !== undefined) {
+          console.error('❌ Stats endpoint returned {seals, rewards} structure!');
+          console.error('❌ This is not the expected structure for stats');
+          // Return empty stats to prevent rendering error
+          return {
+            wallets: { totalUsers: 0, usersCloseToReward: 0, totalLifetimeSeals: 0 },
+            today: { sealsGivenToday: 0, rewardsGrantedToday: 0, transactionsToday: 0 },
+            thisWeek: { sealsGivenThisWeek: 0, rewardsGrantedThisWeek: 0, transactionsThisWeek: 0, dailyBreakdown: {} }
+          };
         }
       }
       
-      // If response is the stats directly
+      // If response is the stats directly (without wrapper)
       if (response && (response.wallets || response.today || response.thisWeek)) {
         console.log('📊 Response is stats object directly');
         return response;
