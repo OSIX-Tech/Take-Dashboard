@@ -64,13 +64,8 @@ const Rewards = () => {
     setError(null)
     try {
       const response = await rewardsService.getRewards()
-      if (Array.isArray(response)) {
-        setRewards(response)
-      } else if (response && response.data) {
-        setRewards(response.data)
-      } else {
-        setRewards([])
-      }
+      // El servicio ya maneja la extracción de datos
+      setRewards(response || [])
     } catch (err) {
       setError('Error al cargar recompensas')
       setRewards([])

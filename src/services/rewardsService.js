@@ -3,7 +3,31 @@ import { apiService } from './api.js'
 export const rewardsService = {
   // Obtener todas las recompensas
   async getRewards() {
-    return apiService.get('reward')
+    const response = await apiService.get('reward')
+    // Handle wrapped response structure
+    if (response && response.data) {
+      // If data contains rewards array, return it
+      if (response.data.rewards) {
+        return response.data.rewards
+      }
+      // If data is directly the array
+      if (Array.isArray(response.data)) {
+        return response.data
+      }
+      // If data contains seals and rewards (different structure)
+      if (response.data.seals && response.data.rewards) {
+        return response.data.rewards
+      }
+    }
+    // If response is already an array
+    if (Array.isArray(response)) {
+      return response
+    }
+    // If response has rewards directly
+    if (response && response.rewards) {
+      return response.rewards
+    }
+    return []
   },
 
   // Obtener una recompensa por ID
