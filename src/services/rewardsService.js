@@ -3,31 +3,43 @@ import { apiService } from './api.js'
 export const rewardsService = {
   // Obtener todas las recompensas
   async getRewards() {
-    const response = await apiService.get('reward')
-    // Handle wrapped response structure
-    if (response && response.data) {
-      // If data contains rewards array, return it
-      if (response.data.rewards) {
-        return response.data.rewards
+    try {
+      const response = await apiService.get('reward')
+      console.log('🎁 Raw rewards response:', response)
+      
+      // Handle wrapped response structure
+      if (response && typeof response === 'object') {
+        // Case 1: {success: true, data: {seals: [], rewards: []}}
+        if (response.data && response.data.rewards) {
+          console.log('🎁 Found rewards in response.data.rewards')
+          return Array.isArray(response.data.rewards) ? response.data.rewards : []
+        }
+        
+        // Case 2: {success: true, data: [...]}
+        if (response.data && Array.isArray(response.data)) {
+          console.log('🎁 Found rewards array in response.data')
+          return response.data
+        }
+        
+        // Case 3: {rewards: [...]}
+        if (response.rewards && Array.isArray(response.rewards)) {
+          console.log('🎁 Found rewards in response.rewards')
+          return response.rewards
+        }
+        
+        // Case 4: Response is the array directly
+        if (Array.isArray(response)) {
+          console.log('🎁 Response is directly an array')
+          return response
+        }
       }
-      // If data is directly the array
-      if (Array.isArray(response.data)) {
-        return response.data
-      }
-      // If data contains seals and rewards (different structure)
-      if (response.data.seals && response.data.rewards) {
-        return response.data.rewards
-      }
+      
+      console.warn('⚠️ Unexpected rewards response structure:', response)
+      return []
+    } catch (error) {
+      console.error('❌ Error fetching rewards:', error)
+      throw error
     }
-    // If response is already an array
-    if (Array.isArray(response)) {
-      return response
-    }
-    // If response has rewards directly
-    if (response && response.rewards) {
-      return response.rewards
-    }
-    return []
   },
 
   // Obtener una recompensa por ID
