@@ -57,25 +57,50 @@ function Wallet() {
 
   const loadInitialData = async () => {
     setInitialLoading(true);
+    console.log('🚀 [Wallet] Starting loadInitialData...');
+    
     try {
       // Load stats and transactions in parallel
       const [statsData, transactionsData] = await Promise.all([
         walletService.getStats().catch(err => {
-          console.error('Error loading stats:', err);
+          console.error('❌ [Wallet] Error loading stats:', err);
           return null;
         }),
         walletService.getTransactions({ limit: filters.limit }).catch(err => {
-          console.error('Error loading transactions:', err);
+          console.error('❌ [Wallet] Error loading transactions:', err);
           return { transactions: [] };
         })
       ]);
 
-      if (statsData) setStats(statsData);
-      setTransactions(transactionsData.transactions || transactionsData || []);
+      console.log('📊 [Wallet] Stats data received:', statsData);
+      console.log('📋 [Wallet] Transactions data received:', transactionsData);
+      
+      // Validate stats data before setting
+      if (statsData && typeof statsData === 'object' && !Array.isArray(statsData)) {
+        console.log('✅ [Wallet] Setting valid stats data');
+        setStats(statsData);
+      } else {
+        console.warn('⚠️ [Wallet] Invalid stats data structure, using null');
+        setStats(null);
+      }
+      
+      // Validate transactions data
+      const transactions = transactionsData?.transactions || transactionsData || [];
+      if (Array.isArray(transactions)) {
+        console.log('✅ [Wallet] Setting transactions array with length:', transactions.length);
+        setTransactions(transactions);
+      } else {
+        console.warn('⚠️ [Wallet] Invalid transactions data, using empty array');
+        console.warn('⚠️ [Wallet] Received transactions data type:', typeof transactions);
+        console.warn('⚠️ [Wallet] Received transactions data:', transactions);
+        setTransactions([]);
+      }
     } catch (err) {
-      console.error('Error loading initial data:', err);
+      console.error('❌ [Wallet] Error loading initial data:', err);
+      console.error('❌ [Wallet] Error stack:', err.stack);
       setError('Error al cargar los datos');
     } finally {
+      console.log('🏁 [Wallet] Finished loadInitialData');
       setInitialLoading(false);
     }
   };
@@ -756,21 +781,35 @@ function Wallet() {
 
 
       {/* Statistics Cards */}
-      {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <Card className="border-0 shadow-macos">
-            <CardHeader className="pb-2 px-4">
-              <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span className="hidden sm:inline">Total Usuarios</span>
-                <span className="sm:hidden">Usuarios</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4">
-              <div className="text-xl md:text-2xl font-bold">{stats.wallets?.totalUsers || 0}</div>
-              <p className="text-xs text-gray-600 mt-1 hidden sm:block">Con wallet activo</p>
-            </CardContent>
-          </Card>
+      {(() => {
+        console.log('🎨 [Wallet] Rendering stats section, stats value:', stats);
+        console.log('🎨 [Wallet] Stats type:', typeof stats);
+        console.log('🎨 [Wallet] Stats is array?:', Array.isArray(stats));
+        
+        if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
+          console.warn('⚠️ [Wallet] Skipping stats render due to invalid data');
+          return null;
+        }
+        
+        console.log('🎨 [Wallet] Stats.wallets:', stats.wallets);
+        console.log('🎨 [Wallet] Stats.today:', stats.today);
+        console.log('🎨 [Wallet] Stats.thisWeek:', stats.thisWeek);
+        
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+            <Card className="border-0 shadow-macos">
+              <CardHeader className="pb-2 px-4">
+                <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Total Usuarios</span>
+                  <span className="sm:hidden">Usuarios</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4">
+                <div className="text-xl md:text-2xl font-bold">{stats?.wallets?.totalUsers || 0}</div>
+                <p className="text-xs text-gray-600 mt-1 hidden sm:block">Con wallet activo</p>
+              </CardContent>
+            </Card>
 
           <Card className="border-0 shadow-macos">
             <CardHeader className="pb-2 px-4">
@@ -781,7 +820,7 @@ function Wallet() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4">
-              <div className="text-xl md:text-2xl font-bold">{stats.wallets?.usersCloseToReward || 0}</div>
+              <div className="text-xl md:text-2xl font-bold">{stats?.wallets?.usersCloseToReward || 0}</div>
               <p className="text-xs text-gray-600 mt-1 hidden sm:block">12+ sellos</p>
             </CardContent>
           </Card>
@@ -795,7 +834,7 @@ function Wallet() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4">
-              <div className="text-xl md:text-2xl font-bold">{stats.today?.sealsGivenToday || 0}</div>
+              <div className="text-xl md:text-2xl font-bold">{stats?.today?.sealsGivenToday || 0}</div>
               <p className="text-xs text-gray-600 mt-1 hidden sm:block">Otorgados</p>
             </CardContent>
           </Card>
@@ -809,12 +848,13 @@ function Wallet() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4">
-              <div className="text-xl md:text-2xl font-bold">{stats.today?.rewardsGrantedToday || 0}</div>
+              <div className="text-xl md:text-2xl font-bold">{stats?.today?.rewardsGrantedToday || 0}</div>
               <p className="text-xs text-gray-600 mt-1 hidden sm:block">Cafés gratis</p>
             </CardContent>
           </Card>
         </div>
-      )}
+        );
+      })()}
 
       {/* Weekly Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
@@ -826,24 +866,24 @@ function Wallet() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {stats && (
+            {stats && typeof stats === 'object' && !Array.isArray(stats) ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-xs text-gray-600">Sellos</p>
-                    <p className="text-xl md:text-2xl font-bold">{stats.thisWeek?.sealsGivenThisWeek || 0}</p>
+                    <p className="text-xl md:text-2xl font-bold">{stats?.thisWeek?.sealsGivenThisWeek || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Premios</p>
-                    <p className="text-xl md:text-2xl font-bold">{stats.thisWeek?.rewardsGrantedThisWeek || 0}</p>
+                    <p className="text-xl md:text-2xl font-bold">{stats?.thisWeek?.rewardsGrantedThisWeek || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Trans.</p>
-                    <p className="text-xl md:text-2xl font-bold">{stats.thisWeek?.transactionsThisWeek || 0}</p>
+                    <p className="text-xl md:text-2xl font-bold">{stats?.thisWeek?.transactionsThisWeek || 0}</p>
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
           </CardContent>
         </Card>
 
@@ -855,7 +895,7 @@ function Wallet() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {stats?.thisWeek?.dailyBreakdown && (
+            {stats?.thisWeek?.dailyBreakdown && typeof stats.thisWeek.dailyBreakdown === 'object' ? (
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {Object.entries(stats.thisWeek.dailyBreakdown).map(([date, count]) => (
                   <div key={date} className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -870,7 +910,7 @@ function Wallet() {
                   </div>
                 ))}
               </div>
-            )}
+            ) : null}
           </CardContent>
         </Card>
       </div>
