@@ -125,7 +125,9 @@ function Wallet() {
       params.limit = filters.limit;
 
       const data = await walletService.getTransactions(params);
-      setTransactions(data.transactions || data || []);
+      // Ensure transactions is always an array
+      const txData = data?.transactions || data || [];
+      setTransactions(Array.isArray(txData) ? txData : []);
     } catch (err) {
       console.error('Error loading transactions:', err);
       setError('Error al cargar las transacciones');
@@ -158,16 +160,16 @@ function Wallet() {
       console.log('🔍 Raw QR Scan Response:', response);
       
       // Extract data from response structure
-      const scanData = response.data || response;
+      const scanData = response?.data || response;
       console.log('📊 Extracted scan data:', scanData);
       
       // The response already has all the seal information we need
       const userDataWithSeals = {
-        user: scanData.user,
-        currentSeals: scanData.currentSeals,
-        totalSeals: scanData.totalSeals,
-        sealsRemaining: scanData.sealsRemaining,
-        lastUpdated: scanData.lastUpdated
+        user: scanData?.user || {},
+        currentSeals: scanData?.currentSeals || 0,
+        totalSeals: scanData?.totalSeals || 0,
+        sealsRemaining: scanData?.sealsRemaining || 15,
+        lastUpdated: scanData?.lastUpdated || null
       };
       
       console.log('📦 User data with seals:', {
@@ -204,11 +206,12 @@ function Wallet() {
       const result = await walletService.addSeals(qrToken, sealsToAdd, notes);
       console.log('✅ Add seals response:', result);
       
-      if (result.rewardGranted) {
+      if (result?.rewardGranted) {
         setShowReward(true);
         setSuccess('¡Café gratis conseguido!');
       } else {
-        setSuccess(`${sealsToAdd} sello${sealsToAdd > 1 ? 's' : ''} añadido${sealsToAdd > 1 ? 's' : ''} correctamente`);
+        const sealsCount = Number(sealsToAdd) || 1;
+        setSuccess(`${sealsCount} sello${sealsCount > 1 ? 's' : ''} añadido${sealsCount > 1 ? 's' : ''} correctamente`);
       }
 
       // Get updated user info after adding seals by scanning again
@@ -216,15 +219,15 @@ function Wallet() {
       console.log('🔄 Updated user data after adding seals:', updatedResponse);
       
       // Extract data from response structure
-      const updatedData = updatedResponse.data || updatedResponse;
+      const updatedData = updatedResponse?.data || updatedResponse;
       
       // Update user info with new seal count
       const updatedUserData = {
-        user: updatedData.user,
-        currentSeals: updatedData.currentSeals,
-        totalSeals: updatedData.totalSeals,
-        sealsRemaining: updatedData.sealsRemaining,
-        lastUpdated: updatedData.lastUpdated
+        user: updatedData?.user,
+        currentSeals: updatedData?.currentSeals,
+        totalSeals: updatedData?.totalSeals,
+        sealsRemaining: updatedData?.sealsRemaining,
+        lastUpdated: updatedData?.lastUpdated
       };
       
       setUserInfo(updatedUserData);
@@ -262,15 +265,15 @@ function Wallet() {
   };
 
   const getProgressPercentage = () => {
-    if (!userInfo) return 0;
-    const seals = userInfo.currentSeals || 0;
+    if (!userInfo || typeof userInfo !== 'object') return 0;
+    const seals = Number(userInfo.currentSeals) || 0;
     return Math.min((seals / 15) * 100, 100);
   };
 
   const getRemainingCups = () => {
-    if (!userInfo) return [];
+    if (!userInfo || typeof userInfo !== 'object') return [];
     const total = 15;
-    const current = userInfo.currentSeals || 0;
+    const current = Number(userInfo.currentSeals) || 0;
     return Array.from({ length: total }, (_, i) => i < current);
   };
 
@@ -303,14 +306,14 @@ function Wallet() {
                     <div className="flex items-center gap-1.5 text-sm">
                       <div className="w-2 h-2 bg-blue-500 rounded-full" />
                       <span className="text-gray-500" style={{ color: '#6b7280' }}>Total histórico:</span>
-                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{userInfo.lifetimeSeals}</span>
+                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{Number(userInfo?.lifetimeSeals) || 0}</span>
                     </div>
                   )}
                   {userInfo.hasGoogleWallet !== undefined && (
                     <div className="flex items-center gap-1.5 text-sm">
                       <div className="w-2 h-2 bg-purple-500 rounded-full" />
                       <span className="text-gray-500" style={{ color: '#6b7280' }}>Wallet:</span>
-                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{userInfo.hasGoogleWallet ? 'Activo' : 'Inactivo'}</span>
+                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{userInfo?.hasGoogleWallet ? 'Activo' : 'Inactivo'}</span>
                     </div>
                   )}
                 </div>
@@ -324,11 +327,11 @@ function Wallet() {
               <div>
                 <h4 className="text-sm md:text-base font-medium text-gray-600 mb-1" style={{ color: '#4b5563' }}>Progreso Actual</h4>
                 <div className="flex items-baseline gap-1 md:gap-2">
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-black text-gray-900" style={{ color: '#111827' }}>{userInfo.currentSeals || 0}</span>
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-black text-gray-900" style={{ color: '#111827' }}>{Number(userInfo?.currentSeals) || 0}</span>
                   <span className="text-lg md:text-xl lg:text-2xl text-gray-400" style={{ color: '#9ca3af' }}>/ 15</span>
                 </div>
               </div>
-              {userInfo.sealsRemaining === 0 && (
+              {userInfo?.sealsRemaining === 0 && (
                 <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-semibold animate-bounce">
                   ¡PREMIO!
                 </div>
@@ -453,7 +456,7 @@ function Wallet() {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-black text-white">{userInfo.currentSeals || 0}</div>
+              <div className="text-2xl font-black text-white">{Number(userInfo?.currentSeals) || 0}</div>
               <div className="text-xs text-gray-300">sellos</div>
             </div>
           </div>
@@ -468,15 +471,15 @@ function Wallet() {
               <div>
                 <p className="text-xs text-gray-500">Progreso actual</p>
                 <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-3xl font-black">{userInfo.currentSeals || 0}</span>
+                  <span className="text-3xl font-black">{Number(userInfo?.currentSeals) || 0}</span>
                   <span className="text-sm text-gray-400">/ 15</span>
                 </div>
               </div>
               
               <div className="text-center">
-                {userInfo.sealsRemaining > 0 ? (
+                {userInfo?.sealsRemaining > 0 ? (
                   <>
-                    <div className="text-2xl font-bold text-gray-900">{userInfo.sealsRemaining}</div>
+                    <div className="text-2xl font-bold text-gray-900">{Number(userInfo?.sealsRemaining) || 0}</div>
                     <div className="text-xs text-gray-500">faltan</div>
                   </>
                 ) : (
@@ -914,18 +917,30 @@ function Wallet() {
           <CardContent>
             {stats?.thisWeek?.dailyBreakdown && typeof stats.thisWeek.dailyBreakdown === 'object' ? (
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {Object.entries(stats.thisWeek.dailyBreakdown).map(([date, count]) => (
-                  <div key={date} className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm font-medium">
-                      {new Date(date).toLocaleDateString('es-ES', { 
-                        weekday: 'short', 
-                        day: 'numeric', 
-                        month: 'short' 
-                      })}
-                    </span>
-                    <Badge variant="outline" className="font-bold">{count}</Badge>
-                  </div>
-                ))}
+                {Object.entries(stats.thisWeek.dailyBreakdown).map(([date, countData]) => {
+                  // Handle both number and object formats
+                  const count = typeof countData === 'number' 
+                    ? countData 
+                    : (countData?.seals || countData?.rewards || countData?.total || 0);
+                  
+                  // Log if we find the problematic structure
+                  if (typeof countData === 'object' && (countData.seals !== undefined || countData.rewards !== undefined)) {
+                    console.warn('⚠️ [Wallet] dailyBreakdown contains {seals, rewards} structure for date:', date, countData);
+                  }
+                  
+                  return (
+                    <div key={date} className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-sm font-medium">
+                        {new Date(date).toLocaleDateString('es-ES', { 
+                          weekday: 'short', 
+                          day: 'numeric', 
+                          month: 'short' 
+                        })}
+                      </span>
+                      <Badge variant="outline" className="font-bold">{count}</Badge>
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
           </CardContent>
@@ -991,18 +1006,18 @@ function Wallet() {
               <div key={transaction.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium">{transaction.user?.name}</p>
-                    <p className="text-xs text-gray-600">{transaction.user?.email}</p>
+                    <p className="font-medium">{transaction?.user?.name || 'Sin nombre'}</p>
+                    <p className="text-xs text-gray-600">{transaction?.user?.email || 'Sin email'}</p>
                   </div>
-                  <Badge variant="outline">+{transaction.sealsAdded}</Badge>
+                  <Badge variant="outline">+{transaction?.sealsAdded || 0}</Badge>
                 </div>
-                {transaction.rewardGranted && (
+                {transaction?.rewardGranted && (
                   <Badge className="bg-black text-white">Premio</Badge>
                 )}
                 <p className="text-xs text-gray-600">
-                  {formatDate(transaction.createdAt)}
+                  {transaction?.createdAt ? formatDate(transaction.createdAt) : 'Sin fecha'}
                 </p>
-                {transaction.notes && (
+                {transaction?.notes && (
                   <p className="text-xs text-gray-500 italic">{transaction.notes}</p>
                 )}
               </div>
@@ -1027,24 +1042,24 @@ function Wallet() {
                   <TableRow key={transaction.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{transaction.user?.name || 'Usuario'}</p>
-                        <p className="text-xs text-gray-600">{transaction.user?.email}</p>
+                        <p className="font-medium">{transaction?.user?.name || 'Usuario'}</p>
+                        <p className="text-xs text-gray-600">{transaction?.user?.email || 'Sin email'}</p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">+{transaction.sealsAdded}</Badge>
+                      <Badge variant="outline">+{transaction?.sealsAdded || 0}</Badge>
                     </TableCell>
                     <TableCell>
-                      {transaction.rewardGranted && (
+                      {transaction?.rewardGranted && (
                         <Badge className="bg-green-600 text-white">Premio</Badge>
                       )}
                     </TableCell>
                     <TableCell className="max-w-xs truncate">
-                      {transaction.notes || '-'}
+                      {transaction?.notes || '-'}
                     </TableCell>
-                    <TableCell>{transaction.performedBy?.name || 'Sistema'}</TableCell>
+                    <TableCell>{transaction?.performedBy?.name || 'Sistema'}</TableCell>
                     <TableCell className="text-sm">
-                      {formatDate(transaction.createdAt)}
+                      {transaction?.createdAt ? formatDate(transaction.createdAt) : 'Sin fecha'}
                     </TableCell>
                   </TableRow>
                 ))}
