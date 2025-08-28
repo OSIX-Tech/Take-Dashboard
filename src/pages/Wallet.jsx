@@ -606,9 +606,26 @@ function Wallet() {
     return <LoadingSpinner />;
   }
 
-  return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+  // Debug logs
+  console.log('🔍 [Wallet] Final render state check:');
+  console.log('  - stats:', stats);
+  console.log('  - transactions:', transactions);
+  console.log('  - transactions is array?:', Array.isArray(transactions));
+  console.log('  - error:', error);
+  console.log('  - success:', success);
+  
+  // Additional safety check
+  if (stats && typeof stats === 'object' && (stats.seals !== undefined || stats.rewards !== undefined)) {
+    console.error('❌❌❌ [Wallet] FOUND THE PROBLEM: stats contains {seals, rewards} structure!');
+    console.error('❌❌❌ [Wallet] Invalid stats object:', stats);
+    setStats(null);
+    setError('Estructura de datos incorrecta recibida del servidor');
+  }
+
+  try {
+    return (
+      <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">Google Wallet</h1>
           <p className="text-sm text-gray-600 hidden md:block">Gestiona los sellos y recompensas de los clientes</p>
@@ -1062,7 +1079,23 @@ function Wallet() {
         </div>
       )}
     </div>
-  );
+    );
+  } catch (renderError) {
+    console.error('❌❌❌ [Wallet] Render error caught:', renderError);
+    console.error('❌❌❌ [Wallet] Error stack:', renderError.stack);
+    console.error('❌❌❌ [Wallet] Current state when error occurred:');
+    console.error('  - stats:', stats);
+    console.error('  - transactions:', transactions);
+    return (
+      <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h2 className="text-red-800 font-bold mb-2">Error de Renderizado</h2>
+          <p className="text-red-600">Ha ocurrido un error al renderizar la página de Wallet.</p>
+          <p className="text-sm text-red-500 mt-2">Por favor, revisa la consola para más detalles.</p>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default Wallet;

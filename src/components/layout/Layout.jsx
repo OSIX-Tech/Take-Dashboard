@@ -13,6 +13,7 @@ const Layout = ({ children, onLogout }) => {
       case '/events': return 'Eventos'
       case '/rewards': return 'Recompensas'
       case '/game': return 'Juego'
+      case '/wallet': return 'Google Wallet'
       default: return 'Dashboard'
     }
   }
