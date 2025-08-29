@@ -863,7 +863,7 @@ function Wallet() {
                     <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                       <User className="w-6 h-6 text-white" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-lg">{userInfo.user?.name || 'Cliente'}</h3>
                       <p className="text-xs opacity-75">{userInfo.user?.email || 'Sin email'}</p>
                     </div>
@@ -876,15 +876,36 @@ function Wallet() {
                   </button>
                 </div>
 
+                {/* Lifetime Seals Display */}
+                <div className="bg-white/20 backdrop-blur rounded-xl p-3 mb-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="text-center">
+                      <p className="text-xs text-white/70 mb-1">Ciclo Actual</p>
+                      <div className="flex items-center justify-center gap-1">
+                        <Coffee className="w-4 h-4" />
+                        <span className="text-2xl font-bold">{userInfo.currentSeals}</span>
+                        <span className="text-sm text-white/70">/15</span>
+                      </div>
+                    </div>
+                    <div className="text-center border-l border-white/30">
+                      <p className="text-xs text-white/70 mb-1">Total Histórico</p>
+                      <div className="flex items-center justify-center gap-1">
+                        <Award className="w-4 h-4" />
+                        <span className="text-2xl font-bold">{userInfo.lifetimeSeals || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Seal Progress Bar */}
                 <div className="bg-white/10 rounded-full h-3 overflow-hidden">
                   <div 
-                    className="bg-gradient-to-r from-green-400 to-emerald-400 h-full transition-all duration-500"
+                    className="bg-gradient-to-r from-white/80 to-white h-full transition-all duration-500"
                     style={{ width: `${(userInfo.currentSeals / 15) * 100}%` }}
                   />
                 </div>
                 <div className="flex justify-between mt-2 text-xs">
-                  <span>{userInfo.currentSeals} sellos</span>
+                  <span>{userInfo.currentSeals} sellos actuales</span>
                   <span>{userInfo.sealsRemaining} para café gratis</span>
                 </div>
               </div>
@@ -893,26 +914,26 @@ function Wallet() {
               {userInfo.lastTransaction && success && (
                 <>
                   {userInfo.lastTransaction.rewardGranted ? (
-                    /* Free Coffee Reward Display */
-                    <div className="bg-gradient-to-r from-yellow-50 via-orange-50 to-yellow-50 p-4 border-b-2 border-orange-200 animate-pulse">
+                    /* Free Coffee Reward Display - Black & White Theme */
+                    <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 p-4 border-b-2 border-gray-800 animate-pulse">
                       <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-lg mb-3">
-                          <Coffee className="w-8 h-8 text-white animate-bounce" />
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-3">
+                          <Coffee className="w-8 h-8 text-black animate-bounce" />
                         </div>
-                        <h3 className="text-xl font-bold text-orange-800 mb-1">¡CAFÉ GRATIS CONSEGUIDO!</h3>
-                        <p className="text-sm text-orange-600 mb-3">Contador reiniciado a 0</p>
+                        <h3 className="text-xl font-bold text-white mb-1">¡CAFÉ GRATIS CONSEGUIDO!</h3>
+                        <p className="text-sm text-gray-300 mb-3">Contador reiniciado a 0</p>
                         <div className="grid grid-cols-3 gap-2 text-sm">
-                          <div className="bg-white/80 rounded-lg p-2">
-                            <span className="text-xs text-gray-500">Anterior</span>
-                            <p className="font-bold text-gray-800">{userInfo.lastTransaction.previousSeals}</p>
+                          <div className="bg-white/90 rounded-lg p-2">
+                            <span className="text-xs text-gray-600">Anterior</span>
+                            <p className="font-bold text-gray-900">{userInfo.lastTransaction.previousSeals}</p>
                           </div>
-                          <div className="bg-white/80 rounded-lg p-2">
-                            <span className="text-xs text-gray-500">Añadidos</span>
-                            <p className="font-bold text-green-600">+{userInfo.lastTransaction.sealsAdded}</p>
+                          <div className="bg-white/90 rounded-lg p-2">
+                            <span className="text-xs text-gray-600">Añadidos</span>
+                            <p className="font-bold text-black">+{userInfo.lastTransaction.sealsAdded}</p>
                           </div>
-                          <div className="bg-white/80 rounded-lg p-2">
-                            <span className="text-xs text-gray-500">Nuevo</span>
-                            <p className="font-bold text-orange-600">{userInfo.lastTransaction.newTotal}</p>
+                          <div className="bg-white/90 rounded-lg p-2">
+                            <span className="text-xs text-gray-600">Nuevo</span>
+                            <p className="font-bold text-black">{userInfo.lastTransaction.newTotal}</p>
                           </div>
                         </div>
                       </div>
@@ -951,21 +972,32 @@ function Wallet() {
               )}
 
               {/* Seals Grid Visualization */}
-              <div className="p-4 bg-gray-50">
+              <div className="p-4 bg-gradient-to-b from-gray-50 to-white">
+                <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider text-center mb-3">Tarjeta de Sellos</h4>
                 <div className="grid grid-cols-5 gap-2 max-w-xs mx-auto">
                   {Array.from({ length: 15 }, (_, i) => (
                     <div
                       key={i}
-                      className={`aspect-square rounded-lg flex items-center justify-center transition-all ${
+                      className={`aspect-square rounded-lg flex items-center justify-center transition-all transform hover:scale-105 ${
                         i < userInfo.currentSeals 
-                          ? 'bg-black shadow-sm' 
+                          ? 'bg-gradient-to-br from-black to-gray-800 shadow-md' 
                           : 'bg-white border-2 border-dashed border-gray-300'
                       }`}
                     >
                       <Coffee className={`w-4 h-4 ${i < userInfo.currentSeals ? 'text-white' : 'text-gray-300'}`} />
+                      {i === 14 && (
+                        <div className="absolute">
+                          <Award className={`w-3 h-3 ${i < userInfo.currentSeals ? 'text-yellow-300' : 'text-gray-400'} absolute -top-1 -right-1`} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
+                <p className="text-center text-xs text-gray-500 mt-3">
+                  {userInfo.sealsRemaining === 0 
+                    ? '🎉 ¡Café gratis disponible!' 
+                    : `${userInfo.sealsRemaining} sellos más para café gratis`}
+                </p>
               </div>
 
               {/* Available Rewards */}
@@ -1328,23 +1360,23 @@ function Wallet() {
       </Card>
       )}
 
-      {/* Reward Animation - Enhanced */}
+      {/* Reward Animation - Black & White Theme */}
       {showReward && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl transform animate-in zoom-in-105 duration-300">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-gradient-to-b from-white to-gray-100 rounded-3xl p-6 shadow-2xl transform animate-in zoom-in-105 duration-300 border-2 border-black">
             <div className="text-center space-y-3">
-              <div className="relative inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-lg animate-bounce">
-                <Award className="w-8 h-8 text-white" />
-                <div className="absolute inset-0 rounded-full bg-white/30 animate-ping" />
+              <div className="relative inline-flex items-center justify-center w-16 h-16 bg-black rounded-full shadow-lg animate-bounce">
+                <Coffee className="w-8 h-8 text-white" />
+                <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">¡PREMIO CONSEGUIDO!</h2>
-                <p className="text-sm text-gray-600 mt-1">Café Gratis Desbloqueado</p>
+                <h2 className="text-xl font-bold text-black">¡PREMIO CONSEGUIDO!</h2>
+                <p className="text-sm text-gray-700 mt-1">Café Gratis Desbloqueado</p>
               </div>
               <div className="flex justify-center gap-2">
-                <Coffee className="w-6 h-6 text-orange-500 animate-pulse" />
-                <Coffee className="w-6 h-6 text-orange-400 animate-pulse delay-75" />
-                <Coffee className="w-6 h-6 text-orange-500 animate-pulse delay-150" />
+                <Coffee className="w-6 h-6 text-black animate-pulse" />
+                <Coffee className="w-6 h-6 text-gray-700 animate-pulse delay-75" />
+                <Coffee className="w-6 h-6 text-black animate-pulse delay-150" />
               </div>
             </div>
           </div>
