@@ -17,10 +17,12 @@ import {
   BarChart3,
   ScanLine,
   User,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import walletService from '../services/walletService';
 import QRScanner from '../components/QRScanner';
+import MobileQRScanner from '../components/MobileQRScanner';
 
 function Wallet() {
   const [stats, setStats] = useState(null);
@@ -45,9 +47,19 @@ function Wallet() {
   const [showReward, setShowReward] = useState(false);
   const [newlyUnlockedRewards, setNewlyUnlockedRewards] = useState([]);
   const [showUnlockedRewardsModal, setShowUnlockedRewardsModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     loadInitialData();
+  }, []);
+
+  // Check if mobile on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -161,8 +173,13 @@ function Wallet() {
       const response = await walletService.scanQRToken(token);
       console.log('🔍 Raw QR Scan Response:', response);
       
-      // Extract data from response structure
-      const scanData = response?.data || response;
+      // Handle the new API response format
+      let scanData;
+      if (response?.success && response?.data) {
+        scanData = response.data;
+      } else {
+        scanData = response?.data || response;
+      }
       console.log('📊 Extracted scan data:', scanData);
       
       // The response already has all the seal information we need
@@ -229,8 +246,13 @@ function Wallet() {
       const updatedResponse = await walletService.scanQRToken(qrToken);
       console.log('🔄 Updated user data after adding seals:', updatedResponse);
       
-      // Extract data from response structure
-      const updatedData = updatedResponse?.data || updatedResponse;
+      // Handle the new API response format for updated data
+      let updatedData;
+      if (updatedResponse?.success && updatedResponse?.data) {
+        updatedData = updatedResponse.data;
+      } else {
+        updatedData = updatedResponse?.data || updatedResponse;
+      }
       
       // Update user info with new seal count
       const updatedUserData = {
@@ -690,28 +712,25 @@ function Wallet() {
       {/* QR Scanner - PRIORITY: Always first visible element */}
       {showScanner && !userInfo && (
         <>
-          {/* Mobile - Prominent card at top */}
+          {/* Mobile - Direct camera view */}
           <div className="md:hidden mb-6">
-            <Card className="border-2 border-black shadow-xl">
-              <CardHeader className="bg-black text-white py-3">
-                <CardTitle className="flex items-center justify-center gap-2 text-lg">
-                  <ScanLine className="w-5 h-5" />
-                  Escanear QR del Cliente
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <QRScanner 
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-black to-gray-800 text-white px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <h2 className="font-semibold text-base">Escanear Sellos</h2>
+                  </div>
+                  <span className="text-xs opacity-75">Apunta al código QR</span>
+                </div>
+              </div>
+              <div className="p-3">
+                <MobileQRScanner 
                   onScan={handleScanSuccess}
-                  onClose={() => {
-                    // On mobile, don't close scanner automatically
-                    if (userInfo) {
-                      setShowScanner(false);
-                    }
-                  }}
-                  title=""
+                  autoStart={true}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
           
           {/* Desktop - Integrated card style */}
@@ -798,45 +817,113 @@ function Wallet() {
           </div>
           
           
-          {/* Mobile - Card Style (not full screen) */}
-          <div className="md:hidden mb-6">
-            <Card className="border-2 border-green-500 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <div className="relative">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+          {/* Mobile - Optimized Card View */}
+          <div className="md:hidden">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              {/* User Header */}
+              <div className="bg-gradient-to-r from-black to-gray-800 text-white p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                      <User className="w-6 h-6 text-white" />
                     </div>
-                    Cliente Activo
-                  </CardTitle>
+                    <div>
+                      <h3 className="font-semibold text-lg">{userInfo.user?.name || 'Cliente'}</h3>
+                      <p className="text-xs opacity-75">{userInfo.user?.email || 'Sin email'}</p>
+                    </div>
+                  </div>
                   <button
                     onClick={resetScanner}
-                    className="p-1.5 bg-white/20 backdrop-blur rounded-full active:bg-white/30"
+                    className="p-2 bg-white/20 rounded-full"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 max-h-[70vh] overflow-y-auto">
-                {renderUserInfo()}
-                
-                {/* Mobile Action Buttons */}
-                <div className="mt-4 space-y-3">
+
+                {/* Seal Progress Bar */}
+                <div className="bg-white/10 rounded-full h-3 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-green-400 to-emerald-400 h-full transition-all duration-500"
+                    style={{ width: `${(userInfo.currentSeals / 15) * 100}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-xs">
+                  <span>{userInfo.currentSeals} sellos</span>
+                  <span>{userInfo.sealsRemaining} para café gratis</span>
+                </div>
+              </div>
+
+              {/* Seals Grid Visualization */}
+              <div className="p-4 bg-gray-50">
+                <div className="grid grid-cols-5 gap-2 max-w-xs mx-auto">
+                  {Array.from({ length: 15 }, (_, i) => (
+                    <div
+                      key={i}
+                      className={`aspect-square rounded-lg flex items-center justify-center transition-all ${
+                        i < userInfo.currentSeals 
+                          ? 'bg-black shadow-sm' 
+                          : 'bg-white border-2 border-dashed border-gray-300'
+                      }`}
+                    >
+                      <Coffee className={`w-4 h-4 ${i < userInfo.currentSeals ? 'text-white' : 'text-gray-300'}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Available Rewards */}
+              {userInfo.availableRewards && userInfo.availableRewards.length > 0 && (
+                <div className="px-4 pb-2">
+                  <h4 className="text-xs font-medium text-gray-600 mb-2">Recompensas Disponibles</h4>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {userInfo.availableRewards.map((reward, idx) => (
+                      <div key={reward.id || idx} className="flex-shrink-0 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                        <p className="text-xs font-medium text-green-800">{reward.name}</p>
+                        <p className="text-xs text-green-600">{reward.required_seals} sellos</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Add Seals */}
+              <div className="p-4 border-t border-gray-200">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-medium">Añadir Sellos</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 5, 10].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setSealsToAdd(num)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                          sealsToAdd === num 
+                            ? 'bg-black text-white' 
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        +{num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2">
                   <Button
                     onClick={handleAddSeals}
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-black to-gray-800 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95"
+                    className="w-full bg-black text-white py-3 rounded-xl font-semibold shadow-lg active:scale-95"
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
                         Procesando...
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        Confirmar {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
-                      </div>
+                      <>
+                        <Plus className="w-4 h-4 mr-2 inline" />
+                        Añadir {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
+                      </>
                     )}
                   </Button>
                   
@@ -849,18 +936,8 @@ function Wallet() {
                     Escanear Otro Cliente
                   </Button>
                 </div>
-                
-                {/* Success Message */}
-                {success && (
-                  <div className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span className="text-sm text-green-700 font-medium">{success}</span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </>
       )}
@@ -881,7 +958,6 @@ function Wallet() {
       {/* Statistics Cards - Hide on mobile when scanner is active */}
       {(() => {
         // On mobile, hide stats when scanner is active without user info
-        const isMobile = window.innerWidth < 768;
         if (isMobile && showScanner && !userInfo) {
           return null; // Don't show stats on mobile when scanning
         }
@@ -961,7 +1037,7 @@ function Wallet() {
       })()}
 
       {/* Weekly Stats - Hide on mobile when scanner is active */}
-      {(!(window.innerWidth < 768 && showScanner && !userInfo)) && (
+      {(!(isMobile && showScanner && !userInfo)) && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
         <Card className="border-0 shadow-macos">
           <CardHeader>
@@ -1034,7 +1110,7 @@ function Wallet() {
       )}
 
       {/* Transactions Table - Hide on mobile when scanner is active */}
-      {(!(window.innerWidth < 768 && showScanner && !userInfo)) && (
+      {(!(isMobile && showScanner && !userInfo)) && (
       <Card className="border-0 shadow-macos">
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
