@@ -13,18 +13,25 @@ export const walletService = {
   async scanQRToken(qrToken) {
     try {
       const response = await apiService.get(`wallet/scan/${qrToken}`);
-      const scanData = response?.data || response;
+      console.log('🔍 Raw scan response:', response);
       
-      // Add lifetime seals if not present (for backward compatibility)
-      if (scanData.lifetimeSeals === undefined) {
-        scanData.lifetimeSeals = scanData.totalSeals || 0;
+      // Handle the API response format: {success: true, data: {...}}
+      let scanData;
+      if (response?.success && response?.data) {
+        scanData = response.data;
+      } else if (response?.data) {
+        scanData = response.data;
+      } else {
+        scanData = response;
       }
       
-      // Get available rewards based on lifetime seals
-      if (scanData.lifetimeSeals !== undefined) {
-        scanData.availableRewards = await sealService.getAvailableRewards(scanData.lifetimeSeals);
-        console.log('📦 Added available rewards to scan response:', scanData.availableRewards.length);
-      }
+      // The response already includes availableRewards from the backend
+      // No need to fetch them separately
+      console.log('📦 Scan data with rewards:', {
+        currentSeals: scanData.currentSeals,
+        lifetimeSeals: scanData.lifetimeSeals,
+        availableRewards: scanData.availableRewards?.length || 0
+      });
       
       return scanData;
     } catch (error) {
@@ -45,9 +52,7 @@ export const walletService = {
 
   async addSeals(qrToken, seals, notes = '') {
     try {
-      // Get current user data before adding seals
-      const beforeData = await this.scanQRToken(qrToken);
-      const previousLifetimeSeals = beforeData.lifetimeSeals || 0;
+      console.log('📤 Adding seals:', { qrToken, seals, notes });
       
       // Add seals
       const response = await apiService.post(`wallet/scan/${qrToken}/add`, {
@@ -55,25 +60,20 @@ export const walletService = {
         notes
       });
       
-      const result = response?.data || response;
+      console.log('📥 Add seals response:', response);
       
-      // Calculate new lifetime seals
-      const newLifetimeSeals = previousLifetimeSeals + Number(seals);
-      result.lifetimeSeals = newLifetimeSeals;
-      
-      // Get all available rewards after adding seals
-      result.availableRewards = await sealService.getAvailableRewards(newLifetimeSeals);
-      
-      // Check for newly unlocked rewards
-      result.newlyUnlockedRewards = await sealService.getNewlyUnlockedRewards(
-        previousLifetimeSeals,
-        newLifetimeSeals
-      );
-      
-      // Add custom message if new rewards were unlocked
-      if (result.newlyUnlockedRewards && result.newlyUnlockedRewards.length > 0) {
-        result.message = sealService.formatUnlockMessage(result.newlyUnlockedRewards);
-        console.log('🎉 New rewards unlocked:', result.message);
+      // Handle the API response format
+      let result;
+      if (response?.success && response?.data) {
+        result = {
+          ...response.data,
+          message: response.message,
+          success: response.success
+        };
+      } else if (response?.data) {
+        result = response.data;
+      } else {
+        result = response;
       }
       
       return result;

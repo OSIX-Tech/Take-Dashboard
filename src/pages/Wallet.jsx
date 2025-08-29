@@ -226,52 +226,88 @@ function Wallet() {
 
     try {
       console.log('📌 Adding seals:', { qrToken, sealsToAdd, notes });
-      const result = await walletService.addSeals(qrToken, sealsToAdd, notes);
-      console.log('✅ Add seals response:', result);
+      const response = await walletService.addSeals(qrToken, sealsToAdd, notes);
+      console.log('✅ Add seals response:', response);
       
-      // Check for newly unlocked rewards
-      if (result?.newlyUnlockedRewards && result.newlyUnlockedRewards.length > 0) {
+      // Handle the new API response format
+      let result;
+      if (response?.success && response?.data) {
+        result = response.data;
+      } else {
+        result = response;
+      }
+      
+      // Store transaction details for display
+      const transactionDetails = {
+        transactionId: result?.transactionId,
+        previousSeals: result?.previousSeals,
+        sealsAdded: result?.sealsAdded || sealsToAdd,
+        newTotal: result?.newTotal,
+        rewardGranted: result?.rewardGranted,
+        message: response?.message || result?.message
+      };
+      
+      // Check for rewards
+      if (result?.rewardGranted) {
+        setShowReward(true);
+        setSuccess(response?.message || '¡Café gratis conseguido! Contador reiniciado.');
+      } else if (result?.newlyUnlockedRewards && result.newlyUnlockedRewards.length > 0) {
         setNewlyUnlockedRewards(result.newlyUnlockedRewards);
         setShowUnlockedRewardsModal(true);
         setSuccess(result.message || '¡Nuevas recompensas desbloqueadas!');
-      } else if (result?.rewardGranted) {
-        setShowReward(true);
-        setSuccess('¡Café gratis conseguido!');
       } else {
-        const sealsCount = Number(sealsToAdd) || 1;
+        const sealsCount = result?.sealsAdded || sealsToAdd;
         setSuccess(`${sealsCount} sello${sealsCount > 1 ? 's' : ''} añadido${sealsCount > 1 ? 's' : ''} correctamente`);
       }
 
-      // Get updated user info after adding seals by scanning again
-      const updatedResponse = await walletService.scanQRToken(qrToken);
-      console.log('🔄 Updated user data after adding seals:', updatedResponse);
-      
-      // Handle the new API response format for updated data
-      let updatedData;
-      if (updatedResponse?.success && updatedResponse?.data) {
-        updatedData = updatedResponse.data;
+      // Update user info with the response data if available
+      if (result?.user) {
+        const updatedUserData = {
+          user: result.user,
+          currentSeals: result.newTotal !== undefined ? result.newTotal : userInfo.currentSeals + sealsToAdd,
+          totalSeals: userInfo.totalSeals + (result?.sealsAdded || sealsToAdd),
+          sealsRemaining: result.rewardGranted ? 15 : Math.max(0, 15 - (result.newTotal || 0)),
+          lifetimeSeals: userInfo.lifetimeSeals + (result?.sealsAdded || sealsToAdd),
+          availableRewards: result?.availableRewards || userInfo.availableRewards,
+          lastUpdated: new Date().toISOString(),
+          lastTransaction: transactionDetails
+        };
+        
+        setUserInfo(updatedUserData);
       } else {
-        updatedData = updatedResponse?.data || updatedResponse;
+        // If no user data in response, fetch updated info
+        const updatedResponse = await walletService.scanQRToken(qrToken);
+        console.log('🔄 Updated user data after adding seals:', updatedResponse);
+        
+        let updatedData;
+        if (updatedResponse?.success && updatedResponse?.data) {
+          updatedData = updatedResponse.data;
+        } else {
+          updatedData = updatedResponse?.data || updatedResponse;
+        }
+        
+        const updatedUserData = {
+          user: updatedData?.user,
+          currentSeals: updatedData?.currentSeals,
+          totalSeals: updatedData?.totalSeals,
+          sealsRemaining: updatedData?.sealsRemaining,
+          lifetimeSeals: updatedData?.lifetimeSeals || updatedData?.totalSeals || 0,
+          availableRewards: updatedData?.availableRewards || [],
+          lastUpdated: updatedData?.lastUpdated,
+          lastTransaction: transactionDetails
+        };
+        
+        setUserInfo(updatedUserData);
       }
       
-      // Update user info with new seal count
-      const updatedUserData = {
-        user: updatedData?.user,
-        currentSeals: updatedData?.currentSeals,
-        totalSeals: updatedData?.totalSeals,
-        sealsRemaining: updatedData?.sealsRemaining,
-        lifetimeSeals: updatedData?.lifetimeSeals || updatedData?.totalSeals || 0,
-        availableRewards: updatedData?.availableRewards || [],
-        lastUpdated: updatedData?.lastUpdated
-      };
-      
-      setUserInfo(updatedUserData);
       setSealsToAdd(1);
       setNotes('');
       
-      // Reload stats and transactions
-      await loadStats();
-      await loadTransactions();
+      // Only reload stats if not on mobile
+      if (!isMobile) {
+        await loadStats();
+        await loadTransactions();
+      }
     } catch (err) {
       setError(err.message || 'Error al añadir sellos');
     } finally {
@@ -853,6 +889,67 @@ function Wallet() {
                 </div>
               </div>
 
+              {/* Transaction Result Display */}
+              {userInfo.lastTransaction && success && (
+                <>
+                  {userInfo.lastTransaction.rewardGranted ? (
+                    /* Free Coffee Reward Display */
+                    <div className="bg-gradient-to-r from-yellow-50 via-orange-50 to-yellow-50 p-4 border-b-2 border-orange-200 animate-pulse">
+                      <div className="text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-lg mb-3">
+                          <Coffee className="w-8 h-8 text-white animate-bounce" />
+                        </div>
+                        <h3 className="text-xl font-bold text-orange-800 mb-1">¡CAFÉ GRATIS CONSEGUIDO!</h3>
+                        <p className="text-sm text-orange-600 mb-3">Contador reiniciado a 0</p>
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div className="bg-white/80 rounded-lg p-2">
+                            <span className="text-xs text-gray-500">Anterior</span>
+                            <p className="font-bold text-gray-800">{userInfo.lastTransaction.previousSeals}</p>
+                          </div>
+                          <div className="bg-white/80 rounded-lg p-2">
+                            <span className="text-xs text-gray-500">Añadidos</span>
+                            <p className="font-bold text-green-600">+{userInfo.lastTransaction.sealsAdded}</p>
+                          </div>
+                          <div className="bg-white/80 rounded-lg p-2">
+                            <span className="text-xs text-gray-500">Nuevo</span>
+                            <p className="font-bold text-orange-600">{userInfo.lastTransaction.newTotal}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Normal Transaction Display */
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 border-b border-green-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <h4 className="font-semibold text-green-800">Sellos Añadidos</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="bg-white rounded-lg p-2">
+                          <span className="text-xs text-gray-500">Sellos Anteriores</span>
+                          <p className="font-bold text-gray-800">{userInfo.lastTransaction.previousSeals}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-2">
+                          <span className="text-xs text-gray-500">Sellos Añadidos</span>
+                          <p className="font-bold text-green-600">+{userInfo.lastTransaction.sealsAdded}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-2">
+                          <span className="text-xs text-gray-500">Total Actual</span>
+                          <p className="font-bold text-gray-800">{userInfo.lastTransaction.newTotal}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-2">
+                          <span className="text-xs text-gray-500">Para Premio</span>
+                          <p className="font-bold text-blue-600">{15 - userInfo.lastTransaction.newTotal}</p>
+                        </div>
+                      </div>
+                      {userInfo.lastTransaction.transactionId && (
+                        <p className="text-xs text-gray-500 mt-2">ID: {userInfo.lastTransaction.transactionId.slice(0, 8)}...</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
               {/* Seals Grid Visualization */}
               <div className="p-4 bg-gray-50">
                 <div className="grid grid-cols-5 gap-2 max-w-xs mx-auto">
@@ -955,12 +1052,8 @@ function Wallet() {
         </div>
       )}
 
-      {/* Statistics Cards - Hide on mobile when scanner is active */}
-      {(() => {
-        // On mobile, hide stats when scanner is active without user info
-        if (isMobile && showScanner && !userInfo) {
-          return null; // Don't show stats on mobile when scanning
-        }
+      {/* Statistics Cards - Never show on mobile */}
+      {!isMobile && (() => {
         
         console.log('🎨 [Wallet] Rendering stats section, stats value:', stats);
         console.log('🎨 [Wallet] Stats type:', typeof stats);
@@ -1036,8 +1129,8 @@ function Wallet() {
         );
       })()}
 
-      {/* Weekly Stats - Hide on mobile when scanner is active */}
-      {(!(isMobile && showScanner && !userInfo)) && (
+      {/* Weekly Stats - Never show on mobile */}
+      {!isMobile && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
         <Card className="border-0 shadow-macos">
           <CardHeader>
@@ -1109,8 +1202,8 @@ function Wallet() {
       </div>
       )}
 
-      {/* Transactions Table - Hide on mobile when scanner is active */}
-      {(!(isMobile && showScanner && !userInfo)) && (
+      {/* Transactions Table - Never show on mobile */}
+      {!isMobile && (
       <Card className="border-0 shadow-macos">
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
