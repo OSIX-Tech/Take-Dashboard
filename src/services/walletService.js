@@ -1,4 +1,5 @@
 import { apiService } from './api';
+import { sealService } from './sealService';
 
 const WALLET_BASE_URL = 'admin/wallet';
 
@@ -10,7 +11,26 @@ export const walletService = {
 
   // Admin endpoints - require auth
   async scanQRToken(qrToken) {
-    return apiService.get(`wallet/scan/${qrToken}`);
+    try {
+      const response = await apiService.get(`wallet/scan/${qrToken}`);
+      const scanData = response?.data || response;
+      
+      // Add lifetime seals if not present (for backward compatibility)
+      if (scanData.lifetimeSeals === undefined) {
+        scanData.lifetimeSeals = scanData.totalSeals || 0;
+      }
+      
+      // Get available rewards based on lifetime seals
+      if (scanData.lifetimeSeals !== undefined) {
+        scanData.availableRewards = await sealService.getAvailableRewards(scanData.lifetimeSeals);
+        console.log('📦 Added available rewards to scan response:', scanData.availableRewards.length);
+      }
+      
+      return scanData;
+    } catch (error) {
+      console.error('❌ Error scanning QR token:', error);
+      throw error;
+    }
   },
 
   async getWalletStatus(qrToken) {
@@ -24,10 +44,43 @@ export const walletService = {
   },
 
   async addSeals(qrToken, seals, notes = '') {
-    return apiService.post(`wallet/scan/${qrToken}/add`, {
-      seals,
-      notes
-    });
+    try {
+      // Get current user data before adding seals
+      const beforeData = await this.scanQRToken(qrToken);
+      const previousLifetimeSeals = beforeData.lifetimeSeals || 0;
+      
+      // Add seals
+      const response = await apiService.post(`wallet/scan/${qrToken}/add`, {
+        seals,
+        notes
+      });
+      
+      const result = response?.data || response;
+      
+      // Calculate new lifetime seals
+      const newLifetimeSeals = previousLifetimeSeals + Number(seals);
+      result.lifetimeSeals = newLifetimeSeals;
+      
+      // Get all available rewards after adding seals
+      result.availableRewards = await sealService.getAvailableRewards(newLifetimeSeals);
+      
+      // Check for newly unlocked rewards
+      result.newlyUnlockedRewards = await sealService.getNewlyUnlockedRewards(
+        previousLifetimeSeals,
+        newLifetimeSeals
+      );
+      
+      // Add custom message if new rewards were unlocked
+      if (result.newlyUnlockedRewards && result.newlyUnlockedRewards.length > 0) {
+        result.message = sealService.formatUnlockMessage(result.newlyUnlockedRewards);
+        console.log('🎉 New rewards unlocked:', result.message);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Error adding seals:', error);
+      throw error;
+    }
   },
 
   async getTransactions(params = {}) {

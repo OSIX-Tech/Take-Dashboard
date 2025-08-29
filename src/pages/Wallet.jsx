@@ -36,13 +36,15 @@ function Wallet() {
     limit: 50
   });
   
-  // QR Scanner states
-  const [showScanner, setShowScanner] = useState(false);
+  // QR Scanner states - Scanner open by default for better UX
+  const [showScanner, setShowScanner] = useState(true); // Changed to true - always open on load
   const [qrToken, setQrToken] = useState('');
   const [userInfo, setUserInfo] = useState(null);
   const [sealsToAdd, setSealsToAdd] = useState(1);
   const [notes, setNotes] = useState('');
   const [showReward, setShowReward] = useState(false);
+  const [newlyUnlockedRewards, setNewlyUnlockedRewards] = useState([]);
+  const [showUnlockedRewardsModal, setShowUnlockedRewardsModal] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -169,6 +171,8 @@ function Wallet() {
         currentSeals: scanData?.currentSeals || 0,
         totalSeals: scanData?.totalSeals || 0,
         sealsRemaining: scanData?.sealsRemaining || 15,
+        lifetimeSeals: scanData?.lifetimeSeals || scanData?.totalSeals || 0,
+        availableRewards: scanData?.availableRewards || [],
         lastUpdated: scanData?.lastUpdated || null
       };
       
@@ -177,7 +181,9 @@ function Wallet() {
         userEmail: userDataWithSeals.user?.email,
         currentSeals: userDataWithSeals.currentSeals,
         sealsRemaining: userDataWithSeals.sealsRemaining,
-        totalSeals: userDataWithSeals.totalSeals
+        totalSeals: userDataWithSeals.totalSeals,
+        lifetimeSeals: userDataWithSeals.lifetimeSeals,
+        availableRewards: userDataWithSeals.availableRewards?.length || 0
       });
       
       setUserInfo(userDataWithSeals);
@@ -206,7 +212,12 @@ function Wallet() {
       const result = await walletService.addSeals(qrToken, sealsToAdd, notes);
       console.log('✅ Add seals response:', result);
       
-      if (result?.rewardGranted) {
+      // Check for newly unlocked rewards
+      if (result?.newlyUnlockedRewards && result.newlyUnlockedRewards.length > 0) {
+        setNewlyUnlockedRewards(result.newlyUnlockedRewards);
+        setShowUnlockedRewardsModal(true);
+        setSuccess(result.message || '¡Nuevas recompensas desbloqueadas!');
+      } else if (result?.rewardGranted) {
         setShowReward(true);
         setSuccess('¡Café gratis conseguido!');
       } else {
@@ -227,6 +238,8 @@ function Wallet() {
         currentSeals: updatedData?.currentSeals,
         totalSeals: updatedData?.totalSeals,
         sealsRemaining: updatedData?.sealsRemaining,
+        lifetimeSeals: updatedData?.lifetimeSeals || updatedData?.totalSeals || 0,
+        availableRewards: updatedData?.availableRewards || [],
         lastUpdated: updatedData?.lastUpdated
       };
       
@@ -309,11 +322,11 @@ function Wallet() {
                       <span className="font-semibold text-lg" style={{ color: '#111827' }}>{Number(userInfo?.lifetimeSeals) || 0}</span>
                     </div>
                   )}
-                  {userInfo.hasGoogleWallet !== undefined && (
+                  {userInfo.availableRewards && userInfo.availableRewards.length > 0 && (
                     <div className="flex items-center gap-1.5 text-sm">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                      <span className="text-gray-500" style={{ color: '#6b7280' }}>Wallet:</span>
-                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{userInfo?.hasGoogleWallet ? 'Activo' : 'Inactivo'}</span>
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span className="text-gray-500" style={{ color: '#6b7280' }}>Recompensas:</span>
+                      <span className="font-semibold text-lg" style={{ color: '#111827' }}>{userInfo.availableRewards.length}</span>
                     </div>
                   )}
                 </div>
@@ -408,6 +421,32 @@ function Wallet() {
               ))}
             </div>
           </div>
+
+          {/* Available Rewards Section */}
+          {userInfo.availableRewards && userInfo.availableRewards.length > 0 && (
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl md:rounded-xl lg:rounded-2xl p-3 md:p-4 lg:p-6 border border-green-200 shadow-sm">
+              <h4 className="text-sm md:text-base font-medium text-gray-700 mb-2 md:mb-3 flex items-center gap-2">
+                <Award className="w-4 h-4 text-green-600" />
+                Recompensas Disponibles
+              </h4>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {userInfo.availableRewards.slice(0, 3).map((reward, idx) => (
+                  <div key={reward.id || idx} className="flex items-center justify-between p-2 bg-white rounded-lg border border-green-100">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800">{reward.name}</p>
+                      <p className="text-xs text-gray-500">{reward.required_seals} sellos</p>
+                    </div>
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                ))}
+                {userInfo.availableRewards.length > 3 && (
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    +{userInfo.availableRewards.length - 3} más disponibles
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl md:rounded-xl lg:rounded-2xl p-2.5 md:p-3 lg:p-4 border border-gray-200 shadow-sm">
@@ -628,56 +667,82 @@ function Wallet() {
   try {
     return (
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">Google Wallet</h1>
           <p className="text-sm text-gray-600 hidden md:block">Gestiona los sellos y recompensas de los clientes</p>
         </div>
-        <Button
-          onClick={() => setShowScanner(!showScanner)}
-          className="bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2.5 md:px-8 md:py-3 rounded-lg md:rounded-xl group"
-        >
-          <ScanLine className="w-4 h-4 md:w-5 md:h-5 mr-2 group-hover:scale-110 transition-transform" />
-          <span className="font-medium">Escanear Cliente</span>
-        </Button>
+        {/* Only show toggle button on desktop when user info is shown */}
+        {userInfo && (
+          <Button
+            onClick={() => {
+              resetScanner();
+              setShowScanner(true);
+            }}
+            className="hidden md:flex bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2.5 md:px-8 md:py-3 rounded-lg md:rounded-xl group"
+          >
+            <ScanLine className="w-4 h-4 md:w-5 md:h-5 mr-2 group-hover:scale-110 transition-transform" />
+            <span className="font-medium">Nuevo Escaneo</span>
+          </Button>
+        )}
       </div>
 
-      {error && <ErrorMessage message={error} onClose={() => setError(null)} />}
-      {success && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-2">
-            <div className="p-1 bg-green-100 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <p className="text-green-700 font-medium">{success}</p>
-          </div>
-        </div>
-      )}
-
-      {/* QR Scanner Modal Overlay for Desktop, Inline for Mobile */}
+      {/* QR Scanner - PRIORITY: Always first visible element */}
       {showScanner && !userInfo && (
         <>
-          {/* Desktop Modal Overlay */}
-          <div className="hidden md:fixed md:inset-0 md:bg-black/50 md:backdrop-blur-sm md:z-50 md:flex md:items-center md:justify-center md:p-4 animate-in fade-in duration-200" onClick={resetScanner}>
-            <div className="animate-in fade-in-up duration-300" onClick={(e) => e.stopPropagation()}>
-              <div className="max-w-lg w-full">
+          {/* Mobile - Prominent card at top */}
+          <div className="md:hidden mb-6">
+            <Card className="border-2 border-black shadow-xl">
+              <CardHeader className="bg-black text-white py-3">
+                <CardTitle className="flex items-center justify-center gap-2 text-lg">
+                  <ScanLine className="w-5 h-5" />
+                  Escanear QR del Cliente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <QRScanner 
                   onScan={handleScanSuccess}
-                  onClose={resetScanner}
-                  title="Escanear Cliente"
-                  isModal={true}
+                  onClose={() => {
+                    // On mobile, don't close scanner automatically
+                    if (userInfo) {
+                      setShowScanner(false);
+                    }
+                  }}
+                  title=""
                 />
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
           
-          {/* Mobile Inline */}
-          <div className="md:hidden mb-6">
-            <QRScanner 
-              onScan={handleScanSuccess}
-              onClose={resetScanner}
-              title="Escanear Cliente"
-            />
+          {/* Desktop - Integrated card style */}
+          <div className="hidden md:block md:mb-6">
+            <Card className="border-0 shadow-macos">
+              <CardHeader className="bg-gradient-to-r from-black to-gray-800 text-white">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ScanLine className="w-5 h-5" />
+                    Escanear QR del Cliente
+                  </div>
+                  <Button
+                    onClick={() => setShowScanner(false)}
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-white/20"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="max-w-md mx-auto">
+                  <QRScanner 
+                    onScan={handleScanSuccess}
+                    onClose={() => {}}
+                    title=""
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </>
       )}
@@ -733,75 +798,94 @@ function Wallet() {
           </div>
           
           
-          {/* Mobile Full Screen Modal */}
-          <div className="md:hidden fixed inset-0 z-50 bg-white">
-            {/* Mobile Header Bar */}
-            <div className="sticky top-0 z-20 bg-gradient-to-r from-black via-gray-900 to-black text-white px-4 py-3 shadow-xl">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                  </div>
-                  <h2 className="text-base font-semibold">Cliente Activo</h2>
-                  <Badge className="bg-white/20 text-white border-white/30 text-[10px] px-1.5 py-0.5">
-                    En vivo
-                  </Badge>
+          {/* Mobile - Card Style (not full screen) */}
+          <div className="md:hidden mb-6">
+            <Card className="border-2 border-green-500 shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <div className="relative">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    </div>
+                    Cliente Activo
+                  </CardTitle>
+                  <button
+                    onClick={resetScanner}
+                    className="p-1.5 bg-white/20 backdrop-blur rounded-full active:bg-white/30"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={resetScanner}
-                  className="p-2 bg-white/10 backdrop-blur rounded-full active:bg-white/20 transition-all"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            
-            {/* Mobile Content - Full Screen Scrollable */}
-            <div className="h-[calc(100vh-56px)] overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
-              <div className="p-4 pb-20">
+              </CardHeader>
+              <CardContent className="p-4 max-h-[70vh] overflow-y-auto">
                 {renderUserInfo()}
                 
-                {/* Mobile Action Section - Fixed at Bottom */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl">
+                {/* Mobile Action Buttons */}
+                <div className="mt-4 space-y-3">
                   <Button
-                      onClick={handleAddSeals}
-                      disabled={loading}
-                      className="w-full bg-gradient-to-r from-black to-gray-800 text-white font-bold py-4 rounded-xl shadow-xl transform transition-all active:scale-95"
-                    >
-                      {loading ? (
-                        <div className="flex items-center justify-center">
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                          Procesando...
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center text-base">
-                          <CheckCircle className="w-5 h-5 mr-2" />
-                          Confirmar {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
-                        </div>
-                      )}
-                    </Button>
+                    onClick={handleAddSeals}
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-black to-gray-800 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95"
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        Procesando...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        Confirmar {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
+                      </div>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    onClick={resetScanner}
+                    variant="outline"
+                    className="w-full border-2 border-gray-300"
+                  >
+                    <ScanLine className="w-4 h-4 mr-2" />
+                    Escanear Otro Cliente
+                  </Button>
                 </div>
                 
-                {/* Success Message for Mobile - Toast Style */}
+                {/* Success Message */}
                 {success && (
-                  <div className="fixed top-16 left-4 right-4 z-30 animate-in slide-in-from-top-2 fade-in duration-300">
-                    <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl shadow-2xl">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5" />
-                        <span className="font-medium">{success}</span>
-                      </div>
+                  <div className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-700 font-medium">{success}</span>
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </>
       )}
 
+      {/* Error and Success Messages */}
+      {error && <ErrorMessage message={error} onClose={() => setError(null)} />}
+      {success && !showUnlockedRewardsModal && !showReward && (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-2">
+            <div className="p-1 bg-green-100 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            </div>
+            <p className="text-green-700 font-medium">{success}</p>
+          </div>
+        </div>
+      )}
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - Hide on mobile when scanner is active */}
       {(() => {
+        // On mobile, hide stats when scanner is active without user info
+        const isMobile = window.innerWidth < 768;
+        if (isMobile && showScanner && !userInfo) {
+          return null; // Don't show stats on mobile when scanning
+        }
+        
         console.log('🎨 [Wallet] Rendering stats section, stats value:', stats);
         console.log('🎨 [Wallet] Stats type:', typeof stats);
         console.log('🎨 [Wallet] Stats is array?:', Array.isArray(stats));
@@ -876,7 +960,8 @@ function Wallet() {
         );
       })()}
 
-      {/* Weekly Stats */}
+      {/* Weekly Stats - Hide on mobile when scanner is active */}
+      {(!(window.innerWidth < 768 && showScanner && !userInfo)) && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
         <Card className="border-0 shadow-macos">
           <CardHeader>
@@ -946,8 +1031,10 @@ function Wallet() {
           </CardContent>
         </Card>
       </div>
+      )}
 
-      {/* Transactions Table */}
+      {/* Transactions Table - Hide on mobile when scanner is active */}
+      {(!(window.innerWidth < 768 && showScanner && !userInfo)) && (
       <Card className="border-0 shadow-macos">
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
@@ -1070,6 +1157,7 @@ function Wallet() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Reward Animation - Enhanced */}
       {showReward && (
@@ -1089,6 +1177,48 @@ function Wallet() {
                 <Coffee className="w-6 h-6 text-orange-400 animate-pulse delay-75" />
                 <Coffee className="w-6 h-6 text-orange-500 animate-pulse delay-150" />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Newly Unlocked Rewards Modal */}
+      {showUnlockedRewardsModal && newlyUnlockedRewards.length > 0 && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl transform animate-in zoom-in-105 duration-300 max-w-md w-full mx-4">
+            <div className="text-center space-y-4">
+              <div className="relative inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full shadow-lg animate-bounce">
+                <Award className="w-10 h-10 text-white" />
+                <div className="absolute inset-0 rounded-full bg-white/30 animate-ping" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">¡NUEVAS RECOMPENSAS!</h2>
+                <p className="text-sm text-gray-600 mt-2">Has desbloqueado {newlyUnlockedRewards.length} nueva{newlyUnlockedRewards.length > 1 ? 's' : ''} recompensa{newlyUnlockedRewards.length > 1 ? 's' : ''}</p>
+              </div>
+              
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {newlyUnlockedRewards.map((reward, idx) => (
+                  <div key={reward.id || idx} className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-xl border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      <div className="text-left flex-1">
+                        <p className="font-semibold text-gray-800">{reward.name}</p>
+                        <p className="text-xs text-gray-600">{reward.description || `Requiere ${reward.required_seals} sellos`}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <Button 
+                onClick={() => {
+                  setShowUnlockedRewardsModal(false);
+                  setNewlyUnlockedRewards([]);
+                }}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-3 rounded-xl shadow-lg transform transition-all hover:scale-105"
+              >
+                ¡Genial!
+              </Button>
             </div>
           </div>
         </div>
