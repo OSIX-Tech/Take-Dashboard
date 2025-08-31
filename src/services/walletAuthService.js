@@ -47,11 +47,6 @@ export const walletAuthService = {
     
     console.log('🔗 [walletAuthService] Redirect URI:', redirectUri)
     
-    // Alert on mobile to see exact URI (for debugging)
-    if (this.isMobileDevice()) {
-      alert(`Redirect URI: ${redirectUri}`)
-    }
-    
     const scope = 'openid email profile'
     const responseType = 'token id_token' // Use implicit flow for SPAs
     const nonce = Math.random().toString(36).substring(7)
