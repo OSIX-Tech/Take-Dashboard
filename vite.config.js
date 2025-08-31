@@ -10,4 +10,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Allow connections from network (needed for Android emulator)
+    host: true, // This exposes the server to all network interfaces
+    port: 5173,
+    // Alternatively, you can use:
+    // host: '0.0.0.0'
+  }
 })
