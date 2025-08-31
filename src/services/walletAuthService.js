@@ -31,11 +31,26 @@ export const walletAuthService = {
   // Generate OAuth URL for redirect flow (mobile-friendly)
   generateOAuthUrl(clientId) {
     // IMPORTANT: The redirect URI must match EXACTLY what's in Google Console
-    // Since we're using localhost in the emulator, use localhost
     const currentOrigin = window.location.origin
-    const redirectUri = `${currentOrigin}/loginWallet`
+    
+    // Normalize the origin (remove any trailing slashes, ensure consistent format)
+    let redirectUri = `${currentOrigin}/loginWallet`
+    
+    // On mobile, window.location might report differently
+    console.log('📱 [walletAuthService] Current location info:', {
+      origin: window.location.origin,
+      hostname: window.location.hostname,
+      protocol: window.location.protocol,
+      pathname: window.location.pathname,
+      href: window.location.href
+    })
     
     console.log('🔗 [walletAuthService] Redirect URI:', redirectUri)
+    
+    // Alert on mobile to see exact URI (for debugging)
+    if (this.isMobileDevice()) {
+      alert(`Redirect URI: ${redirectUri}`)
+    }
     
     const scope = 'openid email profile'
     const responseType = 'token id_token' // Use implicit flow for SPAs
@@ -136,65 +151,20 @@ export const walletAuthService = {
       let response;
       let lastError;
       
-      try {
-        console.log('🔄 [walletAuthService] Attempt 1: Token in custom header + body')
-        response = await fetch('https://opills.app/api/auth/googleLogin', {
-          method: 'POST',
-          mode: 'cors', // Explicitly set CORS mode
-          credentials: 'include', // Include cookies if needed
-          headers: {
-            'Content-Type': 'application/json',
-            'idToken': credentialResponse.credential
-          },
-          body: JSON.stringify({
-            idToken: credentialResponse.credential
-          })
+      // Send request with idToken in body only (as per backend specification)
+      console.log('🔄 [walletAuthService] Calling /api/auth/googleLogin')
+      response = await fetch('https://opills.app/api/auth/googleLogin', {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+          // NO idToken header - backend expects it in body only
+        },
+        body: JSON.stringify({
+          idToken: credentialResponse.credential
         })
-      } catch (error) {
-        console.error('❌ Attempt 1 failed:', error.message)
-        lastError = error;
-        
-        // Format 2: Token only in body (more standard)
-        try {
-          console.log('🔄 [walletAuthService] Attempt 2: Token only in body')
-          response = await fetch('https://opills.app/api/auth/googleLogin', {
-            method: 'POST',
-            mode: 'cors',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              idToken: credentialResponse.credential,
-              credential: credentialResponse.credential // Some backends expect this field
-            })
-          })
-        } catch (error2) {
-          console.error('❌ Attempt 2 failed:', error2.message)
-          lastError = error2;
-          
-          // Format 3: Token in Authorization header
-          try {
-            console.log('🔄 [walletAuthService] Attempt 3: Token in Authorization header')
-            response = await fetch('https://opills.app/api/auth/googleLogin', {
-              method: 'POST',
-              mode: 'cors',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${credentialResponse.credential}`
-              },
-              body: JSON.stringify({
-                idToken: credentialResponse.credential
-              })
-            })
-          } catch (error3) {
-            console.error('❌ Attempt 3 failed:', error3.message)
-            lastError = error3;
-            throw new Error(`Network error: ${error3.message}. This might be a CORS issue or the backend is not reachable.`)
-          }
-        }
-      }
+      })
 
       console.log('📡 [walletAuthService] Response received')
       console.log('📡 [walletAuthService] Response status:', response.status)
@@ -222,18 +192,22 @@ export const walletAuthService = {
       const data = await response.json()
       console.log('✅ [walletAuthService] Backend response received:', data)
       
-      // Store the wallet token - try multiple fields
-      const token = data.token || data.access_token || data.accessToken || data.authToken
-      if (token) {
-        sessionStorage.setItem('walletToken', token)
+      // Handle the response format: { token: "...", user: { ... } }
+      if (data.token) {
+        sessionStorage.setItem('walletToken', data.token)
         console.log('✅ [walletAuthService] Wallet token stored')
+        
+        // Store user data if provided
+        if (data.user) {
+          sessionStorage.setItem('walletUser', JSON.stringify(data.user))
+          console.log('👤 [walletAuthService] User data stored:', data.user)
+        }
+        
+        return data
       } else {
-        console.warn('⚠️ [walletAuthService] No standard token field in response, storing entire response')
-        sessionStorage.setItem('walletToken', JSON.stringify(data))
-        sessionStorage.setItem('walletResponse', JSON.stringify(data))
+        console.error('❌ [walletAuthService] No token in response')
+        throw new Error('No token received from server')
       }
-
-      return data
     } catch (error) {
       console.error('❌ [walletAuthService] Error authenticating with backend:', error)
       console.error('Stack trace:', error.stack)
@@ -321,15 +295,28 @@ Origen actual: ${window.location.origin}`)
   // Clear wallet authentication
   clearWalletAuth() {
     sessionStorage.removeItem('walletToken')
+    sessionStorage.removeItem('walletUser')
+    sessionStorage.removeItem('walletResponse')
   },
 
-  // Decode JWT token to get user info (optional)
+  // Get wallet user info
   getWalletUser() {
+    // First try to get stored user data from backend response
+    const storedUser = sessionStorage.getItem('walletUser')
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser)
+      } catch (e) {
+        console.error('Error parsing stored user:', e)
+      }
+    }
+    
+    // Fallback to decoding JWT token
     const token = sessionStorage.getItem('walletToken')
     if (!token) return null
 
     try {
-      // Basic JWT decode (you may want to use a library for this)
+      // Basic JWT decode
       const payload = JSON.parse(atob(token.split('.')[1]))
       return {
         email: payload.email || 'wallet@user.com',
