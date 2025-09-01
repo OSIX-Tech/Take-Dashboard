@@ -322,7 +322,8 @@ function Wallet() {
     setNotes('');
     setError(null);
     setSuccess(null);
-    setShowScanner(false);
+    // Keep scanner open for next scan
+    setShowScanner(true);
   };
 
   const formatDate = (dateString) => {
@@ -1057,7 +1058,16 @@ function Wallet() {
                   </Button>
                   
                   <Button
-                    onClick={resetScanner}
+                    onClick={() => {
+                      // Reset all states and keep scanner open for next scan
+                      setQrToken('');
+                      setUserInfo(null);
+                      setSealsToAdd(1);
+                      setNotes('');
+                      setError(null);
+                      setSuccess(null);
+                      setShowScanner(true);
+                    }}
                     variant="outline"
                     className="w-full border-2 border-gray-300"
                   >
