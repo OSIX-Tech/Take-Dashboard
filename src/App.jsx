@@ -14,6 +14,8 @@ const Rewards = lazy(() => import('./pages/Rewards'))
 const Events = lazy(() => import('./pages/Events'))
 const Wallet = lazy(() => import('./pages/Wallet'))
 const TestScanner = lazy(() => import('./pages/TestScanner'))
+const LoginWallet = lazy(() => import('./pages/LoginWallet'))
+const AddWallet = lazy(() => import('./pages/AddWallet'))
 
 // Componente para manejar el callback de admin
 const AdminCallback = ({ onLogin }) => {
@@ -161,6 +163,13 @@ function App() {
       console.log('🔐 [App] Iniciando checkAuth...')
       console.log('🔐 [App] URL actual:', window.location.pathname)
       console.log('🔐 [App] URL completa:', window.location.href)
+      
+      // Skip auth check for wallet routes - they have their own auth flow
+      if (window.location.pathname === '/loginWallet' || window.location.pathname === '/addWallet') {
+        console.log('🎫 [App] Wallet route detected, skipping main auth check')
+        setIsLoading(false)
+        return
+      }
       
       // PRIMERO: Verificar si venimos de un callback con token
       const tokenFromUrl = extractTokenFromUrl()
@@ -383,6 +392,10 @@ function App() {
             
             {/* Ruta del login - siempre muestra login */}
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            
+            {/* Wallet routes - separate auth flow */}
+            <Route path="/loginWallet" element={<LoginWallet />} />
+            <Route path="/addWallet" element={<AddWallet />} />
             
             {/* Test Scanner - public route for testing */}
             <Route path="/test-scanner" element={<TestScanner />} />
