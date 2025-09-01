@@ -533,112 +533,79 @@ function Wallet() {
       </div>
     );
 
-    // Mobile Premium Design - Modern Bottom Sheet Style
+    // Mobile Premium Design - Simplified
     const renderMobileLayout = () => (
-      <div className="flex flex-col h-full">
-        {/* User Header Section */}
-        <div className="bg-gradient-to-b from-black to-gray-900 text-white px-4 py-3 -mx-4 -mt-6 rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
+      <div className="space-y-3">
+        {/* User Header Section - Simplified */}
+        <div className="bg-black text-white rounded-xl p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 text-white" />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-white truncate">
-                {userInfo.user?.name || userInfo.name || 'Cliente'}
-              </h3>
-              <p className="text-xs text-gray-300 truncate">
-                {userInfo.user?.email || userInfo.email || 'Sin email'}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-black text-white">{Number(userInfo?.currentSeals) || 0}</div>
-              <div className="text-xs text-gray-300">sellos</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress Section */}
-        <div className="mt-4 mb-3">
-          {/* Main Progress Visual */}
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-            {/* Progress Stats */}
-            <div className="flex justify-between items-center mb-3">
-              <div>
-                <p className="text-xs text-gray-500">Progreso actual</p>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-3xl font-black">{Number(userInfo?.currentSeals) || 0}</span>
-                  <span className="text-sm text-gray-400">/ 15</span>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                {userInfo?.sealsRemaining > 0 ? (
-                  <>
-                    <div className="text-2xl font-bold text-gray-900">{Number(userInfo?.sealsRemaining) || 0}</div>
-                    <div className="text-xs text-gray-500">faltan</div>
-                  </>
-                ) : (
-                  <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1.5 animate-bounce">
-                    ¡Premio Listo!
-                  </Badge>
-                )}
-              </div>
-
-              {/* Circular Mini Progress */}
-              <div className="relative w-14 h-14">
-                <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="none" className="text-gray-200" />
-                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="none" 
-                    strokeDasharray={150.8}
-                    strokeDashoffset={150.8 - (150.8 * getProgressPercentage()) / 100}
-                    className="text-black transition-all duration-700"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold">{Math.round(getProgressPercentage())}%</span>
-                </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-medium text-sm truncate">
+                  {userInfo.user?.name || 'Cliente'}
+                </h3>
+                <p className="text-xs opacity-75 truncate">
+                  {userInfo.user?.email || 'Sin email'}
+                </p>
               </div>
             </div>
-
-            {/* Visual Stamps Grid - Compact 3 rows */}
-            <div className="bg-white rounded-xl p-3 border border-gray-100">
-              <div className="grid grid-cols-5 gap-1.5">
-                {getRemainingCups().map((filled, i) => (
-                  <div key={i}
-                    className={`relative aspect-square rounded-lg flex items-center justify-center transition-all ${
-                      filled 
-                        ? 'bg-gradient-to-br from-black to-gray-700 shadow-sm scale-105' 
-                        : 'bg-gray-50 border border-gray-200'
-                    }`}>
-                    <Coffee className={`w-3.5 h-3.5 ${filled ? 'text-white' : 'text-gray-300'}`} />
-                    {filled && <div className="absolute inset-0 bg-white/10 rounded-lg animate-pulse" />}
-                    <span className="absolute -bottom-0.5 -right-0.5 text-[7px] font-bold bg-white rounded px-0.5">
-                      {i + 1}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              
+            <div className="text-center flex-shrink-0">
+              <div className="text-xl font-bold">{Number(userInfo?.currentSeals) || 0}</div>
+              <div className="text-xs opacity-75">sellos</div>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions - Floating Pills */}
-        <div className="mb-3">
+        {/* Progress Section - Simplified */}
+        <div className="bg-white rounded-xl p-3 border border-gray-200">
+          {/* Progress Bar */}
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs text-gray-600">Progreso</span>
+            <span className="text-xs font-medium">{Number(userInfo?.currentSeals) || 0} / 15</span>
+          </div>
+          <div className="bg-gray-200 rounded-full h-2 mb-3">
+            <div 
+              className="bg-black h-full rounded-full transition-all duration-500"
+              style={{ width: `${getProgressPercentage()}%` }}
+            />
+          </div>
+          
+          {userInfo?.sealsRemaining === 0 && (
+            <div className="bg-green-100 text-green-700 text-center py-2 rounded-lg text-sm font-medium">
+              ¡Café Gratis Disponible!
+            </div>
+          )}
+
+          {/* Stamps Grid - Simplified */}
+          <div className="grid grid-cols-5 gap-1.5">
+            {getRemainingCups().map((filled, i) => (
+              <div key={i}
+                className={`aspect-square rounded-lg flex items-center justify-center ${
+                  filled 
+                    ? 'bg-black' 
+                    : 'bg-gray-100 border border-gray-300'
+                }`}>
+                <Coffee className={`w-3 h-3 ${filled ? 'text-white' : 'text-gray-400'}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions - Simplified */}
+        <div>
           <p className="text-xs font-medium text-gray-600 mb-2">Sellos a añadir</p>
-          <div className="flex gap-2 justify-between">
+          <div className="flex gap-1.5">
             {[1, 2, 3, 5, 10].map((num) => (
               <button
                 key={num}
                 onClick={() => setSealsToAdd(num)}
-                className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all transform active:scale-95 ${
+                className={`flex-1 py-2 rounded-lg font-medium text-xs ${
                   sealsToAdd === num 
-                    ? 'bg-black text-white shadow-lg scale-105' 
-                    : 'bg-white hover:bg-gray-50 border border-gray-200'
+                    ? 'bg-black text-white' 
+                    : 'bg-gray-100 text-gray-700'
                 }`}
               >
                 +{num}
@@ -854,227 +821,137 @@ function Wallet() {
           </div>
           
           
-          {/* Mobile - Optimized Card View */}
+          {/* Mobile - Simplified Card View */}
           <div className="md:hidden">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              {/* User Header */}
-              <div className="bg-gradient-to-r from-black to-gray-800 text-white p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{userInfo.user?.name || 'Cliente'}</h3>
-                      <p className="text-xs opacity-75">{userInfo.user?.email || 'Sin email'}</p>
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              {/* Compact User Header */}
+              <div className="bg-black text-white p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <User className="w-5 h-5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium text-sm truncate">{userInfo.user?.name || 'Cliente'}</h3>
+                      <p className="text-xs opacity-75 truncate">{userInfo.user?.email || 'Sin email'}</p>
                     </div>
                   </div>
                   <button
                     onClick={resetScanner}
-                    className="p-2 bg-white/20 rounded-full"
+                    className="p-1.5 bg-white/20 rounded-lg"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Lifetime Seals Display */}
-                <div className="bg-white/20 backdrop-blur rounded-xl p-3 mb-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="text-center">
-                      <p className="text-xs text-white/70 mb-1">Ciclo Actual</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <Coffee className="w-4 h-4" />
-                        <span className="text-2xl font-bold">{userInfo.currentSeals}</span>
-                        <span className="text-sm text-white/70">/15</span>
-                      </div>
-                    </div>
-                    <div className="text-center border-l border-white/30">
-                      <p className="text-xs text-white/70 mb-1">Total Histórico</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <Award className="w-4 h-4" />
-                        <span className="text-2xl font-bold">{userInfo.lifetimeSeals || 0}</span>
-                      </div>
-                    </div>
+                {/* Simple Stats */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-lg font-bold">{userInfo.currentSeals}</div>
+                    <div className="text-xs opacity-75">actual</div>
                   </div>
-                </div>
-
-                {/* Seal Progress Bar */}
-                <div className="bg-white/10 rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-white/80 to-white h-full transition-all duration-500"
-                    style={{ width: `${(userInfo.currentSeals / 15) * 100}%` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-2 text-xs">
-                  <span>{userInfo.currentSeals} sellos actuales</span>
-                  <span>{userInfo.sealsRemaining} para café gratis</span>
+                  <div className="border-x border-white/30">
+                    <div className="text-lg font-bold">{userInfo.sealsRemaining}</div>
+                    <div className="text-xs opacity-75">faltan</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold">{userInfo.lifetimeSeals || 0}</div>
+                    <div className="text-xs opacity-75">total</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Transaction Result Display */}
+              {/* Transaction Result - Simplified */}
               {userInfo.lastTransaction && success && (
-                <>
+                <div className="p-3 bg-green-50 border-b border-green-200">
                   {userInfo.lastTransaction.rewardGranted ? (
-                    /* Free Coffee Reward Display - Black & White Theme */
-                    <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 p-4 border-b-2 border-gray-800 animate-pulse">
-                      <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-3">
-                          <Coffee className="w-8 h-8 text-black animate-bounce" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-1">¡CAFÉ GRATIS CONSEGUIDO!</h3>
-                        <p className="text-sm text-gray-300 mb-3">Contador reiniciado a 0</p>
-                        <div className="grid grid-cols-3 gap-2 text-sm">
-                          <div className="bg-white/90 rounded-lg p-2">
-                            <span className="text-xs text-gray-600">Anterior</span>
-                            <p className="font-bold text-gray-900">{userInfo.lastTransaction.previousSeals}</p>
-                          </div>
-                          <div className="bg-white/90 rounded-lg p-2">
-                            <span className="text-xs text-gray-600">Añadidos</span>
-                            <p className="font-bold text-black">+{userInfo.lastTransaction.sealsAdded}</p>
-                          </div>
-                          <div className="bg-white/90 rounded-lg p-2">
-                            <span className="text-xs text-gray-600">Nuevo</span>
-                            <p className="font-bold text-black">{userInfo.lastTransaction.newTotal}</p>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="text-center">
+                      <Coffee className="w-8 h-8 text-black mx-auto mb-2" />
+                      <p className="font-bold text-green-700">¡Café Gratis!</p>
+                      <p className="text-xs text-gray-600 mt-1">Contador reiniciado</p>
                     </div>
                   ) : (
-                    /* Normal Transaction Display */
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 border-b border-green-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <h4 className="font-semibold text-green-800">Sellos Añadidos</h4>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">+{userInfo.lastTransaction.sealsAdded} sellos</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="bg-white rounded-lg p-2">
-                          <span className="text-xs text-gray-500">Sellos Anteriores</span>
-                          <p className="font-bold text-gray-800">{userInfo.lastTransaction.previousSeals}</p>
-                        </div>
-                        <div className="bg-white rounded-lg p-2">
-                          <span className="text-xs text-gray-500">Sellos Añadidos</span>
-                          <p className="font-bold text-green-600">+{userInfo.lastTransaction.sealsAdded}</p>
-                        </div>
-                        <div className="bg-white rounded-lg p-2">
-                          <span className="text-xs text-gray-500">Total Actual</span>
-                          <p className="font-bold text-gray-800">{userInfo.lastTransaction.newTotal}</p>
-                        </div>
-                        <div className="bg-white rounded-lg p-2">
-                          <span className="text-xs text-gray-500">Para Premio</span>
-                          <p className="font-bold text-blue-600">{15 - userInfo.lastTransaction.newTotal}</p>
-                        </div>
-                      </div>
-                      {userInfo.lastTransaction.transactionId && (
-                        <p className="text-xs text-gray-500 mt-2">ID: {userInfo.lastTransaction.transactionId.slice(0, 8)}...</p>
-                      )}
+                      <span className="text-xs text-gray-600">Total: {userInfo.lastTransaction.newTotal}/15</span>
                     </div>
                   )}
-                </>
+                </div>
               )}
 
-              {/* Seals Grid Visualization */}
-              <div className="p-4 bg-gradient-to-b from-gray-50 to-white">
-                <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider text-center mb-3">Tarjeta de Sellos</h4>
-                <div className="grid grid-cols-5 gap-2 max-w-xs mx-auto">
+              {/* Seals Grid - Simplified */}
+              <div className="p-3">
+                <div className="grid grid-cols-5 gap-1.5 mb-2">
                   {Array.from({ length: 15 }, (_, i) => (
                     <div
                       key={i}
-                      className={`aspect-square rounded-lg flex items-center justify-center transition-all transform hover:scale-105 ${
+                      className={`aspect-square rounded-lg flex items-center justify-center ${
                         i < userInfo.currentSeals 
-                          ? 'bg-gradient-to-br from-black to-gray-800 shadow-md' 
-                          : 'bg-white border-2 border-dashed border-gray-300'
+                          ? 'bg-black' 
+                          : 'bg-gray-100 border border-gray-300'
                       }`}
                     >
-                      <Coffee className={`w-4 h-4 ${i < userInfo.currentSeals ? 'text-white' : 'text-gray-300'}`} />
-                      {i === 14 && (
-                        <div className="absolute">
-                          <Award className={`w-3 h-3 ${i < userInfo.currentSeals ? 'text-yellow-300' : 'text-gray-400'} absolute -top-1 -right-1`} />
-                        </div>
-                      )}
+                      <Coffee className={`w-3 h-3 ${i < userInfo.currentSeals ? 'text-white' : 'text-gray-400'}`} />
                     </div>
                   ))}
                 </div>
-                <p className="text-center text-xs text-gray-500 mt-3">
+                <p className="text-center text-xs text-gray-600">
                   {userInfo.sealsRemaining === 0 
-                    ? '🎉 ¡Café gratis disponible!' 
-                    : `${userInfo.sealsRemaining} sellos más para café gratis`}
+                    ? '¡Café gratis disponible!' 
+                    : `Faltan ${userInfo.sealsRemaining} sellos`}
                 </p>
               </div>
 
-              {/* Available Rewards */}
-              {userInfo.availableRewards && userInfo.availableRewards.length > 0 && (
-                <div className="px-4 pb-2">
-                  <h4 className="text-xs font-medium text-gray-600 mb-2">Recompensas Disponibles</h4>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {userInfo.availableRewards.map((reward, idx) => (
-                      <div key={reward.id || idx} className="flex-shrink-0 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                        <p className="text-xs font-medium text-green-800">{reward.name}</p>
-                        <p className="text-xs text-green-600">{reward.required_seals} sellos</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Quick Add Seals */}
-              <div className="p-4 border-t border-gray-200">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm font-medium">Añadir Sellos</span>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 5, 10].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => setSealsToAdd(num)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                          sealsToAdd === num 
-                            ? 'bg-black text-white' 
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        +{num}
-                      </button>
-                    ))}
-                  </div>
+              {/* Actions - Simplified */}
+              <div className="p-3 border-t border-gray-200 space-y-2">
+                {/* Quick Seal Buttons */}
+                <div className="flex gap-1">
+                  {[1, 2, 3, 5, 10].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setSealsToAdd(num)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium ${
+                        sealsToAdd === num 
+                          ? 'bg-black text-white' 
+                          : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      +{num}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <Button
-                    onClick={handleAddSeals}
-                    disabled={loading}
-                    className="w-full bg-black text-white py-3 rounded-xl font-semibold shadow-lg active:scale-95"
-                  >
-                    {loading ? (
-                      <div className="flex items-center justify-center">
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Procesando...
-                      </div>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2 inline" />
-                        Añadir {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button
-                    onClick={() => {
-                      // Reset all states and keep scanner open for next scan
-                      setQrToken('');
-                      setUserInfo(null);
-                      setSealsToAdd(1);
-                      setNotes('');
-                      setError(null);
-                      setSuccess(null);
-                      setShowScanner(true);
-                    }}
-                    variant="outline"
-                    className="w-full border-2 border-gray-300"
-                  >
-                    <ScanLine className="w-4 h-4 mr-2" />
-                    Escanear Otro Cliente
-                  </Button>
-                </div>
+                {/* Main Actions */}
+                <Button
+                  onClick={handleAddSeals}
+                  disabled={loading}
+                  className="w-full bg-black text-white py-2.5 rounded-lg font-medium text-sm"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>Añadir {sealsToAdd} {sealsToAdd === 1 ? 'Sello' : 'Sellos'}</>
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    setQrToken('');
+                    setUserInfo(null);
+                    setSealsToAdd(1);
+                    setNotes('');
+                    setError(null);
+                    setSuccess(null);
+                    setShowScanner(true);
+                  }}
+                  variant="outline"
+                  className="w-full border border-gray-300 py-2.5 rounded-lg text-sm"
+                >
+                  <ScanLine className="w-3 h-3 mr-1 inline" />
+                  Nuevo Escaneo
+                </Button>
               </div>
             </div>
           </div>
