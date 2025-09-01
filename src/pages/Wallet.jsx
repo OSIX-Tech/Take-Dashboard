@@ -62,12 +62,6 @@ function Wallet() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    if (showReward) {
-      const timer = setTimeout(() => setShowReward(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showReward]);
 
   const loadInitialData = async () => {
     setInitialLoading(true);
@@ -249,8 +243,8 @@ function Wallet() {
       
       // Check for rewards
       if (result?.rewardGranted) {
-        setShowReward(true);
-        setSuccess(response?.message || '¡Café gratis conseguido! Contador reiniciado.');
+        setShowReward(false); // Don't show animation
+        setSuccess(response?.message || '¡Café gratis conseguido! Contador reiniciado a 0.');
       } else if (result?.newlyUnlockedRewards && result.newlyUnlockedRewards.length > 0) {
         setNewlyUnlockedRewards(result.newlyUnlockedRewards);
         setShowUnlockedRewardsModal(true);
@@ -859,20 +853,20 @@ function Wallet() {
                 </div>
               </div>
 
-              {/* Transaction Result - Simplified */}
+              {/* Transaction Result - Black & White */}
               {userInfo.lastTransaction && success && (
-                <div className="p-3 bg-green-50 border-b border-green-200">
+                <div className="p-3 bg-gray-100 border-b border-gray-300">
                   {userInfo.lastTransaction.rewardGranted ? (
                     <div className="text-center">
                       <Coffee className="w-8 h-8 text-black mx-auto mb-2" />
-                      <p className="font-bold text-green-700">¡Café Gratis!</p>
-                      <p className="text-xs text-gray-600 mt-1">Contador reiniciado</p>
+                      <p className="font-bold text-black">¡Café Gratis!</p>
+                      <p className="text-xs text-gray-600 mt-1">Contador reiniciado a 0</p>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span className="text-sm font-medium text-green-700">+{userInfo.lastTransaction.sealsAdded} sellos</span>
+                        <CheckCircle className="w-4 h-4 text-black" />
+                        <span className="text-sm font-medium text-black">+{userInfo.lastTransaction.sealsAdded} sellos</span>
                       </div>
                       <span className="text-xs text-gray-600">Total: {userInfo.lastTransaction.newTotal}/15</span>
                     </div>
@@ -1247,28 +1241,6 @@ function Wallet() {
       </Card>
       )}
 
-      {/* Reward Animation - Black & White Theme */}
-      {showReward && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-gradient-to-b from-white to-gray-100 rounded-3xl p-6 shadow-2xl transform animate-in zoom-in-105 duration-300 border-2 border-black">
-            <div className="text-center space-y-3">
-              <div className="relative inline-flex items-center justify-center w-16 h-16 bg-black rounded-full shadow-lg animate-bounce">
-                <Coffee className="w-8 h-8 text-white" />
-                <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-black">¡PREMIO CONSEGUIDO!</h2>
-                <p className="text-sm text-gray-700 mt-1">Café Gratis Desbloqueado</p>
-              </div>
-              <div className="flex justify-center gap-2">
-                <Coffee className="w-6 h-6 text-black animate-pulse" />
-                <Coffee className="w-6 h-6 text-gray-700 animate-pulse delay-75" />
-                <Coffee className="w-6 h-6 text-black animate-pulse delay-150" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Newly Unlocked Rewards Modal */}
       {showUnlockedRewardsModal && newlyUnlockedRewards.length > 0 && (
