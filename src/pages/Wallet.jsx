@@ -800,15 +800,6 @@ function Wallet() {
                 <CardContent className="p-4 md:p-5 lg:p-6 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-y-auto flex-1">
                   {renderUserInfo()}
                   
-                  {/* Success Feedback Area */}
-                  {success && (
-                    <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 animate-in fade-in slide-in-from-top-2">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="text-green-700 font-medium">{success}</span>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -859,8 +850,20 @@ function Wallet() {
                   {userInfo.lastTransaction.rewardGranted ? (
                     <div className="text-center">
                       <Coffee className="w-8 h-8 text-black mx-auto mb-2" />
+                      {/* Check for additional rewards in the message */}
                       <p className="font-bold text-black">¡Café Gratis!</p>
                       <p className="text-xs text-gray-600 mt-1">Contador reiniciado a 0</p>
+                      {(success.includes('Además') || success.includes('desbloqueado')) && success.includes(':') && (
+                        <div className="mt-2 pt-2 border-t border-gray-300">
+                          <p className="text-xs text-black font-medium">
+                            {(() => {
+                              // Extract reward name from message like "¡Además, has desbloqueado: Brownie gratis!"
+                              const match = success.match(/desbloqueado:\s*(.+?)(?:\!|$)/);
+                              return match ? `+ ${match[1]}` : '';
+                            })()}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
@@ -952,18 +955,8 @@ function Wallet() {
         </>
       )}
 
-      {/* Error and Success Messages */}
+      {/* Error Messages Only - Success is shown in transaction result */}
       {error && <ErrorMessage message={error} onClose={() => setError(null)} />}
-      {success && !showUnlockedRewardsModal && !showReward && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-2">
-            <div className="p-1 bg-green-100 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <p className="text-green-700 font-medium">{success}</p>
-          </div>
-        </div>
-      )}
 
       {/* Statistics Cards - Never show on mobile */}
       {!isMobile && (() => {
