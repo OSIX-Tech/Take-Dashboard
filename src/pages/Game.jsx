@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Trophy, Medal, Award, Star, User } from 'lucide-react'
+import { Trophy, Medal, Award, Star, User, Calendar, Clock } from 'lucide-react'
 import { highScoreService } from '@/services/gameService'
+import { leaderboardService } from '@/services/leaderboardService'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import ErrorMessage from '@/components/common/ErrorMessage'
 
 function Game() {
   const [leaderboard, setLeaderboard] = useState([])
+  const [activePeriod, setActivePeriod] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchLeaderboard()
+    fetchActivePeriod()
+    const interval = setInterval(() => {
+      fetchActivePeriod()
+    }, 60000) // Update period info every minute
+    return () => clearInterval(interval)
   }, [])
+
+  const fetchActivePeriod = async () => {
+    try {
+      const period = await leaderboardService.getActivePeriod()
+      setActivePeriod(period)
+    } catch (err) {
+      console.error('Error cargando periodo activo:', err)
+    }
+  }
 
   const fetchLeaderboard = async () => {
     setLoading(true)
@@ -90,6 +106,44 @@ function Game() {
           </p>
         </div>
       </div>
+
+      {/* Active Period Info */}
+      {activePeriod && (
+        <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-800 rounded-xl">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-800 text-white rounded-lg">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Periodo Actual</p>
+                  <p className="font-semibold text-gray-900">
+                    {leaderboardService.formatPeriodDates(activePeriod.start_date, activePeriod.end_date)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-800 text-white rounded-lg">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">Tiempo Restante</p>
+                  <p className="font-bold text-gray-900 text-lg">
+                    {leaderboardService.formatTimeRemaining(activePeriod.end_date)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-300">
+              <p className="text-sm text-gray-700 text-center">
+                <Trophy className="inline-block w-4 h-4 mr-1" />
+                El ganador del periodo recibirá un premio especial en la cafetería
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Top 3 Cards */}
       {leaderboard.length > 0 && (

@@ -16,6 +16,8 @@ const Wallet = lazy(() => import('./pages/Wallet'))
 const TestScanner = lazy(() => import('./pages/TestScanner'))
 const LoginWallet = lazy(() => import('./pages/LoginWallet'))
 const AddWallet = lazy(() => import('./pages/AddWallet'))
+const LeaderboardPeriods = lazy(() => import('./pages/LeaderboardPeriods'))
+const LeaderboardWinners = lazy(() => import('./pages/LeaderboardWinners'))
 
 // Componente para manejar el callback de admin
 const AdminCallback = ({ onLogin }) => {
@@ -443,6 +445,20 @@ function App() {
               isAuthenticated ? (
                 <Layout onLogout={handleLogout}>
                   <Wallet />
+                </Layout>
+              ) : <Navigate to="/login" replace />
+            } />
+            <Route path="/leaderboard-periods" element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout}>
+                  <LeaderboardPeriods />
+                </Layout>
+              ) : <Navigate to="/login" replace />
+            } />
+            <Route path="/leaderboard-winners" element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout}>
+                  <LeaderboardWinners />
                 </Layout>
               ) : <Navigate to="/login" replace />
             } />

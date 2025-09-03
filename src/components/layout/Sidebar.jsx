@@ -8,7 +8,9 @@ import {
   Trophy,
   Wallet,
   ChevronLeft, 
-  ChevronRight
+  ChevronRight,
+  Timer,
+  Award
 } from 'lucide-react'
 
 const Sidebar = () => {
@@ -65,6 +67,18 @@ const Sidebar = () => {
       label: 'Juego', 
       path: '/game',
       description: 'Ver clasificación'
+    },
+    { 
+      icon: <Timer className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
+      label: 'Periodos', 
+      path: '/leaderboard-periods',
+      description: 'Gestionar periodos de juego'
+    },
+    { 
+      icon: <Award className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
+      label: 'Ganadores', 
+      path: '/leaderboard-winners',
+      description: 'Gestionar ganadores y premios'
     },
     { 
       icon: <Wallet className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
