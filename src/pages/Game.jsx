@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 // eslint-disable-next-line no-unused-vars
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 // eslint-disable-next-line no-unused-vars
@@ -66,7 +66,8 @@ function Game() {
     }, 60000)
     
     return () => clearInterval(interval)
-  }, [activeTab, filterClaimed, loadWinners])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, filterClaimed])
 
   const fetchActivePeriod = async () => {
     try {
@@ -128,7 +129,7 @@ function Game() {
     }
   }
 
-  const loadWinners = useCallback(async () => {
+  const loadWinners = async () => {
     try {
       setLoading(true)
       const data = await leaderboardService.getAllWinners()
@@ -162,7 +163,7 @@ function Game() {
     } finally {
       setLoading(false)
     }
-  }, [filterClaimed])
+  }
 
   const handleCreatePeriod = async (e) => {
     e.preventDefault()
