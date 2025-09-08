@@ -45,7 +45,10 @@ const Menu = () => {
     price: '',
     category_id: '',
     is_available: true,
-    image_url: ''
+    image_url: '',
+    price_m: '',
+    price_xl: '',
+    price_ice: ''
   })
   const [selectedImageFile, setSelectedImageFile] = useState(null)
 
@@ -126,7 +129,14 @@ const Menu = () => {
       return
     }
     
-    const descValidation = validateRequired(formData.description, 'Descripción')
+    // Prepare description with price format if coffee prices exist
+    let finalDescription = formData.description
+    if (formData.price_m || formData.price_xl || formData.price_ice) {
+      const pricePrefix = `${formData.price_m || ''}; ${formData.price_xl || ''};${formData.price_ice || ''};`
+      finalDescription = pricePrefix + formData.description
+    }
+    
+    const descValidation = validateRequired(finalDescription, 'Descripción')
     if (!descValidation.isValid) {
       alert(descValidation.error)
       return
@@ -152,6 +162,10 @@ const Menu = () => {
         image_url: imageUrlNormalized,
         folder: 'menu-items'
       }
+      // Remove the individual price fields as they're now in description
+      delete normalized.price_m
+      delete normalized.price_xl
+      delete normalized.price_ice
 
       if (editingItem) {
         let result
@@ -198,13 +212,34 @@ const Menu = () => {
 
   const handleEdit = useCallback((item) => {
     setEditingItem(item)
+    
+    // Parse prices from description if they exist
+    let actualDescription = item.description
+    let priceM = ''
+    let priceXL = ''
+    let priceIce = ''
+    
+    // Check if description starts with price format
+    const pricePattern = /^([^;]*);([^;]*);([^;]*);(.*)$/
+    const match = item.description.match(pricePattern)
+    
+    if (match) {
+      priceM = match[1].trim()
+      priceXL = match[2].trim()
+      priceIce = match[3].trim()
+      actualDescription = match[4]
+    }
+    
     setFormData({
       name: item.name,
-      description: item.description,
+      description: actualDescription,
       price: item.price ? item.price.toString() : '',
       category_id: item.category_id,
       is_available: item.is_available,
-      image_url: item.image_url || ''
+      image_url: item.image_url || '',
+      price_m: priceM,
+      price_xl: priceXL,
+      price_ice: priceIce
     })
     setSelectedImageFile(null) // Reset selected image file when editing
     setShowForm(true)
@@ -244,7 +279,10 @@ const Menu = () => {
       price: '',
       category_id: '',
       is_available: true,
-      image_url: ''
+      image_url: '',
+      price_m: '',
+      price_xl: '',
+      price_ice: ''
     })
     setSelectedImageFile(null)
   }
@@ -455,7 +493,12 @@ const Menu = () => {
                   {item.name}
                 </h3>
                 <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                  {item.description}
+                  {(() => {
+                    // Parse and display description without price prefix
+                    const pricePattern = /^([^;]*);([^;]*);([^;]*);(.*)$/
+                    const match = item.description.match(pricePattern)
+                    return match ? match[4] : item.description
+                  })()}
                 </p>
               </div>
 
@@ -463,9 +506,44 @@ const Menu = () => {
               <div className="pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-baseline space-x-2">
-                    <span className="text-2xl font-bold text-gray-900">
-                      €{item.price}
-                    </span>
+                    {(() => {
+                      // Check if item has coffee prices
+                      const pricePattern = /^([^;]*);([^;]*);([^;]*);(.*)$/
+                      const match = item.description.match(pricePattern)
+                      
+                      if (match && (match[1].trim() || match[2].trim() || match[3].trim())) {
+                        // Show coffee prices if they exist
+                        return (
+                          <div className="flex flex-col space-y-1">
+                            {match[1].trim() && (
+                              <div className="flex items-baseline space-x-1">
+                                <span className="text-xs text-gray-500">M:</span>
+                                <span className="text-sm font-bold text-gray-900">€{match[1].trim()}</span>
+                              </div>
+                            )}
+                            {match[2].trim() && (
+                              <div className="flex items-baseline space-x-1">
+                                <span className="text-xs text-gray-500">XL:</span>
+                                <span className="text-sm font-bold text-gray-900">€{match[2].trim()}</span>
+                              </div>
+                            )}
+                            {match[3].trim() && (
+                              <div className="flex items-baseline space-x-1">
+                                <span className="text-xs text-gray-500">Hielo:</span>
+                                <span className="text-sm font-bold text-gray-900">€{match[3].trim()}</span>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      } else {
+                        // Show regular price
+                        return (
+                          <span className="text-2xl font-bold text-gray-900">
+                            €{item.price}
+                          </span>
+                        )
+                      }
+                    })()}
                   </div>
                   
                   {/* Quick actions for mobile - now always visible on mobile */}
@@ -547,6 +625,45 @@ const Menu = () => {
                 placeholder="Nombre del elemento"
                 required
               />
+            </div>
+            
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Precios de Café (opcional)</label>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Tamaño M</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price_m}
+                    onChange={(e) => setFormData({...formData, price_m: e.target.value})}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Tamaño XL</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price_xl}
+                    onChange={(e) => setFormData({...formData, price_xl: e.target.value})}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Con Hielo</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price_ice}
+                    onChange={(e) => setFormData({...formData, price_ice: e.target.value})}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
             </div>
             
             <div>
