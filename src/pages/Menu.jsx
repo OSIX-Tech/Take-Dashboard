@@ -42,7 +42,6 @@ const Menu = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: '',
     category_id: '',
     is_available: true,
     image_url: '',
@@ -142,12 +141,8 @@ const Menu = () => {
       return
     }
     
-    // Validate price
-    const priceValidation = validatePrice(formData.price)
-    if (!priceValidation.isValid) {
-      alert(priceValidation.error)
-      return
-    }
+    // Set fixed price to 1
+    const fixedPrice = 1
     
     try {
       const imageUrlNormalized = typeof formData.image_url === 'string'
@@ -158,7 +153,7 @@ const Menu = () => {
         ...formData,
         name: nameValidation.value,
         description: descValidation.value,
-        price: priceValidation.value,
+        price: fixedPrice,
         image_url: imageUrlNormalized,
         folder: 'menu-items'
       }
@@ -233,7 +228,6 @@ const Menu = () => {
     setFormData({
       name: item.name,
       description: actualDescription,
-      price: item.price ? item.price.toString() : '',
       category_id: item.category_id,
       is_available: item.is_available,
       image_url: item.image_url || '',
@@ -276,7 +270,6 @@ const Menu = () => {
     setFormData({
       name: '',
       description: '',
-      price: '',
       category_id: '',
       is_available: true,
       image_url: '',
@@ -672,19 +665,6 @@ const Menu = () => {
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 placeholder="Descripción del elemento"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Precio</label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                placeholder="0.00"
                 required
               />
             </div>
