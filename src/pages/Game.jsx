@@ -644,7 +644,7 @@ function Game() {
                 
                 <form onSubmit={handleCreatePeriod} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">ID del Juego</label>
+                    <label className="block text-sm font-medium mb-1">ID del Juego *</label>
                     <input
                       type="text"
                       value={newPeriod.gameId}
@@ -656,7 +656,7 @@ function Game() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium mb-1">Duración (días)</label>
+                    <label className="block text-sm font-medium mb-1">Duración (días) *</label>
                     <input
                       type="number"
                       value={newPeriod.durationDays}
@@ -716,7 +716,7 @@ function Game() {
                 
                 <form onSubmit={handleUpdatePeriod} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Duración (días)</label>
+                    <label className="block text-sm font-medium mb-1">Duración (días) *</label>
                     <input
                       type="number"
                       value={editData.duration_days}
@@ -742,13 +742,14 @@ function Game() {
                   
                   {editData.auto_restart && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Duración del siguiente periodo (días)</label>
+                      <label className="block text-sm font-medium mb-1">Duración del siguiente periodo (días) *</label>
                       <input
                         type="number"
                         value={editData.next_period_duration_days}
                         onChange={(e) => setEditData({...editData, next_period_duration_days: parseInt(e.target.value)})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         min="1"
+                        required
                       />
                     </div>
                   )}

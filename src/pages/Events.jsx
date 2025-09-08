@@ -95,6 +95,13 @@ const Events = () => {
       return
     }
     
+    
+    // Validate image is required
+    if (!formData.image_url && !selectedImageFile) {
+      alert('La imagen del evento es obligatoria')
+      return
+    }
+    
     // Validate date
     const dateValidation = validateDate(formData.published_at)
     if (!dateValidation.isValid) {
@@ -368,7 +375,7 @@ const Events = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Evento</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Evento *</label>
                 <ImageUpload
                   key={editingEvent?.id || 'new'} // Force re-render when switching items
                   currentImageUrl={formData.image_url || ''}
@@ -676,7 +683,7 @@ const Events = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Evento</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Evento *</label>
                 <ImageUpload
                   key={editingEvent?.id || 'new'} // Force re-render when switching items
                   currentImageUrl={formData.image_url || ''}

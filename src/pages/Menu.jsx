@@ -128,12 +128,21 @@ const Menu = () => {
       return
     }
     
-    // Prepare description with price format if coffee prices exist
-    let finalDescription = formData.description
-    if (formData.price_m || formData.price_xl || formData.price_ice) {
-      const pricePrefix = `${formData.price_m || ''}; ${formData.price_xl || ''};${formData.price_ice || ''};`
-      finalDescription = pricePrefix + formData.description
+    // Validate coffee prices are required
+    if (!formData.price_m || !formData.price_xl || !formData.price_ice) {
+      alert('Todos los precios de café son obligatorios')
+      return
     }
+    
+    // Validate image is required
+    if (!formData.image_url && !selectedImageFile) {
+      alert('La imagen del producto es obligatoria')
+      return
+    }
+    
+    // Prepare description with price format
+    const pricePrefix = `${formData.price_m}; ${formData.price_xl};${formData.price_ice};`
+    const finalDescription = pricePrefix + formData.description
     
     const descValidation = validateRequired(finalDescription, 'Descripción')
     if (!descValidation.isValid) {
@@ -611,7 +620,7 @@ const Menu = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -621,10 +630,10 @@ const Menu = () => {
             </div>
             
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Precios de Café (opcional)</label>
+              <label className="block text-sm font-medium text-gray-700">Precios de Café *</label>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Tamaño M</label>
+                  <label className="block text-xs text-gray-600 mb-1">Tamaño M *</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -632,10 +641,11 @@ const Menu = () => {
                     value={formData.price_m}
                     onChange={(e) => setFormData({...formData, price_m: e.target.value})}
                     placeholder="0.00"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Tamaño XL</label>
+                  <label className="block text-xs text-gray-600 mb-1">Tamaño XL *</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -643,10 +653,11 @@ const Menu = () => {
                     value={formData.price_xl}
                     onChange={(e) => setFormData({...formData, price_xl: e.target.value})}
                     placeholder="0.00"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Con Hielo</label>
+                  <label className="block text-xs text-gray-600 mb-1">Con Hielo *</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -654,13 +665,14 @@ const Menu = () => {
                     value={formData.price_ice}
                     onChange={(e) => setFormData({...formData, price_ice: e.target.value})}
                     placeholder="0.00"
+                    required
                   />
                 </div>
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Descripción *</label>
               <Input
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -670,7 +682,7 @@ const Menu = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
               <select
                 value={formData.category_id}
                 onChange={(e) => setFormData({...formData, category_id: e.target.value})}
@@ -685,7 +697,7 @@ const Menu = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Producto</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Producto *</label>
               <ImageUpload
                 key={editingItem?.id || 'new'} // Force re-render when switching items
                 currentImageUrl={formData.image_url || ''}

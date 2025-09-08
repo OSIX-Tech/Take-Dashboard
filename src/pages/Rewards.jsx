@@ -135,8 +135,19 @@ const Rewards = () => {
       return
     }
     
+    if (!formData.description.trim()) {
+      alert('La descripción es requerida')
+      return
+    }
+    
     if (!formData.required_seals || formData.required_seals < 1) {
       alert('La cantidad de sellos debe ser mayor a 0')
+      return
+    }
+    
+    // Validate image is required
+    if (!formData.image_url && !selectedImageFile) {
+      alert('El icono es obligatorio')
       return
     }
 
@@ -368,7 +379,7 @@ const Rewards = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre
+                Nombre *
               </label>
               <Input
                 ref={nameInputRef}
@@ -382,7 +393,7 @@ const Rewards = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción
+                Descripción *
               </label>
               <Input
                 ref={descriptionInputRef}
@@ -390,12 +401,13 @@ const Rewards = () => {
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder="Ej: Un café gratis de tu elección"
+                required
                 className="w-full"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sellos Requeridos
+                Sellos Requeridos *
               </label>
               <Input
                 ref={sealsInputRef}
@@ -410,7 +422,7 @@ const Rewards = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Icono
+                Icono *
               </label>
               <ImageUpload
                 key={editingReward?.id || 'new'}
