@@ -26,7 +26,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
   const [categoryFormData, setCategoryFormData] = useState({
     name: '',
     description: '',
-    type: 'drinks',
+    type: 'cafes',
     icon_url: '',
     allergen_ids: []
   })
@@ -86,7 +86,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     setCategoryFormData({
       name: category.name || '',
       description: category.description || '',
-      type: category.type || 'drinks',
+      type: category.type || 'cafes',
       icon_url: category.icon_url || '',
       allergen_ids: category.allergen_ids || []
     })
@@ -233,7 +233,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
     setCategoryFormData({
       name: '',
       description: '',
-      type: 'drinks',
+      type: 'cafes',
       icon_url: '',
       allergen_ids: []
     })
@@ -260,7 +260,9 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
   }
 
   const getTypeIcon = (type) => {
-    return type === 'drinks' ? <Coffee className="w-4 h-4" /> : <Pizza className="w-4 h-4" />
+    if (type === 'cafes') return <Coffee className="w-4 h-4" />
+    if (type === 'otras-bebidas') return <Coffee className="w-4 h-4" />
+    return <Pizza className="w-4 h-4" />
   }
 
   return createPortal(
@@ -405,23 +407,36 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                           <div className="flex gap-2">
                             <button
                               type="button"
-                              onClick={() => setCategoryFormData({ ...categoryFormData, type: 'drinks' })}
+                              onClick={() => setCategoryFormData({ ...categoryFormData, type: 'cafes' })}
                               className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
-                                categoryFormData.type === 'drinks' 
-                                  ? 'bg-gray-900 text-white border-gray-900' 
+                                categoryFormData.type === 'cafes'
+                                  ? 'bg-gray-900 text-white border-gray-900'
                                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                               }`}
                               disabled={savingCategory}
                             >
                               <Coffee className="w-4 h-4 inline mr-2" />
-                              Bebidas
+                              Cafés
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCategoryFormData({ ...categoryFormData, type: 'otras-bebidas' })}
+                              className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
+                                categoryFormData.type === 'otras-bebidas'
+                                  ? 'bg-gray-900 text-white border-gray-900'
+                                  : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                              }`}
+                              disabled={savingCategory}
+                            >
+                              <Coffee className="w-4 h-4 inline mr-2" />
+                              Otras Bebidas
                             </button>
                             <button
                               type="button"
                               onClick={() => setCategoryFormData({ ...categoryFormData, type: 'snacks' })}
                               className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
-                                categoryFormData.type === 'snacks' 
-                                  ? 'bg-gray-900 text-white border-gray-900' 
+                                categoryFormData.type === 'snacks'
+                                  ? 'bg-gray-900 text-white border-gray-900'
                                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                               }`}
                               disabled={savingCategory}
@@ -517,13 +532,13 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                getTypeIcon(category.type || 'drinks')
+                                getTypeIcon(category.type || 'cafes')
                               )}
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{category.name}</h3>
                               <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                                {category.type === 'snacks' ? 'Snacks' : 'Bebidas'}
+                                {category.type === 'snacks' ? 'Snacks' : category.type === 'cafes' ? 'Cafés' : 'Otras Bebidas'}
                               </span>
                             </div>
                           </div>
@@ -654,7 +669,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
                                 className="w-4 h-4 text-black focus:ring-black border-gray-300 rounded"
                               />
                               <div className="flex items-center space-x-1">
-                                {getTypeIcon(category.type || 'drinks')}
+                                {getTypeIcon(category.type || 'cafes')}
                                 <span className="text-sm">{category.name}</span>
                               </div>
                             </label>
