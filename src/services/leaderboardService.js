@@ -142,9 +142,11 @@ const simulateDelay = () => new Promise(resolve => setTimeout(resolve, 300))
 
 export const leaderboardService = {
   // Period Management
-  async getAllPeriods() {
+  async getAllPeriods(gameId = null) {
     try {
-      return await apiService.get('high_score/periods')
+      const params = gameId ? { gameId } : {}
+      const response = await apiService.get('high_score/periods', params)
+      return response.data || response
     } catch (error) {
       console.warn('Using mock data for periods:', error.message)
       await simulateDelay()
@@ -164,7 +166,13 @@ export const leaderboardService = {
 
   async createPeriod(data) {
     try {
-      return await apiService.post('high_score/periods', data)
+      // Convert camelCase to snake_case for backend
+      const requestBody = {
+        game_id: data.gameId,
+        duration_days: data.durationDays,
+        auto_restart: data.autoRestart
+      }
+      return await apiService.post('high_score/periods', requestBody)
     } catch (error) {
       console.warn('Mock: Creating period locally', error.message)
       await simulateDelay()
@@ -187,7 +195,12 @@ export const leaderboardService = {
 
   async updatePeriod(periodId, data) {
     try {
-      return await apiService.put(`high_score/periods/${periodId}`, data)
+      // Convert camelCase to snake_case for backend if needed
+      const requestBody = {
+        end_date: data.end_date,
+        auto_restart: data.auto_restart
+      }
+      return await apiService.put(`high_score/periods/${periodId}`, requestBody)
     } catch (error) {
       console.warn('Mock: Updating period locally', error.message)
       await simulateDelay()
@@ -201,7 +214,8 @@ export const leaderboardService = {
 
   async closePeriod(periodId, topPositions = 1) {
     try {
-      return await apiService.post(`high_score/periods/${periodId}/close`, { topPositions })
+      const response = await apiService.post(`high_score/periods/${periodId}/close`, { topPositions })
+      return response.data || response
     } catch (error) {
       console.warn('Mock: Closing period locally', error.message)
       await simulateDelay()
@@ -216,7 +230,8 @@ export const leaderboardService = {
 
   async processExpiredPeriods() {
     try {
-      return await apiService.post('high_score/process-expired')
+      const response = await apiService.post('high_score/process-expired')
+      return response.data || response
     } catch (error) {
       console.warn('Mock: Processing expired periods', error.message)
       await simulateDelay()
@@ -227,7 +242,8 @@ export const leaderboardService = {
   // Winner Management
   async getAllWinners(params = {}) {
     try {
-      return await apiService.get('high_score/winners', params)
+      const response = await apiService.get('high_score/winners', params)
+      return response.data || response
     } catch (error) {
       console.warn('Using mock data for winners:', error.message)
       await simulateDelay()
@@ -247,7 +263,8 @@ export const leaderboardService = {
 
   async markWinnerClaimed(winnerId) {
     try {
-      return await apiService.post(`high_score/winners/${winnerId}/mark-claimed`)
+      const response = await apiService.post(`high_score/winners/${winnerId}/mark-claimed`)
+      return response.data || response
     } catch (error) {
       console.warn('Mock: Marking winner as claimed locally', error.message)
       await simulateDelay()
@@ -262,7 +279,8 @@ export const leaderboardService = {
 
   async getPeriodWinners(periodId) {
     try {
-      return await apiService.get(`high_score/periods/${periodId}/winners`)
+      const response = await apiService.get(`high_score/periods/${periodId}/winners`)
+      return response.data || response
     } catch (error) {
       console.warn('Using mock data for period winners:', error.message)
       await simulateDelay()
