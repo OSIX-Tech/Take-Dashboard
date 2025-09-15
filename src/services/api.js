@@ -103,12 +103,13 @@ class ApiService {
         }
       })
 
-      console.log(`🌐 Making GET request to: ${url.toString()}`)
-      console.log(`🔑 Headers:`, this.getAuthHeaders())
+      console.log(`🌐 [API] Making GET request to: ${url.toString()}`)
+      console.log(`🔑 [API] Headers:`, this.getAuthHeaders())
+      console.log(`📊 [API] Query params:`, params)
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 Using credentials: ${credentials}`)
+      console.log(`🔧 [API] Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -137,12 +138,13 @@ class ApiService {
   async post(endpoint, data = {}) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 Making POST request to: ${url.toString()}`)
-      console.log(`📦 Data:`, data)
+      console.log(`🌐 [API] Making POST request to: ${url.toString()}`)
+      console.log(`📦 [API] Request body:`, data)
+      console.log(`🔑 [API] Headers:`, this.getAuthHeaders())
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 Using credentials: ${credentials}`)
+      console.log(`🔧 [API] Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'POST',
@@ -193,12 +195,13 @@ class ApiService {
   async put(endpoint, data = {}) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 Making PUT request to: ${url.toString()}`)
-      console.log(`📦 Data:`, data)
+      console.log(`🌐 [API] Making PUT request to: ${url.toString()}`)
+      console.log(`📦 [API] Request body:`, data)
+      console.log(`🔑 [API] Headers:`, this.getAuthHeaders())
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 Using credentials: ${credentials}`)
+      console.log(`🔧 [API] Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'PUT',
