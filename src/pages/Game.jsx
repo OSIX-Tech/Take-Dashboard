@@ -36,8 +36,8 @@ function Game() {
     claimedToday: 0
   })
 
-  // gameId hardcodeado para el juego principal (según high-score-admin-guide)
-  const GAME_ID = '123e4567-e89b-12d3-a456-426614174000'
+  // gameId hardcodeado para el juego principal
+  const GAME_ID = '7ed73f84-2303-405b-91e9-13f3feec3057'
 
   const [newPeriod, setNewPeriod] = useState({
     gameId: GAME_ID,
@@ -175,7 +175,13 @@ function Game() {
       await loadPeriods()
     } catch (err) {
       console.error('Error creating period:', err)
-      setError('Error al crear el periodo')
+      // Mostrar más detalles del error
+      const errorMsg = err.message || 'Error al crear el periodo'
+      if (errorMsg.includes('500')) {
+        setError('Error del servidor. Posibles causas: El gameId no existe, ya hay un periodo activo, o problema interno del servidor.')
+      } else {
+        setError(errorMsg)
+      }
     }
   }
 

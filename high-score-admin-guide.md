@@ -54,6 +54,11 @@ POST /api/high_score/periods
 
 **Request Body:**
 ```json
+{
+  "gameId": "7ed73f84-2303-405b-91e9-13f3feec3057",
+  "durationDays": 7,
+  "autoRestart": true
+}
 ```
 
 **Response:**
@@ -62,7 +67,7 @@ POST /api/high_score/periods
   "success": true,
   "data": {
     "id": "new-period-uuid",
-    "game_id": "123e4567-e89b-12d3-a456-426614174000",
+    "game_id": "7ed73f84-2303-405b-91e9-13f3feec3057",
     "start_date": "2024-01-15T00:00:00Z",
     "end_date": "2024-01-22T23:59:59Z",
     "is_active": true,
@@ -405,7 +410,7 @@ curl -X POST "https://api.domain.com/api/high_score/periods" \
   -H "Authorization: Bearer <admin-token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "gameId": "123e4567-e89b-12d3-a456-426614174000",
+    "gameId": "7ed73f84-2303-405b-91e9-13f3feec3057",
     "durationDays": 7,
     "autoRestart": true
   }'
