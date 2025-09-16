@@ -25,11 +25,11 @@ export const leaderboardService = {
 
   async createPeriod(data) {
     console.log('🎯 [LeaderboardService] createPeriod called with data:', data)
-    // Convert camelCase to snake_case for backend
+    // API expects camelCase based on the guide
     const requestBody = {
-      game_id: data.gameId,
-      duration_days: data.durationDays,
-      auto_restart: data.autoRestart
+      gameId: data.gameId,
+      durationDays: data.durationDays,
+      autoRestart: data.autoRestart
     }
     const url = 'high_score/periods'
     console.log('🔗 [LeaderboardService] POST URL:', url)
@@ -138,20 +138,29 @@ export const leaderboardService = {
   async getActivePeriod(gameId = null) {
     console.log('🔍 [LeaderboardService] getActivePeriod called with gameId:', gameId)
     try {
-      const periods = await this.getAllPeriods()
-      console.log('📊 [LeaderboardService] getActivePeriod - periods received:', periods)
-      if (Array.isArray(periods)) {
+      const response = await this.getAllPeriods()
+      console.log('📊 [LeaderboardService] getActivePeriod - response received:', response)
+
+      let periods = []
+      if (Array.isArray(response)) {
+        periods = response
+      } else if (response && response.data && Array.isArray(response.data)) {
+        periods = response.data
+      }
+
+      if (periods.length > 0) {
         const activePeriods = periods.filter(p => p.is_active)
         console.log('🎯 [LeaderboardService] Active periods found:', activePeriods.length)
         if (gameId) {
           const period = activePeriods.find(p => p.game_id === gameId)
           console.log('✨ [LeaderboardService] Period for gameId', gameId, ':', period)
-          return period
+          return period || null
         }
         console.log('✨ [LeaderboardService] Returning first active period:', activePeriods[0])
-        return activePeriods[0]
+        return activePeriods[0] || null
       }
-      console.log('⚠️ [LeaderboardService] No periods array received')
+
+      console.log('⚠️ [LeaderboardService] No periods found')
       return null
     } catch (error) {
       console.error('❌ [LeaderboardService] getActivePeriod error:', error)

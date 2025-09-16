@@ -72,9 +72,11 @@ function Game() {
   const fetchActivePeriod = async () => {
     try {
       const period = await leaderboardService.getActivePeriod()
-      setActivePeriod(period)
+      console.log('🎯 Active period:', period)
+      setActivePeriod(period || null)
     } catch (err) {
-      console.error('Error loading active period:', err)
+      console.error('❌ Error loading active period:', err)
+      setActivePeriod(null)
     }
   }
 
@@ -118,12 +120,25 @@ function Game() {
   const loadPeriods = async () => {
     try {
       setLoading(true)
-      const data = await leaderboardService.getAllPeriods()
-      setPeriods(Array.isArray(data) ? data : [])
+      const response = await leaderboardService.getAllPeriods()
+      console.log('🔍 Periods response:', response)
+
+      let data = []
+      if (Array.isArray(response)) {
+        data = response
+      } else if (response && response.data && Array.isArray(response.data)) {
+        data = response.data
+      } else if (response && response.success === false) {
+        console.warn('⚠️ Periods endpoint returned error:', response.error || response.message)
+        data = []
+      }
+
+      setPeriods(data)
       setError(null)
     } catch (err) {
-      console.error('Error loading periods:', err)
-      setError('Error al cargar los periodos')
+      console.error('❌ Error loading periods:', err)
+      setError('Error al cargar los periodos. Verifica que el backend esté configurado.')
+      setPeriods([])
     } finally {
       setLoading(false)
     }
@@ -132,34 +147,51 @@ function Game() {
   const loadWinners = async () => {
     try {
       setLoading(true)
-      const data = await leaderboardService.getAllWinners()
-      let winnersData = Array.isArray(data) ? data : []
-      
-      if (filterClaimed === 'pending') {
-        winnersData = winnersData.filter(w => !w.claimed)
-      } else if (filterClaimed === 'claimed') {
-        winnersData = winnersData.filter(w => w.claimed)
+      const response = await leaderboardService.getAllWinners()
+      console.log('🔍 Winners response:', response)
+
+      let data = []
+      if (Array.isArray(response)) {
+        data = response
+      } else if (response && response.data && Array.isArray(response.data)) {
+        data = response.data
+      } else if (response && response.success === false) {
+        console.warn('⚠️ Winners endpoint returned error:', response.error || response.message)
+        data = []
       }
-      
+
+      let winnersData = data
+
+      if (filterClaimed === 'pending') {
+        winnersData = winnersData.filter(w => !w.reward_claimed)
+      } else if (filterClaimed === 'claimed') {
+        winnersData = winnersData.filter(w => w.reward_claimed)
+      }
+
       setWinners(winnersData)
-      
-      const allWinners = Array.isArray(data) ? data : []
-      const pendingCount = allWinners.filter(w => !w.claimed).length
+
+      const pendingCount = data.filter(w => !w.reward_claimed).length
       const today = new Date().toDateString()
-      const claimedTodayCount = allWinners.filter(w => 
-        w.claimed && w.claimed_at && new Date(w.claimed_at).toDateString() === today
+      const claimedTodayCount = data.filter(w =>
+        w.reward_claimed && w.claimed_at && new Date(w.claimed_at).toDateString() === today
       ).length
-      
+
       setStats({
-        totalWinners: allWinners.length,
+        totalWinners: data.length,
         pendingClaims: pendingCount,
         claimedToday: claimedTodayCount
       })
-      
+
       setError(null)
     } catch (err) {
-      console.error('Error loading winners:', err)
-      setError('Error al cargar los ganadores')
+      console.error('❌ Error loading winners:', err)
+      setError('Error al cargar los ganadores. Verifica que el backend esté configurado.')
+      setWinners([])
+      setStats({
+        totalWinners: 0,
+        pendingClaims: 0,
+        claimedToday: 0
+      })
     } finally {
       setLoading(false)
     }
@@ -271,10 +303,10 @@ function Game() {
   }
 
   const getPriorityClass = (winner) => {
-    if (winner.claimed) return 'border-gray-200 bg-gray-50'
-    
-    const daysAgo = Math.floor((new Date() - new Date(winner.leaderboard_periods?.end_date || winner.created_at)) / (1000 * 60 * 60 * 24))
-    
+    if (winner.reward_claimed) return 'border-gray-200 bg-gray-50'
+
+    const daysAgo = Math.floor((new Date() - new Date(winner.created_at)) / (1000 * 60 * 60 * 24))
+
     if (daysAgo > 7) return 'border-red-500 bg-red-50'
     if (daysAgo > 3) return 'border-yellow-500 bg-yellow-50'
     return 'border-green-500 bg-green-50'
@@ -864,11 +896,11 @@ function Game() {
               </div>
             ) : (
               winners.map((winner) => (
-                <div 
-                  key={winner.id} 
+                <div
+                  key={winner.id}
                   className={`rounded-lg border-2 p-4 transition-all ${getPriorityClass(winner)}`}
                 >
-                  <div 
+                  <div
                     className="flex justify-between items-start cursor-pointer"
                     onClick={() => setExpandedWinner(expandedWinner === winner.id ? null : winner.id)}
                   >
@@ -876,7 +908,7 @@ function Game() {
                       <div className="flex items-center gap-3 mb-2">
                         <User className="h-5 w-5 text-gray-400" />
                         <span className="text-lg font-semibold">
-                          {winner.users?.name || 'Usuario Desconocido'}
+                          {winner.user_name || 'Usuario Desconocido'}
                         </span>
                         {winner.position === 1 && (
                           <span className="px-2 py-1 bg-yellow-400 text-black text-xs rounded flex items-center gap-1">
@@ -884,45 +916,40 @@ function Game() {
                             TOP 1
                           </span>
                         )}
-                        {winner.claimed && (
+                        {winner.reward_claimed && (
                           <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded flex items-center gap-1">
                             <Check className="h-3 w-3" />
                             Recogido
                           </span>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <p className="text-gray-600">Puntuación</p>
-                          <p className="font-semibold">{winner.final_score?.toLocaleString()} pts</p>
+                          <p className="font-semibold">{winner.score?.toLocaleString() || 0} pts</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Periodo</p>
                           <p className="font-semibold">
-                            {winner.leaderboard_periods 
-                              ? leaderboardService.formatPeriodDates(
-                                  winner.leaderboard_periods.start_date,
-                                  winner.leaderboard_periods.end_date
-                                )
-                              : 'N/A'}
+                            {winner.period_id || 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Juego</p>
+                          <p className="text-gray-600">Posición</p>
                           <p className="font-semibold">
-                            {winner.leaderboard_periods?.games?.name || 'Flappy Bird'}
+                            #{winner.position || 'N/A'}
                           </p>
                         </div>
                         <div>
                           <p className="text-gray-600">Ganó</p>
                           <p className="font-semibold">
-                            {formatDaysAgo(winner.leaderboard_periods?.end_date || winner.created_at)}
+                            {formatDaysAgo(winner.created_at)}
                           </p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="ml-4">
                       {expandedWinner === winner.id ? (
                         <ChevronUp className="h-5 w-5 text-gray-400" />
@@ -936,18 +963,18 @@ function Game() {
                     <div className="mt-4 pt-4 border-t">
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-4">
                         <div>
-                          <p className="text-gray-600">Email</p>
-                          <p>{winner.users?.email || 'N/A'}</p>
+                          <p className="text-gray-600">ID de Usuario</p>
+                          <p>{winner.user_id || 'N/A'}</p>
                         </div>
-                        {winner.claimed && winner.claimed_at && (
+                        {winner.reward_claimed && winner.claimed_at && (
                           <div>
                             <p className="text-gray-600">Recogido el</p>
                             <p>{new Date(winner.claimed_at).toLocaleString('es')}</p>
                           </div>
                         )}
                       </div>
-                      
-                      {!winner.claimed && (
+
+                      {!winner.reward_claimed && (
                         <button
                           onClick={() => handleMarkClaimed(winner.id)}
                           className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2"
