@@ -36,8 +36,11 @@ function Game() {
     claimedToday: 0
   })
 
+  // gameId hardcodeado para el juego principal (según high-score-admin-guide)
+  const GAME_ID = '123e4567-e89b-12d3-a456-426614174000'
+
   const [newPeriod, setNewPeriod] = useState({
-    gameId: '',
+    gameId: GAME_ID,
     durationDays: 7,
     autoRestart: true
   })
@@ -68,8 +71,9 @@ function Game() {
 
   const fetchActivePeriod = async () => {
     try {
-      const period = await leaderboardService.getActivePeriod()
-      console.log('🎯 Active period:', period)
+      // Solo obtener el periodo activo del juego hardcodeado
+      const period = await leaderboardService.getActivePeriod(GAME_ID)
+      console.log('🎯 Active period for game:', GAME_ID, period)
       setActivePeriod(period || null)
     } catch (err) {
       console.error('❌ Error loading active period:', err)
@@ -82,8 +86,9 @@ function Game() {
   const loadPeriods = async () => {
     try {
       setLoading(true)
-      const response = await leaderboardService.getAllPeriods()
-      console.log('🔍 Periods response:', response)
+      // Solo cargar periodos del juego hardcodeado
+      const response = await leaderboardService.getAllPeriods(GAME_ID)
+      console.log('🔍 Periods response for game:', GAME_ID, response)
 
       let data = []
       if (Array.isArray(response)) {
@@ -162,9 +167,11 @@ function Game() {
   const handleCreatePeriod = async (e) => {
     e.preventDefault()
     try {
-      await leaderboardService.createPeriod(newPeriod)
+      // Asegurar que siempre se use el gameId hardcodeado
+      const periodData = { ...newPeriod, gameId: GAME_ID }
+      await leaderboardService.createPeriod(periodData)
       setShowNewPeriodForm(false)
-      setNewPeriod({ gameId: '', durationDays: 7, autoRestart: true })
+      setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true })
       await loadPeriods()
     } catch (err) {
       console.error('Error creating period:', err)
@@ -482,18 +489,13 @@ function Game() {
                 </div>
                 
                 <form onSubmit={handleCreatePeriod} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">ID del Juego *</label>
-                    <input
-                      type="text"
-                      value={newPeriod.gameId}
-                      onChange={(e) => setNewPeriod({...newPeriod, gameId: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="UUID del juego"
-                      required
-                    />
+                  <div className="p-3 bg-gray-50 rounded-md">
+                    <p className="text-sm text-gray-600">
+                      <strong>Juego:</strong> Flappy Bird
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1 font-mono">ID: {GAME_ID}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Duración (días) *</label>
                     <input

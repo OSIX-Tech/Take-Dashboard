@@ -54,11 +54,6 @@ POST /api/high_score/periods
 
 **Request Body:**
 ```json
-{
-  "gameId": "123e4567-e89b-12d3-a456-426614174000",
-  "durationDays": 7,
-  "autoRestart": true
-}
 ```
 
 **Response:**
