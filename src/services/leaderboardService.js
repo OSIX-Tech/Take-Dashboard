@@ -66,7 +66,24 @@ export const leaderboardService = {
     try {
       const response = await apiService.get(url, params)
       console.log('✅ [LeaderboardService] getAllPeriods response:', response)
-      return response.data || response
+
+      // Procesar los periodos para asegurar que tengan duration_days
+      let periods = response.data || response
+      if (Array.isArray(periods)) {
+        periods = periods.map(period => {
+          // Si no tiene duration_days, calcularlo desde las fechas
+          if (!period.duration_days && period.start_date && period.end_date) {
+            const start = new Date(period.start_date)
+            const end = new Date(period.end_date)
+            const diffInMs = end - start
+            const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+            period.duration_days = diffInDays
+          }
+          return period
+        })
+      }
+
+      return periods
     } catch (error) {
       console.error('❌ [LeaderboardService] getAllPeriods error:', error)
 
@@ -135,10 +152,19 @@ export const leaderboardService = {
    */
   async updatePeriod(periodId, data) {
     console.log('🎯 [LeaderboardService] updatePeriod called with periodId:', periodId, 'data:', data)
+
+    // Calcular el nuevo end_date basado en duration_days si se proporciona
+    let end_date = data.end_date
+    if (data.duration_days && data.start_date) {
+      const startDate = new Date(data.start_date)
+      const newEndDate = new Date(startDate.getTime() + data.duration_days * 24 * 60 * 60 * 1000)
+      end_date = newEndDate.toISOString()
+    }
+
     // Convert to snake_case for backend
     // NO enviamos reward_id al backend, es solo visual
     const requestBody = {
-      end_date: data.end_date,
+      end_date: end_date,
       auto_restart: data.auto_restart
     }
     const url = `high_score/periods/${periodId}`
@@ -441,13 +467,26 @@ export const leaderboardService = {
       if (periods.length > 0) {
         const activePeriods = periods.filter(p => p.is_active)
         console.log('🎯 [LeaderboardService] Active periods found:', activePeriods.length)
+
+        // Asegurar que el periodo activo tenga duration_days
+        const processPeriod = (period) => {
+          if (period && !period.duration_days && period.start_date && period.end_date) {
+            const start = new Date(period.start_date)
+            const end = new Date(period.end_date)
+            const diffInMs = end - start
+            const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+            period.duration_days = diffInDays
+          }
+          return period
+        }
+
         if (gameId) {
           const period = activePeriods.find(p => p.game_id === gameId)
           console.log('✨ [LeaderboardService] Period for gameId', gameId, ':', period)
-          return period || null
+          return processPeriod(period) || null
         }
         console.log('✨ [LeaderboardService] Returning first active period:', activePeriods[0])
-        return activePeriods[0] || null
+        return processPeriod(activePeriods[0]) || null
       }
 
       console.log('⚠️ [LeaderboardService] No periods found')

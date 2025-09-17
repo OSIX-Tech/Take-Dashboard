@@ -238,7 +238,12 @@ function Game() {
     if (!editingPeriod) return
 
     try {
-      await leaderboardService.updatePeriod(editingPeriod.id, editData)
+      // Incluir start_date para calcular el nuevo end_date
+      const updateData = {
+        ...editData,
+        start_date: editingPeriod.start_date
+      }
+      await leaderboardService.updatePeriod(editingPeriod.id, updateData)
 
       // Guardar o actualizar la reward en localStorage
       if (editData.reward_id) {
@@ -250,6 +255,7 @@ function Game() {
       setShowEditForm(false)
       setEditingPeriod(null)
       await loadPeriods()
+      await fetchActivePeriod() // Refrescar periodo activo también
     } catch (err) {
       console.error('Error updating period:', err)
       setError('Error al actualizar el periodo')
@@ -530,7 +536,7 @@ function Game() {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <p className="text-gray-600">Duración</p>
-                            <p>{period.duration_days || period.duration_days} días</p>
+                            <p>{period.duration_days} días</p>
                           </div>
                           <div>
                             <p className="text-gray-600">Reinicio Automático</p>
