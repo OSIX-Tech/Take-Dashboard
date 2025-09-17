@@ -25,7 +25,8 @@ const Rewards = () => {
     name: '',
     description: '',
     required_seals: '',
-    image_url: ''
+    image_url: '',
+    is_game_reward: false
   })
   const [selectedImageFile, setSelectedImageFile] = useState(null)
   
@@ -81,7 +82,8 @@ const Rewards = () => {
       required_seals: '',
       description: '',
       image_url: '',
-      active: true
+      active: true,
+      is_game_reward: false
     })
     setSelectedImageFile(null)
     setShowForm(true)
@@ -97,7 +99,8 @@ const Rewards = () => {
       name: reward.name || '',
       description: reward.description || '',
       required_seals: reward.required_seals || '',
-      image_url: reward.image_url || ''
+      image_url: reward.image_url || '',
+      is_game_reward: reward.required_seals === 0
     })
     setSelectedImageFile(null)
     setShowForm(true)
@@ -140,9 +143,12 @@ const Rewards = () => {
       return
     }
     
-    if (formData.required_seals === '' || formData.required_seals < 0) {
-      alert('La cantidad de sellos debe ser 0 o mayor')
-      return
+    // Si es recompensa de juego, siempre tiene 0 sellos
+    if (!formData.is_game_reward) {
+      if (formData.required_seals === '' || formData.required_seals < 0) {
+        alert('La cantidad de sellos debe ser 0 o mayor')
+        return
+      }
     }
     
     // Validate image is required
@@ -156,7 +162,7 @@ const Rewards = () => {
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        required_seals: parseInt(formData.required_seals)
+        required_seals: formData.is_game_reward ? 0 : parseInt(formData.required_seals)
       }
 
       console.log('🚀 Submitting reward data:', payload)
@@ -188,7 +194,7 @@ const Rewards = () => {
       
       setShowForm(false)
       setEditingReward(null)
-      setFormData({ name: '', description: '', required_seals: '', image_url: '' })
+      setFormData({ name: '', description: '', required_seals: '', image_url: '', is_game_reward: false })
       setSelectedImageFile(null)
     } catch (error) {
       console.error('Error saving reward:', error)
@@ -199,7 +205,7 @@ const Rewards = () => {
   const handleCancel = () => {
     setShowForm(false)
     setEditingReward(null)
-    setFormData({ name: '', description: '', required_seals: '', image_url: '' })
+    setFormData({ name: '', description: '', required_seals: '', image_url: '', is_game_reward: false })
     setSelectedImageFile(null)
   }
 
@@ -303,11 +309,18 @@ const Rewards = () => {
                   <Award className="w-16 h-16 text-gray-600" />
                 </div>
               </div>
-              {/* Badge de sellos requeridos */}
-              <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full flex items-center gap-1">
-                <Coffee className="w-4 h-4" />
-                <span className="font-bold">{reward.required_seals}</span>
-              </div>
+              {/* Badge de sellos requeridos o indicador de juego */}
+              {reward.required_seals === 0 ? (
+                <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <Trophy className="w-4 h-4" />
+                  <span className="font-bold text-xs">JUEGO</span>
+                </div>
+              ) : (
+                <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full flex items-center gap-1">
+                  <Coffee className="w-4 h-4" />
+                  <span className="font-bold">{reward.required_seals}</span>
+                </div>
+              )}
             </div>
             
             <CardHeader className="pb-3">
@@ -321,10 +334,13 @@ const Rewards = () => {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              {/* Visual representation with coffee cups */}
+              {/* Visual representation with coffee cups or trophy */}
               <div className="flex items-center space-x-1 mb-4">
                 {reward.required_seals === 0 ? (
-                  <span className="text-sm text-gray-500">Sin sellos requeridos</span>
+                  <div className="flex items-center gap-2 text-yellow-600">
+                    <Trophy className="w-5 h-5" />
+                    <span className="text-sm font-medium">Premio para ganadores del juego</span>
+                  </div>
                 ) : (
                   <>
                     {[...Array(Math.min(reward.required_seals, 8))].map((_, i) => (
@@ -411,6 +427,28 @@ const Rewards = () => {
                 className="w-full"
               />
             </div>
+
+            {/* Checkbox para recompensa de juego */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_game_reward"
+                checked={formData.is_game_reward}
+                onChange={(e) => {
+                  const isChecked = e.target.checked
+                  setFormData(prev => ({
+                    ...prev,
+                    is_game_reward: isChecked,
+                    required_seals: isChecked ? 0 : prev.required_seals
+                  }))
+                }}
+                className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+              />
+              <label htmlFor="is_game_reward" className="text-sm font-medium text-gray-700">
+                Recompensa para ganadores del juego (sin sellos)
+              </label>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Sellos Requeridos *
@@ -418,13 +456,19 @@ const Rewards = () => {
               <Input
                 ref={sealsInputRef}
                 type="number"
-                value={formData.required_seals}
+                value={formData.is_game_reward ? 0 : formData.required_seals}
                 onChange={(e) => handleInputChange('required_seals', e.target.value)}
                 placeholder="10"
                 min="0"
                 required
-                className="w-full"
+                disabled={formData.is_game_reward}
+                className={`w-full ${formData.is_game_reward ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               />
+              {formData.is_game_reward && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Las recompensas de juego no requieren sellos
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
