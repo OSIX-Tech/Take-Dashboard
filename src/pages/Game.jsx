@@ -51,7 +51,6 @@ function Game() {
   })
 
   const [rewards, setRewards] = useState([])
-  const [periodRewards, setPeriodRewards] = useState({}) // Mapeo de periodId -> rewardId
 
   const [editData, setEditData] = useState({
     duration_days: 7,
@@ -60,33 +59,13 @@ function Game() {
     reward_id: null
   })
 
-  // Funciones para manejar localStorage de asociaciones periodo-reward
-  const loadPeriodRewards = () => {
-    const stored = localStorage.getItem('periodRewards')
-    if (stored) {
-      setPeriodRewards(JSON.parse(stored))
-    }
-  }
-
-  const savePeriodReward = (periodId, rewardId) => {
-    const updated = { ...periodRewards, [periodId]: rewardId }
-    setPeriodRewards(updated)
-    localStorage.setItem('periodRewards', JSON.stringify(updated))
-  }
-
-  const removePeriodReward = (periodId) => {
-    const updated = { ...periodRewards }
-    delete updated[periodId]
-    setPeriodRewards(updated)
-    localStorage.setItem('periodRewards', JSON.stringify(updated))
-  }
+  // Las recompensas de período ahora se manejan directamente en el backend
 
   useEffect(() => {
     if (activeTab === 'periods') {
       loadPeriods()
       fetchActivePeriod()
       loadRewards() // Cargar rewards cuando se muestra la tab de periodos
-      loadPeriodRewards() // Cargar asociaciones periodo-reward de localStorage
     } else if (activeTab === 'winners') {
       loadWinners()
     }
@@ -260,17 +239,15 @@ function Game() {
       const periodData = {
         gameId: GAME_ID, // Siempre usar el gameId hardcodeado
         durationDays: newPeriod.durationDays,
-        autoRestart: newPeriod.autoRestart
+        autoRestart: newPeriod.autoRestart,
+        rewardId: newPeriod.rewardId || null // Agregar rewardId según FRONTEND_CHANGES_REWARDS.md
       }
 
       console.log('🆕 [Game] Creando nuevo periodo con datos:', periodData)
       const response = await leaderboardService.createPeriod(periodData)
       console.log('✅ [Game] Periodo creado:', response)
 
-      // Si se creó exitosamente y hay una rewardId, guardarla en localStorage
-      if (response && response.data && response.data.id && newPeriod.rewardId) {
-        savePeriodReward(response.data.id, newPeriod.rewardId)
-      }
+      // Ya no necesitamos localStorage - el rewardId se envía directamente al backend
 
       setShowNewPeriodForm(false)
       setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true, rewardId: null })
@@ -315,10 +292,11 @@ function Game() {
     }
 
     try {
-      // NUEVO: Solo enviamos duration_days y auto_restart
+      // Enviar duration_days, auto_restart y reward_id según FRONTEND_CHANGES_REWARDS.md
       const updateData = {
         duration_days: editData.duration_days,
-        auto_restart: editData.auto_restart
+        auto_restart: editData.auto_restart,
+        reward_id: editData.reward_id || null
       }
 
       console.log('📤 [Game] Calling updatePeriod with NEW FORMAT:', {
@@ -329,12 +307,7 @@ function Game() {
       const result = await leaderboardService.updatePeriod(editingPeriod.id, updateData)
       console.log('✅ [Game] Period updated successfully:', result)
 
-      // Guardar o actualizar la reward en localStorage
-      if (editData.reward_id) {
-        savePeriodReward(editingPeriod.id, editData.reward_id)
-      } else {
-        removePeriodReward(editingPeriod.id)
-      }
+      // Ya no necesitamos localStorage - el reward_id se envía directamente al backend
 
       setShowEditForm(false)
       setEditingPeriod(null)
@@ -525,7 +498,7 @@ function Game() {
       duration_days: durationDays,
       auto_restart: period.auto_restart || false,
       next_period_duration_days: durationDays,
-      reward_id: periodRewards[period.id] || null // Cargar reward desde localStorage
+      reward_id: period.reward_id || null // Cargar reward_id desde el backend
     })
     setShowEditForm(true)
   }
@@ -751,14 +724,19 @@ function Game() {
                             {leaderboardService.formatPeriodDates(period.start_date, period.end_date)}
                           </span>
                         </div>
-                        {periodRewards[period.id] && (
-                          <div className="flex items-center gap-1">
-                            <Trophy className="h-4 w-4 text-yellow-500" />
+                        {period.rewards && (
+                          <div className="flex items-center gap-2">
+                            {period.rewards.image_url ? (
+                              <img
+                                src={period.rewards.image_url}
+                                alt={period.rewards.name}
+                                className="w-4 h-4 object-cover rounded"
+                              />
+                            ) : (
+                              <Trophy className="h-4 w-4 text-yellow-500" />
+                            )}
                             <span className="text-sm text-gray-600">
-                              {(() => {
-                                const reward = rewards.find(r => r.id === periodRewards[period.id])
-                                return reward ? reward.name : 'Recompensa'
-                              })()}
+                              {period.rewards.name}
                             </span>
                           </div>
                         )}
@@ -789,11 +767,8 @@ function Game() {
                           <div>
                             <p className="text-gray-600">Recompensa</p>
                             <p className="font-medium">
-                              {periodRewards[period.id] ? (
-                                (() => {
-                                  const reward = rewards.find(r => r.id === periodRewards[period.id])
-                                  return reward ? `${reward.name} (${reward.points} pts)` : 'ID: ' + periodRewards[period.id]
-                                })()
+                              {period.rewards ? (
+                                `${period.rewards.name} (${period.rewards.required_seals} sellos)`
                               ) : (
                                 <span className="text-gray-400">Sin recompensa</span>
                               )}
@@ -874,7 +849,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.points} puntos
+                          {reward.name} - {reward.required_seals} sellos
                         </option>
                       ))}
                     </select>
@@ -984,7 +959,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.points} puntos
+                          {reward.name} - {reward.required_seals} sellos
                         </option>
                       ))}
                     </select>
@@ -1362,17 +1337,14 @@ function Game() {
                 </p>
               </div>
 
-              {periodRewards[periodToClose.id] && (
+              {periodToClose.rewards && (
                 <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200">
                   <div className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-yellow-600" />
                     <p className="text-sm font-medium text-yellow-700">Recompensa:</p>
                   </div>
                   <p className="text-sm text-yellow-800 ml-6">
-                    {(() => {
-                      const reward = rewards.find(r => r.id === periodRewards[periodToClose.id])
-                      return reward ? `${reward.name} (${reward.points} puntos)` : 'Recompensa asignada'
-                    })()}
+                    {periodToClose.rewards.name} ({periodToClose.rewards.required_seals} sellos)
                   </p>
                 </div>
               )}
