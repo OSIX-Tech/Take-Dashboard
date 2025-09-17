@@ -852,7 +852,7 @@ function Game() {
                         const newValue = parseInt(e.target.value)
                         console.log('🔄 [EDIT] Duration input changed to:', newValue)
                         setEditData({...editData, duration_days: newValue})
-                      }}}
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       min="1"
                       required
