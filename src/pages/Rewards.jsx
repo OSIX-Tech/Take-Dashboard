@@ -140,8 +140,8 @@ const Rewards = () => {
       return
     }
     
-    if (!formData.required_seals || formData.required_seals < 1) {
-      alert('La cantidad de sellos debe ser mayor a 0')
+    if (formData.required_seals === '' || formData.required_seals < 0) {
+      alert('La cantidad de sellos debe ser 0 o mayor')
       return
     }
     
@@ -323,11 +323,17 @@ const Rewards = () => {
             <CardContent className="pt-0">
               {/* Visual representation with coffee cups */}
               <div className="flex items-center space-x-1 mb-4">
-                {[...Array(Math.min(reward.required_seals, 8))].map((_, i) => (
-                  <Coffee key={i} className="w-4 h-4 text-gray-400" />
-                ))}
-                {reward.required_seals > 8 && (
-                  <span className="text-sm text-gray-500 ml-1">+{reward.required_seals - 8}</span>
+                {reward.required_seals === 0 ? (
+                  <span className="text-sm text-gray-500">Sin sellos requeridos</span>
+                ) : (
+                  <>
+                    {[...Array(Math.min(reward.required_seals, 8))].map((_, i) => (
+                      <Coffee key={i} className="w-4 h-4 text-gray-400" />
+                    ))}
+                    {reward.required_seals > 8 && (
+                      <span className="text-sm text-gray-500 ml-1">+{reward.required_seals - 8}</span>
+                    )}
+                  </>
                 )}
               </div>
               
@@ -415,7 +421,7 @@ const Rewards = () => {
                 value={formData.required_seals}
                 onChange={(e) => handleInputChange('required_seals', e.target.value)}
                 placeholder="10"
-                min="1"
+                min="0"
                 required
                 className="w-full"
               />
