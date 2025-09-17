@@ -131,6 +131,15 @@ export const leaderboardService = {
           // Usar ceil para incluir el día completo
           const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
           response.data.duration_days = diffInDays
+
+          // Log para debug
+          console.log('📊 [LeaderboardService] Period dates from backend:', {
+            requested_days: data.durationDays,
+            start_date: response.data.start_date,
+            end_date: response.data.end_date,
+            calculated_days: diffInDays,
+            diff_in_hours: diffInMs / (1000 * 60 * 60)
+          })
         }
       }
 
@@ -141,15 +150,22 @@ export const leaderboardService = {
       // Si es 404, simular creación con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
         console.log('📦 [LeaderboardService] Simulating period creation with mock data')
+        const now = new Date()
+        const startDate = new Date(now)
+        // Establecer el inicio al principio del día actual
+        startDate.setHours(0, 0, 0, 0)
+        // Calcular el fin exacto: días * 24 horas - 1 segundo para terminar en 23:59:59
+        const endDate = new Date(startDate.getTime() + (data.durationDays * 24 * 60 * 60 * 1000) - 1000)
+
         const newPeriod = {
           id: `period-${Date.now()}`,
           game_id: data.gameId,
-          start_date: new Date().toISOString(),
-          end_date: new Date(Date.now() + data.durationDays * 24 * 60 * 60 * 1000).toISOString(),
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
           duration_days: data.durationDays,
           is_active: true,
           auto_restart: data.autoRestart,
-          created_at: new Date().toISOString()
+          created_at: now.toISOString()
         }
         mockPeriods.forEach(p => p.is_active = false) // Desactivar otros periodos
         mockPeriods.unshift(newPeriod)
@@ -173,15 +189,30 @@ export const leaderboardService = {
    */
   async updatePeriod(periodId, data) {
     console.log('🎯 [LeaderboardService] updatePeriod called with periodId:', periodId, 'data:', data)
+    console.log('🎯 [LeaderboardService] Data received:')
+    console.log('  - duration_days:', data.duration_days)
+    console.log('  - auto_restart:', data.auto_restart)
+    console.log('  - start_date:', data.start_date)
+    console.log('  - end_date:', data.end_date)
+
+    // Verificar si tenemos los datos necesarios
+    if (!periodId) {
+      console.error('❌ [LeaderboardService] ERROR: No periodId provided')
+      throw new Error('periodId es requerido')
+    }
 
     // Calcular el nuevo end_date basado en duration_days
     let end_date = data.end_date
     if (data.duration_days !== undefined && data.start_date) {
       const startDate = new Date(data.start_date)
+      console.log('🕐 [LeaderboardService] Start date parsed:', startDate.toISOString())
+
       // Restar 1 segundo para que termine en 23:59:59 del último día
       const newEndDate = new Date(startDate.getTime() + (data.duration_days * 24 * 60 * 60 * 1000) - 1000)
       end_date = newEndDate.toISOString()
       console.log('📅 [LeaderboardService] Calculated new end_date:', end_date, 'from duration_days:', data.duration_days)
+    } else {
+      console.log('⚠️ [LeaderboardService] No duration_days or start_date, using existing end_date:', end_date)
     }
 
     // Backend solo acepta end_date y auto_restart según la guía
@@ -194,8 +225,10 @@ export const leaderboardService = {
     console.log('📦 [LeaderboardService] Request body:', requestBody)
 
     try {
+      console.log('🚀 [LeaderboardService] Sending PUT request...')
       const response = await apiService.put(url, requestBody)
       console.log('✅ [LeaderboardService] updatePeriod response:', response)
+      console.log('✅ [LeaderboardService] Response data:', response?.data)
 
       // El backend devuelve el periodo actualizado, calcular duration_days
       if (response && response.data) {
@@ -212,6 +245,10 @@ export const leaderboardService = {
       return response
     } catch (error) {
       console.error('❌ [LeaderboardService] updatePeriod error:', error)
+      console.error('❌ [LeaderboardService] Error details:')
+      console.error('  - Status:', error.status)
+      console.error('  - Message:', error.message)
+      console.error('  - Stack:', error.stack)
 
       // Si es 404, simular actualización con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
@@ -575,13 +612,16 @@ export const leaderboardService = {
   formatTimeRemaining(endDate) {
     const end = new Date(endDate)
     const now = new Date()
-    const diff = end - now
+    // Sumar 2 horas al cálculo (2 * 60 * 60 * 1000 ms)
+    const diff = end - now + (2 * 60 * 60 * 1000)
 
     if (diff <= 0) return 'Periodo terminado'
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    // Calcular componentes de tiempo más precisamente
+    const totalMinutes = Math.floor(diff / (1000 * 60))
+    const days = Math.floor(totalMinutes / (24 * 60))
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60)
+    const minutes = totalMinutes % 60
 
     return `${days}d ${hours}h ${minutes}m`
   },

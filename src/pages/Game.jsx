@@ -260,7 +260,14 @@ function Game() {
 
   const handleUpdatePeriod = async (e) => {
     e.preventDefault()
-    if (!editingPeriod) return
+    console.log('🔄 [Game] handleUpdatePeriod called')
+    console.log('🔄 [Game] editingPeriod:', editingPeriod)
+    console.log('🔄 [Game] editData:', editData)
+
+    if (!editingPeriod) {
+      console.error('❌ [Game] No editingPeriod found')
+      return
+    }
 
     try {
       // Incluir start_date para calcular el nuevo end_date
@@ -268,7 +275,13 @@ function Game() {
         ...editData,
         start_date: editingPeriod.start_date
       }
-      await leaderboardService.updatePeriod(editingPeriod.id, updateData)
+      console.log('📤 [Game] Calling updatePeriod with:', {
+        periodId: editingPeriod.id,
+        updateData
+      })
+
+      const result = await leaderboardService.updatePeriod(editingPeriod.id, updateData)
+      console.log('✅ [Game] Period updated successfully:', result)
 
       // Guardar o actualizar la reward en localStorage
       if (editData.reward_id) {
@@ -279,11 +292,34 @@ function Game() {
 
       setShowEditForm(false)
       setEditingPeriod(null)
+
+      // Mostrar mensaje de éxito
+      alert(`Periodo actualizado exitosamente\nNueva duración: ${editData.duration_days} días`)
+
       await loadPeriods()
       await fetchActivePeriod() // Refrescar periodo activo también
     } catch (err) {
-      console.error('Error updating period:', err)
-      setError('Error al actualizar el periodo')
+      console.error('❌ [Game] Error updating period:', err)
+      console.error('❌ [Game] Error details:', {
+        message: err.message,
+        stack: err.stack
+      })
+
+      // Mensaje de error más detallado
+      let errorMsg = 'Error al actualizar el periodo'
+      if (err.message) {
+        if (err.message.includes('404')) {
+          errorMsg = 'El periodo no fue encontrado'
+        } else if (err.message.includes('400')) {
+          errorMsg = 'Datos inválidos para la actualización'
+        } else if (err.message.includes('500')) {
+          errorMsg = 'Error del servidor al actualizar el periodo'
+        } else {
+          errorMsg = `Error: ${err.message}`
+        }
+      }
+      setError(errorMsg)
+      // NO cerrar el modal para que el usuario pueda intentar de nuevo
     }
   }
 
@@ -379,11 +415,18 @@ function Game() {
   }
 
   const openEditForm = (period) => {
+    console.log('📝 [Game] openEditForm called with period:', period)
+
+    // Asegurar que duration_days esté presente
+    const durationDays = period.duration_days || 7
+
+    console.log('📝 [Game] Setting edit data with duration_days:', durationDays)
+
     setEditingPeriod(period)
     setEditData({
-      duration_days: period.duration_days,
-      auto_restart: period.auto_restart,
-      next_period_duration_days: period.duration_days,
+      duration_days: durationDays,
+      auto_restart: period.auto_restart || false,
+      next_period_duration_days: durationDays,
       reward_id: periodRewards[period.id] || null // Cargar reward desde localStorage
     })
     setShowEditForm(true)
@@ -531,16 +574,31 @@ function Game() {
                   <p className="font-semibold">
                     {new Date(activePeriod.start_date).toLocaleDateString('es')}
                   </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(activePeriod.start_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Fin</p>
                   <p className="font-semibold">
                     {new Date(activePeriod.end_date).toLocaleDateString('es')}
                   </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(activePeriod.end_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Duración</p>
+                  <p className="text-sm text-gray-600">Duración Configurada</p>
                   <p className="font-semibold">{activePeriod.duration_days || 7} días</p>
+                  <p className="text-xs text-gray-500">
+                    Real: {(() => {
+                      const start = new Date(activePeriod.start_date)
+                      const end = new Date(activePeriod.end_date)
+                      const diff = end - start
+                      const days = diff / (1000 * 60 * 60 * 24)
+                      return days.toFixed(2) + ' días'
+                    })()}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Reinicio Auto</p>
@@ -556,7 +614,11 @@ function Game() {
                   Cerrar Periodo
                 </button>
                 <button
-                  onClick={() => openEditForm(activePeriod)}
+                  onClick={() => {
+                    console.log('🎯 [EDIT] Botón Editar Duración clickeado')
+                    console.log('🎯 [EDIT] activePeriod:', activePeriod)
+                    openEditForm(activePeriod)
+                  }}
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2"
                 >
                   <Settings className="h-4 w-4" />
@@ -767,13 +829,30 @@ function Game() {
                   </button>
                 </div>
                 
-                <form onSubmit={handleUpdatePeriod} className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    console.log('📨 [EDIT] FORM ONSUBMIT TRIGGERED')
+                    handleUpdatePeriod(e)
+                  }}
+                  className="space-y-4"
+                >
+                  {/* Mostrar información del periodo actual */}
+                  <div className="p-3 bg-gray-50 rounded-md mb-4">
+                    <p className="text-xs text-gray-600">Periodo ID: {editingPeriod?.id}</p>
+                    <p className="text-xs text-gray-600">Inicio: {editingPeriod?.start_date ? new Date(editingPeriod.start_date).toLocaleString('es') : 'N/A'}</p>
+                    <p className="text-xs text-gray-600">Fin actual: {editingPeriod?.end_date ? new Date(editingPeriod.end_date).toLocaleString('es') : 'N/A'}</p>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Duración (días) *</label>
                     <input
                       type="number"
                       value={editData.duration_days}
-                      onChange={(e) => setEditData({...editData, duration_days: parseInt(e.target.value)})}
+                      onChange={(e) => {
+                        const newValue = parseInt(e.target.value)
+                        console.log('🔄 [EDIT] Duration input changed to:', newValue)
+                        setEditData({...editData, duration_days: newValue})
+                      }}}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       min="1"
                       required
@@ -801,7 +880,11 @@ function Game() {
                       type="checkbox"
                       id="editAutoRestart"
                       checked={editData.auto_restart}
-                      onChange={(e) => setEditData({...editData, auto_restart: e.target.checked})}
+                      onChange={(e) => {
+                        const newValue = e.target.checked
+                        console.log('🔄 [EDIT] Auto-restart changed to:', newValue)
+                        setEditData({...editData, auto_restart: newValue})
+                      }}
                       className="rounded"
                     />
                     <label htmlFor="editAutoRestart" className="text-sm">
@@ -823,16 +906,90 @@ function Game() {
                     </div>
                   )}
                   
+                  {/* Botones de debug y prueba */}
+                  <div className="p-2 bg-yellow-50 border border-yellow-300 rounded text-xs space-y-2">
+                    <p className="font-semibold text-yellow-800">🔧 Herramientas de Debug:</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        console.log('🔍 [DEBUG] === ESTADO DEL FORMULARIO ===')
+                        console.log('🔍 [DEBUG] editingPeriod:', editingPeriod)
+                        console.log('🔍 [DEBUG] editData:', editData)
+                        console.log('🔍 [DEBUG] showEditForm:', showEditForm)
+                        console.log('🔍 [DEBUG] Form will send:', {
+                          periodId: editingPeriod?.id,
+                          duration_days: editData.duration_days,
+                          auto_restart: editData.auto_restart,
+                          start_date: editingPeriod?.start_date
+                        })
+                        alert(`Estado del formulario:\n\nPeriod ID: ${editingPeriod?.id}\nDuración actual: ${editData.duration_days} días\nAuto-restart: ${editData.auto_restart}\nFecha inicio: ${editingPeriod?.start_date}`)
+                      }}
+                      className="text-yellow-700 underline block w-full text-left hover:bg-yellow-100 p-1"
+                    >
+                      🔍 Ver estado del formulario
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        console.log('🧪 [TEST] === PROBANDO PUT DIRECTO ===')
+                        try {
+                          const testData = {
+                            duration_days: editData.duration_days,
+                            auto_restart: editData.auto_restart,
+                            start_date: editingPeriod.start_date
+                          }
+                          console.log('🧪 [TEST] Enviando a updatePeriod:', testData)
+                          const result = await leaderboardService.updatePeriod(editingPeriod.id, testData)
+                          console.log('🧪 [TEST] Resultado exitoso:', result)
+                          alert('PUT ejecutado exitosamente - revisa la consola')
+                          await loadPeriods()
+                          await fetchActivePeriod()
+                        } catch (err) {
+                          console.error('🧪 [TEST] Error en PUT:', err)
+                          alert(`Error en PUT: ${err.message}`)
+                        }
+                      }}
+                      className="text-blue-700 underline block w-full text-left hover:bg-blue-100 p-1"
+                    >
+                      🧪 Probar PUT directamente (sin form submit)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        console.log('📝 [TEST] Simulando submit manual')
+                        const form = document.querySelector('form')
+                        if (form) {
+                          console.log('📝 [TEST] Form found:', form)
+                          const event = new Event('submit', { bubbles: true, cancelable: true })
+                          form.dispatchEvent(event)
+                        } else {
+                          console.error('📝 [TEST] No form found!')
+                        }
+                      }}
+                      className="text-green-700 underline block w-full text-left hover:bg-green-100 p-1"
+                    >
+                      📝 Simular submit del formulario
+                    </button>
+                  </div>
+
                   <div className="flex gap-2 pt-2">
                     <button
                       type="submit"
                       className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+                      onClick={(e) => {
+                        console.log('📤 [EDIT] Submit button clicked')
+                        console.log('📤 [EDIT] Event type:', e.type)
+                        console.log('📤 [EDIT] Form validity:', e.target.form?.checkValidity())
+                      }}
                     >
                       Guardar Cambios
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowEditForm(false)}
+                      onClick={() => {
+                        console.log('❌ Cancel button clicked')
+                        setShowEditForm(false)
+                      }}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                       Cancelar
