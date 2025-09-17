@@ -86,10 +86,12 @@ PUT /api/high_score/periods/<period-id>
 **Request Body:**
 ```json
 {
-  "end_date": "2024-01-25T23:59:59",
+  "duration_days": 7,
   "auto_restart": false
 }
 ```
+
+**Note:** The backend now expects `duration_days` instead of `end_date` for period updates.
 
 **Use Cases:**
 - Extend or shorten competition period

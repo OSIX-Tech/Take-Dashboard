@@ -270,23 +270,15 @@ function Game() {
     }
 
     try {
-      // Incluir start_date para calcular el nuevo end_date
+      // NUEVO: Solo enviamos duration_days y auto_restart
       const updateData = {
-        ...editData,
-        start_date: editingPeriod.start_date
+        duration_days: editData.duration_days,
+        auto_restart: editData.auto_restart
       }
 
-      // Verificar que NO estamos pasando el end_date original
-      if (updateData.end_date) {
-        console.warn('⚠️ [Game] WARNING: updateData contiene end_date:', updateData.end_date)
-        console.warn('⚠️ [Game] Esto sobrescribirá el cálculo basado en duration_days')
-        delete updateData.end_date // Eliminar end_date para forzar el cálculo
-      }
-
-      console.log('📤 [Game] Calling updatePeriod with:', {
+      console.log('📤 [Game] Calling updatePeriod with NEW FORMAT:', {
         periodId: editingPeriod.id,
-        updateData,
-        NO_end_date: !updateData.end_date
+        updateData
       })
 
       const result = await leaderboardService.updatePeriod(editingPeriod.id, updateData)
@@ -410,16 +402,56 @@ function Game() {
   }
 
   const handleMarkClaimed = async (winnerId) => {
+    console.log('🎆 [Game] handleMarkClaimed iniciado con winnerId:', winnerId)
+
+    if (!winnerId) {
+      console.error('❌ [Game] ERROR: No winnerId provided to handleMarkClaimed')
+      alert('Error: No se encontró el ID del ganador')
+      return
+    }
+
+    // Encontrar el winner actual para verificar su estado
+    const currentWinner = winners.find(w => w.id === winnerId)
+    console.log('🔍 [Game] Estado actual del ganador:', {
+      id: currentWinner?.id,
+      name: currentWinner?.user_name,
+      reward_claimed: currentWinner?.reward_claimed,
+      claimed_at: currentWinner?.claimed_at
+    })
+
+    if (currentWinner?.reward_claimed) {
+      console.warn('⚠️ [Game] Este premio ya está marcado como recogido')
+      alert('Este premio ya está marcado como recogido')
+      return
+    }
+
     if (!confirm('¿Confirmar que el premio ha sido recogido?')) return
 
     try {
-      console.log('✅ [Game] Marcando premio como reclamado:', winnerId)
-      await leaderboardService.markWinnerClaimed(winnerId)
+      console.log('📤 [Game] Enviando solicitud para marcar como reclamado:', winnerId)
+      const result = await leaderboardService.markWinnerClaimed(winnerId)
+      console.log('✅ [Game] Resultado de marcar como reclamado:', result)
+
       alert('Premio marcado como recogido exitosamente')
+
+      // Recargar la lista de ganadores
+      console.log('🔄 [Game] Recargando lista de ganadores...')
       await loadWinners()
+
+      // Verificar si se actualizó
+      const updatedWinner = winners.find(w => w.id === winnerId)
+      console.log('🔍 [Game] Estado después de actualizar:', {
+        id: updatedWinner?.id,
+        reward_claimed: updatedWinner?.reward_claimed,
+        claimed_at: updatedWinner?.claimed_at
+      })
     } catch (err) {
       console.error('❌ [Game] Error marking winner as claimed:', err)
-      setError('Error al marcar premio como recogido')
+      console.error('❌ [Game] Error details:', {
+        message: err.message,
+        stack: err.stack
+      })
+      setError(`Error al marcar premio como recogido: ${err.message}`)
     }
   }
 
@@ -1134,7 +1166,15 @@ function Game() {
                 >
                   <div
                     className="flex justify-between items-start cursor-pointer"
-                    onClick={() => setExpandedWinner(expandedWinner === winner.id ? null : winner.id)}
+                    onClick={() => {
+                      console.log('👥 [Game] Winner clicked:', {
+                        id: winner.id,
+                        name: winner.user_name,
+                        reward_claimed: winner.reward_claimed,
+                        position: winner.position
+                      })
+                      setExpandedWinner(expandedWinner === winner.id ? null : winner.id)
+                    }}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -1206,14 +1246,45 @@ function Game() {
                         )}
                       </div>
 
-                      {!winner.reward_claimed && (
-                        <button
-                          onClick={() => handleMarkClaimed(winner.id)}
-                          className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2"
-                        >
-                          <Check className="h-4 w-4" />
-                          Marcar como Recogido
-                        </button>
+                      {!winner.reward_claimed ? (
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => handleMarkClaimed(winner.id)}
+                            className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2 w-full"
+                          >
+                            <Check className="h-4 w-4" />
+                            Marcar como Recogido
+                          </button>
+
+                          {/* Herramientas de debug */}
+                          <div className="p-2 bg-gray-100 rounded text-xs space-y-1">
+                            <p className="font-semibold">🔧 Debug Info:</p>
+                            <p>Winner ID: {winner.id || 'NO ID'}</p>
+                            <p>User ID: {winner.user_id || 'NO USER ID'}</p>
+                            <p>Status: {winner.reward_claimed ? 'Reclamado' : 'Pendiente'}</p>
+                            <button
+                              onClick={async () => {
+                                console.log('🧪 [DEBUG] Testing mark claimed directly')
+                                console.log('🧪 [DEBUG] Winner object:', winner)
+                                try {
+                                  const result = await leaderboardService.markWinnerClaimed(winner.id)
+                                  console.log('🧪 [DEBUG] Direct mark result:', result)
+                                  alert('Ver consola para resultado del test')
+                                } catch (err) {
+                                  console.error('🧪 [DEBUG] Direct mark error:', err)
+                                  alert('Error en test - ver consola')
+                                }
+                              }}
+                              className="text-blue-600 underline"
+                            >
+                              🧪 Test directo del servicio
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-2 bg-green-100 rounded text-sm">
+                          ✅ Premio recogido el {winner.claimed_at ? new Date(winner.claimed_at).toLocaleDateString('es') : 'fecha desconocida'}
+                        </div>
                       )}
                     </div>
                   )}
