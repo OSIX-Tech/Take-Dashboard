@@ -172,10 +172,19 @@ function Game() {
       }
 
       // Debug: mostrar todos los winners y su estado
-      console.log('📊 [Game] Todos los winners del backend:', data.map(w => ({
+      console.log('📊 [Game] Todos los winners del backend (RAW):', data)
+
+      // Verificar el primer winner en detalle
+      if (data.length > 0) {
+        console.log('🔍 [Game] Primer winner - todas las propiedades:', Object.keys(data[0]))
+        console.log('🔍 [Game] Primer winner - valores:', data[0])
+      }
+
+      console.log('📊 [Game] Winners mapeados:', data.map(w => ({
         id: w.id,
-        name: w.user_name,
+        name: w.user_name || w.userName || w.name || 'Unknown',
         reward_claimed: w.reward_claimed,
+        reward_claimed_type: typeof w.reward_claimed,
         claimed_at: w.claimed_at
       })))
 
@@ -187,10 +196,20 @@ function Game() {
 
       if (activeFilter === 'pending') {
         winnersData = winnersData.filter(w => !w.reward_claimed)
-        console.log('📊 [Game] Winners PENDIENTES (reward_claimed = false):', winnersData.length, winnersData.map(w => w.user_name))
+        console.log('📊 [Game] Winners PENDIENTES (reward_claimed = false):', winnersData.length)
+        console.log('📊 [Game] Detalle pendientes:', winnersData.map(w => ({
+          id: w.id,
+          name: w.user_name,
+          reward_claimed: w.reward_claimed
+        })))
       } else if (activeFilter === 'claimed') {
         winnersData = winnersData.filter(w => w.reward_claimed)
-        console.log('📊 [Game] Winners RECOGIDOS (reward_claimed = true):', winnersData.length, winnersData.map(w => w.user_name))
+        console.log('📊 [Game] Winners RECOGIDOS (reward_claimed = true):', winnersData.length)
+        console.log('📊 [Game] Detalle recogidos:', winnersData.map(w => ({
+          id: w.id,
+          name: w.user_name,
+          reward_claimed: w.reward_claimed
+        })))
       } else {
         console.log('📊 [Game] Mostrando TODOS los winners:', winnersData.length)
       }
