@@ -272,7 +272,13 @@ function Game() {
       await fetchActivePeriod()
     } catch (err) {
       console.error('Error closing period:', err)
-      setError('Error al cerrar el periodo')
+      // Mostrar más detalles del error
+      const errorMsg = err.message || 'Error al cerrar el periodo'
+      if (errorMsg.includes('500')) {
+        setError('Error del servidor al cerrar el periodo. Posibles causas: El periodo ya está cerrado, no hay jugadores con puntuaciones, o error interno del servidor.')
+      } else {
+        setError(`Error al cerrar el periodo: ${errorMsg}`)
+      }
       setShowCloseModal(false)
     }
   }

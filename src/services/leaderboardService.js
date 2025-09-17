@@ -177,6 +177,8 @@ export const leaderboardService = {
   async closePeriod(periodId, topPositions = 1) {
     console.log('🎯 [LeaderboardService] closePeriod called with periodId:', periodId, 'topPositions:', topPositions)
     const url = `high_score/periods/${periodId}/close`
+
+    // Intentar primero con el body según la documentación
     const requestBody = { topPositions }
     console.log('🔗 [LeaderboardService] POST URL:', url)
     console.log('📦 [LeaderboardService] Request body:', requestBody)
@@ -187,6 +189,12 @@ export const leaderboardService = {
       return response.data || response
     } catch (error) {
       console.error('❌ [LeaderboardService] closePeriod error:', error)
+      console.error('❌ Error details:', {
+        status: error.status,
+        message: error.message,
+        periodId: periodId,
+        requestBody: requestBody
+      })
 
       // Si es 404, simular cierre con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
