@@ -178,11 +178,21 @@ function Game() {
       if (data.length > 0) {
         console.log('🔍 [Game] Primer winner - todas las propiedades:', Object.keys(data[0]))
         console.log('🔍 [Game] Primer winner - valores:', data[0])
+        if (data[0].users) {
+          console.log('🔍 [Game] Primer winner - users object:', data[0].users)
+        }
       }
 
-      console.log('📊 [Game] Winners mapeados:', data.map(w => ({
+      // Mapear los campos correctamente desde el backend
+      data = data.map(w => ({
+        ...w,
+        reward_claimed: w.claimed, // El campo se llama 'claimed' en el backend
+        user_name: w.users?.name || w.users?.username || 'Usuario Desconocido'
+      }))
+
+      console.log('📊 [Game] Winners mapeados correctamente:', data.map(w => ({
         id: w.id,
-        name: w.user_name || w.userName || w.name || 'Unknown',
+        name: w.user_name,
         reward_claimed: w.reward_claimed,
         reward_claimed_type: typeof w.reward_claimed,
         claimed_at: w.claimed_at
