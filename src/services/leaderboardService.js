@@ -117,6 +117,18 @@ export const leaderboardService = {
     try {
       const response = await apiService.post(url, requestBody)
       console.log('✅ [LeaderboardService] createPeriod response:', response)
+
+      // El backend devuelve start_date y end_date, calculamos duration_days
+      if (response && response.data) {
+        if (response.data.start_date && response.data.end_date) {
+          const start = new Date(response.data.start_date)
+          const end = new Date(response.data.end_date)
+          const diffInMs = end - start
+          const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+          response.data.duration_days = diffInDays
+        }
+      }
+
       return response
     } catch (error) {
       console.error('❌ [LeaderboardService] createPeriod error:', error)
@@ -129,6 +141,7 @@ export const leaderboardService = {
           game_id: data.gameId,
           start_date: new Date().toISOString(),
           end_date: new Date(Date.now() + data.durationDays * 24 * 60 * 60 * 1000).toISOString(),
+          duration_days: data.durationDays,
           is_active: true,
           auto_restart: data.autoRestart,
           created_at: new Date().toISOString()
@@ -153,16 +166,16 @@ export const leaderboardService = {
   async updatePeriod(periodId, data) {
     console.log('🎯 [LeaderboardService] updatePeriod called with periodId:', periodId, 'data:', data)
 
-    // Calcular el nuevo end_date basado en duration_days si se proporciona
+    // Calcular el nuevo end_date basado en duration_days
     let end_date = data.end_date
-    if (data.duration_days && data.start_date) {
+    if (data.duration_days !== undefined && data.start_date) {
       const startDate = new Date(data.start_date)
       const newEndDate = new Date(startDate.getTime() + data.duration_days * 24 * 60 * 60 * 1000)
       end_date = newEndDate.toISOString()
+      console.log('📅 [LeaderboardService] Calculated new end_date:', end_date, 'from duration_days:', data.duration_days)
     }
 
-    // Convert to snake_case for backend
-    // NO enviamos reward_id al backend, es solo visual
+    // Backend solo acepta end_date y auto_restart según la guía
     const requestBody = {
       end_date: end_date,
       auto_restart: data.auto_restart
@@ -174,6 +187,18 @@ export const leaderboardService = {
     try {
       const response = await apiService.put(url, requestBody)
       console.log('✅ [LeaderboardService] updatePeriod response:', response)
+
+      // El backend devuelve el periodo actualizado, calcular duration_days
+      if (response && response.data) {
+        if (response.data.start_date && response.data.end_date) {
+          const start = new Date(response.data.start_date)
+          const end = new Date(response.data.end_date)
+          const diffInMs = end - start
+          const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+          response.data.duration_days = diffInDays
+        }
+      }
+
       return response
     } catch (error) {
       console.error('❌ [LeaderboardService] updatePeriod error:', error)
@@ -183,8 +208,18 @@ export const leaderboardService = {
         console.log('📦 [LeaderboardService] Simulating period update with mock data')
         const period = mockPeriods.find(p => p.id === periodId)
         if (period) {
-          if (data.end_date) period.end_date = data.end_date
-          if (data.auto_restart !== undefined) period.auto_restart = data.auto_restart
+          if (requestBody.end_date) period.end_date = requestBody.end_date
+          if (requestBody.auto_restart !== undefined) period.auto_restart = requestBody.auto_restart
+
+          // Calcular duration_days para el mock
+          if (period.start_date && period.end_date) {
+            const start = new Date(period.start_date)
+            const end = new Date(period.end_date)
+            const diffInMs = end - start
+            const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+            period.duration_days = diffInDays
+          }
+
           return {
             success: true,
             data: period,
