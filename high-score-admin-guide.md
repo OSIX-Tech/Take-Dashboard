@@ -86,7 +86,7 @@ PUT /api/high_score/periods/<period-id>
 **Request Body:**
 ```json
 {
-  "end_date": "2024-01-25T23:59:59Z",
+  "end_date": "2024-01-25T23:59:59",
   "auto_restart": false
 }
 ```

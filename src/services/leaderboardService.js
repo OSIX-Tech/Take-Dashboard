@@ -209,17 +209,22 @@ export const leaderboardService = {
       console.log('🕐 [LeaderboardService] Start date parsed:', startDate.toISOString())
       console.log('🕐 [LeaderboardService] Duration days requested:', data.duration_days)
 
-      // Calcular el end_date: agregar los días completos
-      // Para 7 días, queremos que termine 7 días después a las 23:59:59
-      const durationMs = data.duration_days * 24 * 60 * 60 * 1000
-      const newEndDate = new Date(startDate.getTime() + durationMs - 1000) // -1000ms para terminar en :59
+      // Calcular el end_date correctamente:
+      // 1. Crear nueva fecha basada en el inicio
+      const newEndDate = new Date(startDate.getTime())
+      // 2. Agregar los días completos
+      newEndDate.setDate(newEndDate.getDate() + data.duration_days)
+      // 3. Establecer la hora a 23:59:59.999 para el final del día
+      newEndDate.setHours(23, 59, 59, 999)
+
       end_date = newEndDate.toISOString()
 
       console.log('📅 [LeaderboardService] === CÁLCULO DE END_DATE ===')
-      console.log('📅   Start:', startDate.toISOString())
-      console.log('📅   Duration:', data.duration_days, 'días')
-      console.log('📅   Duration ms:', durationMs)
-      console.log('📅   New end_date:', end_date)
+      console.log('📅   Start date:', startDate.toISOString())
+      console.log('📅   Duration requested:', data.duration_days, 'días')
+      console.log('📅   End date ANTES de ajustar hora:', new Date(startDate.getTime() + data.duration_days * 24 * 60 * 60 * 1000).toISOString())
+      console.log('📅   End date DESPUÉS de ajustar hora:', end_date)
+      console.log('📅   Hora del end_date:', new Date(end_date).toTimeString())
       console.log('📅   Diferencia real:', ((new Date(end_date) - startDate) / (1000 * 60 * 60 * 24)).toFixed(2), 'días')
     } else if (!end_date) {
       console.error('❌ [LeaderboardService] ERROR: No se puede calcular end_date')

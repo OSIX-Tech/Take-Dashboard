@@ -275,9 +275,18 @@ function Game() {
         ...editData,
         start_date: editingPeriod.start_date
       }
+
+      // Verificar que NO estamos pasando el end_date original
+      if (updateData.end_date) {
+        console.warn('⚠️ [Game] WARNING: updateData contiene end_date:', updateData.end_date)
+        console.warn('⚠️ [Game] Esto sobrescribirá el cálculo basado en duration_days')
+        delete updateData.end_date // Eliminar end_date para forzar el cálculo
+      }
+
       console.log('📤 [Game] Calling updatePeriod with:', {
         periodId: editingPeriod.id,
-        updateData
+        updateData,
+        NO_end_date: !updateData.end_date
       })
 
       const result = await leaderboardService.updatePeriod(editingPeriod.id, updateData)
@@ -417,8 +426,20 @@ function Game() {
   const openEditForm = (period) => {
     console.log('📝 [Game] openEditForm called with period:', period)
 
-    // Asegurar que duration_days esté presente
-    const durationDays = period.duration_days || 7
+    // Asegurar que duration_days esté presente y sea un número válido
+    let durationDays = period.duration_days
+    if (!durationDays || isNaN(durationDays)) {
+      // Si no hay duration_days, calcularlo desde las fechas
+      if (period.start_date && period.end_date) {
+        const start = new Date(period.start_date)
+        const end = new Date(period.end_date)
+        const diff = end - start
+        durationDays = Math.ceil(diff / (1000 * 60 * 60 * 24))
+      } else {
+        durationDays = 7 // Valor por defecto
+      }
+    }
+    durationDays = parseInt(durationDays) || 7
 
     console.log('📝 [Game] Setting edit data with duration_days:', durationDays)
 
@@ -847,14 +868,31 @@ function Game() {
                     <label className="block text-sm font-medium mb-1">Duración (días) *</label>
                     <input
                       type="number"
-                      value={editData.duration_days}
+                      value={editData.duration_days || ''}
                       onChange={(e) => {
-                        const newValue = parseInt(e.target.value)
-                        console.log('🔄 [EDIT] Duration input changed to:', newValue)
-                        setEditData({...editData, duration_days: newValue})
+                        const value = e.target.value
+                        // Permitir campo vacío temporalmente mientras escribe
+                        if (value === '') {
+                          console.log('🔄 [EDIT] Duration input cleared')
+                          setEditData({...editData, duration_days: ''})
+                        } else {
+                          const numValue = parseInt(value)
+                          if (!isNaN(numValue) && numValue > 0) {
+                            console.log('🔄 [EDIT] Duration input changed to:', numValue)
+                            setEditData({...editData, duration_days: numValue})
+                          }
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // Si el campo queda vacío al perder el foco, poner 1
+                        if (e.target.value === '' || editData.duration_days === '') {
+                          console.log('🔄 [EDIT] Duration defaulted to 1 on blur')
+                          setEditData({...editData, duration_days: 1})
+                        }
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       min="1"
+                      max="365"
                       required
                     />
                   </div>
