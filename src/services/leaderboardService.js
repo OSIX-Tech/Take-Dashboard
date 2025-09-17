@@ -205,14 +205,28 @@ export const leaderboardService = {
     let end_date = data.end_date
     if (data.duration_days !== undefined && data.start_date) {
       const startDate = new Date(data.start_date)
+      console.log('🕐 [LeaderboardService] Start date original:', data.start_date)
       console.log('🕐 [LeaderboardService] Start date parsed:', startDate.toISOString())
+      console.log('🕐 [LeaderboardService] Duration days requested:', data.duration_days)
 
-      // Restar 1 segundo para que termine en 23:59:59 del último día
-      const newEndDate = new Date(startDate.getTime() + (data.duration_days * 24 * 60 * 60 * 1000) - 1000)
+      // Calcular el end_date: agregar los días completos
+      // Para 7 días, queremos que termine 7 días después a las 23:59:59
+      const durationMs = data.duration_days * 24 * 60 * 60 * 1000
+      const newEndDate = new Date(startDate.getTime() + durationMs - 1000) // -1000ms para terminar en :59
       end_date = newEndDate.toISOString()
-      console.log('📅 [LeaderboardService] Calculated new end_date:', end_date, 'from duration_days:', data.duration_days)
-    } else {
-      console.log('⚠️ [LeaderboardService] No duration_days or start_date, using existing end_date:', end_date)
+
+      console.log('📅 [LeaderboardService] === CÁLCULO DE END_DATE ===')
+      console.log('📅   Start:', startDate.toISOString())
+      console.log('📅   Duration:', data.duration_days, 'días')
+      console.log('📅   Duration ms:', durationMs)
+      console.log('📅   New end_date:', end_date)
+      console.log('📅   Diferencia real:', ((new Date(end_date) - startDate) / (1000 * 60 * 60 * 24)).toFixed(2), 'días')
+    } else if (!end_date) {
+      console.error('❌ [LeaderboardService] ERROR: No se puede calcular end_date')
+      console.error('  - duration_days:', data.duration_days)
+      console.error('  - start_date:', data.start_date)
+      console.error('  - end_date:', data.end_date)
+      throw new Error('No se puede determinar el end_date para la actualización')
     }
 
     // Backend solo acepta end_date y auto_restart según la guía
@@ -222,7 +236,11 @@ export const leaderboardService = {
     }
     const url = `high_score/periods/${periodId}`
     console.log('🔗 [LeaderboardService] PUT URL:', url)
-    console.log('📦 [LeaderboardService] Request body:', requestBody)
+    console.log('📦 [LeaderboardService] Request body:', JSON.stringify(requestBody, null, 2))
+    console.log('📦 [LeaderboardService] Body details:')
+    console.log('  - end_date enviado:', requestBody.end_date)
+    console.log('  - auto_restart enviado:', requestBody.auto_restart)
+    console.log('  - Tipo de end_date:', typeof requestBody.end_date)
 
     try {
       console.log('🚀 [LeaderboardService] Sending PUT request...')
