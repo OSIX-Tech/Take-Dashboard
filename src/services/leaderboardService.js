@@ -55,6 +55,7 @@ export const leaderboardService = {
   /**
    * Get All Periods
    * GET /api/high_score/periods?gameId=<uuid>
+   * Según high-score-admin-guide.md
    */
   async getAllPeriods(gameId = null) {
     console.log('🎯 [LeaderboardService] getAllPeriods called with gameId:', gameId)
@@ -71,12 +72,13 @@ export const leaderboardService = {
       let periods = response.data || response
       if (Array.isArray(periods)) {
         periods = periods.map(period => {
-          // Si no tiene duration_days, calcularlo desde las fechas
-          if (!period.duration_days && period.start_date && period.end_date) {
+          // SIEMPRE calcular duration_days desde las fechas para precisión
+          if (period.start_date && period.end_date) {
             const start = new Date(period.start_date)
             const end = new Date(period.end_date)
             const diffInMs = end - start
-            const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+            // Usar ceil para incluir el día completo
+            const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
             period.duration_days = diffInDays
           }
           return period
@@ -100,6 +102,8 @@ export const leaderboardService = {
   /**
    * Create New Period
    * POST /api/high_score/periods
+   * Body: { gameId, durationDays, autoRestart }
+   * Según high-score-admin-guide.md
    */
   async createPeriod(data) {
     console.log('🎯 [LeaderboardService] createPeriod called with data:', data)
@@ -124,7 +128,8 @@ export const leaderboardService = {
           const start = new Date(response.data.start_date)
           const end = new Date(response.data.end_date)
           const diffInMs = end - start
-          const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+          // Usar ceil para incluir el día completo
+          const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
           response.data.duration_days = diffInDays
         }
       }
@@ -162,6 +167,9 @@ export const leaderboardService = {
   /**
    * Update Period Settings
    * PUT /api/high_score/periods/<period-id>
+   * Body: { end_date, auto_restart }
+   * NOTA: Backend solo acepta end_date y auto_restart según la guía
+   * Según high-score-admin-guide.md
    */
   async updatePeriod(periodId, data) {
     console.log('🎯 [LeaderboardService] updatePeriod called with periodId:', periodId, 'data:', data)
@@ -170,7 +178,8 @@ export const leaderboardService = {
     let end_date = data.end_date
     if (data.duration_days !== undefined && data.start_date) {
       const startDate = new Date(data.start_date)
-      const newEndDate = new Date(startDate.getTime() + data.duration_days * 24 * 60 * 60 * 1000)
+      // Restar 1 segundo para que termine en 23:59:59 del último día
+      const newEndDate = new Date(startDate.getTime() + (data.duration_days * 24 * 60 * 60 * 1000) - 1000)
       end_date = newEndDate.toISOString()
       console.log('📅 [LeaderboardService] Calculated new end_date:', end_date, 'from duration_days:', data.duration_days)
     }
@@ -194,7 +203,8 @@ export const leaderboardService = {
           const start = new Date(response.data.start_date)
           const end = new Date(response.data.end_date)
           const diffInMs = end - start
-          const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+          // Usar ceil para incluir el día completo
+          const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
           response.data.duration_days = diffInDays
         }
       }
@@ -216,7 +226,7 @@ export const leaderboardService = {
             const start = new Date(period.start_date)
             const end = new Date(period.end_date)
             const diffInMs = end - start
-            const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+            const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
             period.duration_days = diffInDays
           }
 
@@ -234,9 +244,16 @@ export const leaderboardService = {
   /**
    * Close Period Manually
    * POST /api/high_score/periods/<period-id>/close
+   * Body (opcional): { topPositions: 1 }
+   * Según high-score-admin-guide.md
    */
   async closePeriod(periodId, topPositions = 1) {
     console.log('🎯 [LeaderboardService] closePeriod called with periodId:', periodId, 'topPositions:', topPositions)
+
+    if (!periodId) {
+      throw new Error('periodId es requerido para cerrar un periodo')
+    }
+
     const url = `high_score/periods/${periodId}/close`
 
     // Intentar primero con el body según la documentación
@@ -253,6 +270,7 @@ export const leaderboardService = {
       console.error('❌ Error details:', {
         status: error.status,
         message: error.message,
+        response: error.response,
         periodId: periodId,
         requestBody: requestBody
       })
@@ -297,6 +315,7 @@ export const leaderboardService = {
   /**
    * Get Period Winners
    * GET /api/high_score/periods/<period-id>/winners
+   * Según high-score-admin-guide.md
    */
   async getPeriodWinners(periodId) {
     console.log('🎯 [LeaderboardService] getPeriodWinners called with periodId:', periodId)
@@ -327,6 +346,8 @@ export const leaderboardService = {
   /**
    * Get Winners History
    * GET /api/high_score/winners?gameId=<uuid>&position=1&limit=50
+   * Query params: gameId, position, limit (todos opcionales)
+   * Según high-score-admin-guide.md
    */
   async getAllWinners(params = {}) {
     console.log('🎯 [LeaderboardService] getAllWinners called with params:', params)
@@ -367,6 +388,8 @@ export const leaderboardService = {
   /**
    * Mark Reward as Claimed
    * POST /api/high_score/winners/<winner-id>/mark-claimed
+   * Uso: Cuando un usuario físicamente recoge su premio en el café
+   * Según high-score-admin-guide.md
    */
   async markWinnerClaimed(winnerId) {
     console.log('🎯 [LeaderboardService] markWinnerClaimed called with winnerId:', winnerId)
@@ -410,6 +433,8 @@ export const leaderboardService = {
   /**
    * Process Expired Periods
    * POST /api/high_score/process-expired
+   * Normalmente ejecutado por cron job, procesa periodos expirados
+   * Según high-score-admin-guide.md
    */
   async processExpiredPeriods() {
     console.log('🎯 [LeaderboardService] processExpiredPeriods called')
@@ -505,11 +530,12 @@ export const leaderboardService = {
 
         // Asegurar que el periodo activo tenga duration_days
         const processPeriod = (period) => {
-          if (period && !period.duration_days && period.start_date && period.end_date) {
+          if (period && period.start_date && period.end_date) {
             const start = new Date(period.start_date)
             const end = new Date(period.end_date)
             const diffInMs = end - start
-            const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24))
+            // SIEMPRE recalcular para precisión
+            const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
             period.duration_days = diffInDays
           }
           return period

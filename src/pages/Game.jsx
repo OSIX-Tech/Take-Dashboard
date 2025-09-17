@@ -39,8 +39,9 @@ function Game() {
     claimedToday: 0
   })
 
-  // gameId hardcodeado para el juego principal
-  const GAME_ID = '7ed73f84-2303-405b-91e9-13f3feec3057'
+  // gameId hardcodeado para el juego principal - Flappy Bird
+  // TODO: En el futuro, esto debería venir de una configuración o API
+  const GAME_ID = '7ed73f84-2303-405b-91e9-13f3feec3057' // Flappy Bird UUID
 
   const [newPeriod, setNewPeriod] = useState({
     gameId: GAME_ID,
@@ -156,8 +157,9 @@ function Game() {
   const loadWinners = async () => {
     try {
       setLoading(true)
-      const response = await leaderboardService.getAllWinners()
-      console.log('🔍 Winners response:', response)
+      // Obtener ganadores del juego específico
+      const response = await leaderboardService.getAllWinners({ gameId: GAME_ID })
+      console.log('🔍 Winners response for game:', GAME_ID, response)
 
       let data = []
       if (Array.isArray(response)) {
@@ -210,8 +212,15 @@ function Game() {
     e.preventDefault()
     try {
       // Asegurar que siempre se use el gameId hardcodeado
-      const periodData = { ...newPeriod, gameId: GAME_ID }
+      const periodData = {
+        gameId: GAME_ID, // Siempre usar el gameId hardcodeado
+        durationDays: newPeriod.durationDays,
+        autoRestart: newPeriod.autoRestart
+      }
+
+      console.log('🆕 [Game] Creando nuevo periodo con datos:', periodData)
       const response = await leaderboardService.createPeriod(periodData)
+      console.log('✅ [Game] Periodo creado:', response)
 
       // Si se creó exitosamente y hay una rewardId, guardarla en localStorage
       if (response && response.data && response.data.id && newPeriod.rewardId) {
@@ -220,16 +229,32 @@ function Game() {
 
       setShowNewPeriodForm(false)
       setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true, rewardId: null })
-      await loadPeriods()
-    } catch (err) {
-      console.error('Error creating period:', err)
-      // Mostrar más detalles del error
-      const errorMsg = err.message || 'Error al crear el periodo'
-      if (errorMsg.includes('500')) {
-        setError('Error del servidor. Posibles causas: El gameId no existe, ya hay un periodo activo, o problema interno del servidor.')
-      } else {
-        setError(errorMsg)
+
+      // Mostrar mensaje de éxito
+      if (response && response.data) {
+        const period = response.data
+        alert(`Periodo creado exitosamente\nDuración: ${period.duration_days || newPeriod.durationDays} días\nReinicio automático: ${period.auto_restart ? 'Sí' : 'No'}`)
       }
+
+      await loadPeriods()
+      await fetchActivePeriod()
+    } catch (err) {
+      console.error('❌ [Game] Error creating period:', err)
+
+      // Mejorar manejo de errores
+      let errorMessage = 'Error al crear el periodo'
+      if (err.message) {
+        if (err.message.includes('400')) {
+          errorMessage = 'Datos inválidos. Verifica que la duración sea válida'
+        } else if (err.message.includes('500')) {
+          errorMessage = 'Error del servidor. Posibles causas:\n- Ya existe un periodo activo\n- El gameId no existe en el sistema\n- Problema interno del servidor'
+        } else if (err.message.includes('401')) {
+          errorMessage = 'No autorizado. Por favor, vuelve a iniciar sesión'
+        } else {
+          errorMessage = err.message
+        }
+      }
+      setError(errorMessage)
     }
   }
 
@@ -271,43 +296,84 @@ function Game() {
     if (!periodToClose) return
 
     try {
-      await leaderboardService.closePeriod(periodToClose.id)
+      console.log('🎯 [Game] Cerrando periodo:', periodToClose.id)
+      const result = await leaderboardService.closePeriod(periodToClose.id, 1)
+      console.log('✅ [Game] Periodo cerrado exitosamente:', result)
+
       setShowCloseModal(false)
       setPeriodToClose(null)
+
+      // Mostrar mensaje de éxito con información del ganador
+      if (result && result.winners && result.winners.length > 0) {
+        const winner = result.winners[0]
+        alert(`Periodo cerrado exitosamente.\nGanador: ${winner.user_name}\nPuntuación: ${winner.score}`)
+      } else {
+        alert('Periodo cerrado exitosamente. No se encontraron ganadores.')
+      }
+
       await loadPeriods()
       await fetchActivePeriod()
     } catch (err) {
-      console.error('Error closing period:', err)
-      // Mostrar más detalles del error
-      const errorMsg = err.message || 'Error al cerrar el periodo'
-      if (errorMsg.includes('500')) {
-        setError('Error del servidor al cerrar el periodo. Posibles causas: El periodo ya está cerrado, no hay jugadores con puntuaciones, o error interno del servidor.')
-      } else {
-        setError(`Error al cerrar el periodo: ${errorMsg}`)
+      console.error('❌ [Game] Error closing period:', err)
+      console.error('❌ Error details:', err)
+
+      // Mejorar el manejo de errores
+      let errorMessage = 'Error al cerrar el periodo'
+
+      if (err.message) {
+        if (err.message.includes('404')) {
+          errorMessage = 'El periodo no fue encontrado o ya fue cerrado'
+        } else if (err.message.includes('400')) {
+          errorMessage = 'Solicitud inválida. Verifica los datos del periodo'
+        } else if (err.message.includes('500')) {
+          errorMessage = 'Error del servidor. Posibles causas:\n- El periodo ya está cerrado\n- No hay jugadores con puntuaciones\n- Error interno del servidor'
+        } else if (err.message.includes('401')) {
+          errorMessage = 'No autorizado. Por favor, vuelve a iniciar sesión'
+        } else {
+          errorMessage = `Error: ${err.message}`
+        }
       }
+
+      setError(errorMessage)
       setShowCloseModal(false)
     }
   }
 
   const handleProcessExpired = async () => {
     try {
-      await leaderboardService.processExpiredPeriods()
+      console.log('🔄 [Game] Procesando periodos expirados...')
+      const result = await leaderboardService.processExpiredPeriods()
+      console.log('✅ [Game] Resultado del procesamiento:', result)
+
       await loadPeriods()
-      alert('Periodos expirados procesados correctamente')
+      await fetchActivePeriod()
+
+      // Mostrar resultado más detallado
+      if (result && result.processedCount !== undefined) {
+        if (result.processedCount > 0) {
+          alert(`Se procesaron ${result.processedCount} periodo(s) expirado(s) correctamente`)
+        } else {
+          alert('No hay periodos expirados para procesar')
+        }
+      } else {
+        alert('Periodos expirados procesados correctamente')
+      }
     } catch (err) {
-      console.error('Error processing expired periods:', err)
+      console.error('❌ [Game] Error processing expired periods:', err)
       setError('Error al procesar periodos expirados')
     }
   }
 
   const handleMarkClaimed = async (winnerId) => {
     if (!confirm('¿Confirmar que el premio ha sido recogido?')) return
-    
+
     try {
+      console.log('✅ [Game] Marcando premio como reclamado:', winnerId)
       await leaderboardService.markWinnerClaimed(winnerId)
+      alert('Premio marcado como recogido exitosamente')
       await loadWinners()
     } catch (err) {
-      console.error('Error marking winner as claimed:', err)
+      console.error('❌ [Game] Error marking winner as claimed:', err)
       setError('Error al marcar premio como recogido')
     }
   }
@@ -425,6 +491,24 @@ function Game() {
             </button>
           </div>
 
+          {/* No active period message */}
+          {!activePeriod && (
+            <div className="bg-yellow-50 rounded-lg border-2 border-yellow-300 p-8 text-center">
+              <div className="mb-4">
+                <Timer className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
+                <p className="text-lg font-semibold text-gray-700">No hay periodo activo</p>
+                <p className="text-sm text-gray-600 mt-1">Crea un nuevo periodo para comenzar la competencia</p>
+              </div>
+              <button
+                onClick={() => setShowNewPeriodForm(true)}
+                className="px-6 py-3 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2 mx-auto"
+              >
+                <Plus className="h-5 w-5" />
+                Crear Nuevo Periodo
+              </button>
+            </div>
+          )}
+
           {/* Active Period Card */}
           {activePeriod && (
             <div className="p-6 border-2 border-black rounded-lg">
@@ -456,7 +540,7 @@ function Game() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Duración</p>
-                  <p className="font-semibold">{activePeriod.duration_days} días</p>
+                  <p className="font-semibold">{activePeriod.duration_days || 7} días</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Reinicio Auto</p>
@@ -600,7 +684,12 @@ function Game() {
                     <p className="text-sm text-gray-600">
                       <strong>Juego:</strong> Flappy Bird
                     </p>
-                    <p className="text-xs text-gray-500 mt-1 font-mono">ID: {GAME_ID}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <span className="font-semibold">ID:</span> <span className="font-mono">{GAME_ID}</span>
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      ⚠️ Este es el único juego configurado actualmente
+                    </p>
                   </div>
 
                   <div>
@@ -640,7 +729,7 @@ function Game() {
                       className="rounded"
                     />
                     <label htmlFor="autoRestart" className="text-sm">
-                      Reinicio automático
+                      Reinicio automático (crear nuevo periodo al cerrar)
                     </label>
                   </div>
                   
