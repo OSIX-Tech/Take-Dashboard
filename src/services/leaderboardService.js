@@ -87,6 +87,7 @@ export const leaderboardService = {
   async createPeriod(data) {
     console.log('🎯 [LeaderboardService] createPeriod called with data:', data)
     // API expects camelCase based on the guide
+    // NO enviamos rewardId al backend, es solo visual
     const requestBody = {
       gameId: data.gameId,
       durationDays: data.durationDays,
@@ -135,6 +136,7 @@ export const leaderboardService = {
   async updatePeriod(periodId, data) {
     console.log('🎯 [LeaderboardService] updatePeriod called with periodId:', periodId, 'data:', data)
     // Convert to snake_case for backend
+    // NO enviamos reward_id al backend, es solo visual
     const requestBody = {
       end_date: data.end_date,
       auto_restart: data.auto_restart

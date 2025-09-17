@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 /* eslint-enable no-unused-vars */
 import { leaderboardService } from '@/services/leaderboardService'
+import { rewardsService } from '@/services/rewardsService'
 // eslint-disable-next-line no-unused-vars
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 // eslint-disable-next-line no-unused-vars
@@ -29,6 +30,8 @@ function Game() {
   const [showNewPeriodForm, setShowNewPeriodForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingPeriod, setEditingPeriod] = useState(null)
+  const [showCloseModal, setShowCloseModal] = useState(false)
+  const [periodToClose, setPeriodToClose] = useState(null)
   const [filterClaimed, setFilterClaimed] = useState('pending')
   const [stats, setStats] = useState({
     totalWinners: 0,
@@ -42,19 +45,47 @@ function Game() {
   const [newPeriod, setNewPeriod] = useState({
     gameId: GAME_ID,
     durationDays: 7,
-    autoRestart: true
+    autoRestart: true,
+    rewardId: null
   })
+
+  const [rewards, setRewards] = useState([])
+  const [periodRewards, setPeriodRewards] = useState({}) // Mapeo de periodId -> rewardId
 
   const [editData, setEditData] = useState({
     duration_days: 7,
     auto_restart: true,
-    next_period_duration_days: 7
+    next_period_duration_days: 7,
+    reward_id: null
   })
+
+  // Funciones para manejar localStorage de asociaciones periodo-reward
+  const loadPeriodRewards = () => {
+    const stored = localStorage.getItem('periodRewards')
+    if (stored) {
+      setPeriodRewards(JSON.parse(stored))
+    }
+  }
+
+  const savePeriodReward = (periodId, rewardId) => {
+    const updated = { ...periodRewards, [periodId]: rewardId }
+    setPeriodRewards(updated)
+    localStorage.setItem('periodRewards', JSON.stringify(updated))
+  }
+
+  const removePeriodReward = (periodId) => {
+    const updated = { ...periodRewards }
+    delete updated[periodId]
+    setPeriodRewards(updated)
+    localStorage.setItem('periodRewards', JSON.stringify(updated))
+  }
 
   useEffect(() => {
     if (activeTab === 'periods') {
       loadPeriods()
       fetchActivePeriod()
+      loadRewards() // Cargar rewards cuando se muestra la tab de periodos
+      loadPeriodRewards() // Cargar asociaciones periodo-reward de localStorage
     } else if (activeTab === 'winners') {
       loadWinners()
     }
@@ -108,6 +139,17 @@ function Game() {
       setPeriods([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadRewards = async () => {
+    try {
+      const rewardsData = await rewardsService.getRewards()
+      console.log('🎁 Rewards loaded:', rewardsData)
+      setRewards(rewardsData || [])
+    } catch (err) {
+      console.error('Error loading rewards:', err)
+      setRewards([])
     }
   }
 
@@ -169,9 +211,15 @@ function Game() {
     try {
       // Asegurar que siempre se use el gameId hardcodeado
       const periodData = { ...newPeriod, gameId: GAME_ID }
-      await leaderboardService.createPeriod(periodData)
+      const response = await leaderboardService.createPeriod(periodData)
+
+      // Si se creó exitosamente y hay una rewardId, guardarla en localStorage
+      if (response && response.data && response.data.id && newPeriod.rewardId) {
+        savePeriodReward(response.data.id, newPeriod.rewardId)
+      }
+
       setShowNewPeriodForm(false)
-      setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true })
+      setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true, rewardId: null })
       await loadPeriods()
     } catch (err) {
       console.error('Error creating period:', err)
@@ -188,9 +236,17 @@ function Game() {
   const handleUpdatePeriod = async (e) => {
     e.preventDefault()
     if (!editingPeriod) return
-    
+
     try {
       await leaderboardService.updatePeriod(editingPeriod.id, editData)
+
+      // Guardar o actualizar la reward en localStorage
+      if (editData.reward_id) {
+        savePeriodReward(editingPeriod.id, editData.reward_id)
+      } else {
+        removePeriodReward(editingPeriod.id)
+      }
+
       setShowEditForm(false)
       setEditingPeriod(null)
       await loadPeriods()
@@ -200,16 +256,24 @@ function Game() {
     }
   }
 
-  const handleClosePeriod = async (periodId) => {
-    if (!confirm('¿Cerrar este periodo y determinar el ganador?')) return
-    
+  const openCloseModal = (period) => {
+    setPeriodToClose(period)
+    setShowCloseModal(true)
+  }
+
+  const handleClosePeriod = async () => {
+    if (!periodToClose) return
+
     try {
-      await leaderboardService.closePeriod(periodId)
+      await leaderboardService.closePeriod(periodToClose.id)
+      setShowCloseModal(false)
+      setPeriodToClose(null)
       await loadPeriods()
       await fetchActivePeriod()
     } catch (err) {
       console.error('Error closing period:', err)
       setError('Error al cerrar el periodo')
+      setShowCloseModal(false)
     }
   }
 
@@ -241,7 +305,8 @@ function Game() {
     setEditData({
       duration_days: period.duration_days,
       auto_restart: period.auto_restart,
-      next_period_duration_days: period.duration_days
+      next_period_duration_days: period.duration_days,
+      reward_id: periodRewards[period.id] || null // Cargar reward desde localStorage
     })
     setShowEditForm(true)
   }
@@ -389,7 +454,7 @@ function Game() {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleClosePeriod(activePeriod.id)}
+                  onClick={() => openCloseModal(activePeriod)}
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   Cerrar Periodo
@@ -430,6 +495,17 @@ function Game() {
                             {leaderboardService.formatPeriodDates(period.start_date, period.end_date)}
                           </span>
                         </div>
+                        {periodRewards[period.id] && (
+                          <div className="flex items-center gap-1">
+                            <Trophy className="h-4 w-4 text-yellow-500" />
+                            <span className="text-sm text-gray-600">
+                              {(() => {
+                                const reward = rewards.find(r => r.id === periodRewards[period.id])
+                                return reward ? reward.name : 'Recompensa'
+                              })()}
+                            </span>
+                          </div>
+                        )}
                         {period.is_active ? (
                           <span className="px-2 py-1 bg-green-500 text-white text-xs rounded">Activo</span>
                         ) : (
@@ -448,18 +524,31 @@ function Game() {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <p className="text-gray-600">Duración</p>
-                            <p>{period.duration_days} días</p>
+                            <p>{period.duration_days || period.duration_days} días</p>
                           </div>
                           <div>
                             <p className="text-gray-600">Reinicio Automático</p>
                             <p>{period.auto_restart ? 'Activado' : 'Desactivado'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Recompensa</p>
+                            <p className="font-medium">
+                              {periodRewards[period.id] ? (
+                                (() => {
+                                  const reward = rewards.find(r => r.id === periodRewards[period.id])
+                                  return reward ? `${reward.name} (${reward.points} pts)` : 'ID: ' + periodRewards[period.id]
+                                })()
+                              ) : (
+                                <span className="text-gray-400">Sin recompensa</span>
+                              )}
+                            </p>
                           </div>
                         </div>
                         
                         {period.is_active && (
                           <div className="mt-4 flex gap-2">
                             <button
-                              onClick={() => handleClosePeriod(period.id)}
+                              onClick={() => openCloseModal(period)}
                               className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
                             >
                               Cerrar Periodo
@@ -513,7 +602,23 @@ function Game() {
                       required
                     />
                   </div>
-                  
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Recompensa</label>
+                    <select
+                      value={newPeriod.rewardId || ''}
+                      onChange={(e) => setNewPeriod({...newPeriod, rewardId: e.target.value || null})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Sin recompensa</option>
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.points} puntos
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -573,7 +678,23 @@ function Game() {
                       required
                     />
                   </div>
-                  
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Recompensa</label>
+                    <select
+                      value={editData.reward_id || ''}
+                      onChange={(e) => setEditData({...editData, reward_id: e.target.value || null})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Sin recompensa</option>
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.points} puntos
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -803,6 +924,78 @@ function Game() {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para cerrar periodo */}
+      {showCloseModal && periodToClose && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-full">
+                <Calendar className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Cerrar Periodo</h3>
+                <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-sm font-medium text-gray-700">Periodo a cerrar:</p>
+                <p className="text-lg font-semibold">
+                  {leaderboardService.formatPeriodDates(periodToClose.start_date, periodToClose.end_date)}
+                </p>
+              </div>
+
+              {periodRewards[periodToClose.id] && (
+                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-yellow-600" />
+                    <p className="text-sm font-medium text-yellow-700">Recompensa:</p>
+                  </div>
+                  <p className="text-sm text-yellow-800 ml-6">
+                    {(() => {
+                      const reward = rewards.find(r => r.id === periodRewards[periodToClose.id])
+                      return reward ? `${reward.name} (${reward.points} puntos)` : 'Recompensa asignada'
+                    })()}
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <strong>¿Qué pasará?</strong>
+                </p>
+                <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                  <li>• Se determinará el ganador basado en las puntuaciones</li>
+                  <li>• El periodo se marcará como cerrado</li>
+                  {periodToClose.auto_restart && (
+                    <li>• Se creará automáticamente un nuevo periodo</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCloseModal(false)
+                  setPeriodToClose(null)
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleClosePeriod}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Cerrar Periodo
+              </button>
+            </div>
           </div>
         </div>
       )}
