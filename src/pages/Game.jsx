@@ -171,6 +171,14 @@ function Game() {
         data = []
       }
 
+      // Debug: mostrar todos los winners y su estado
+      console.log('📊 [Game] Todos los winners del backend:', data.map(w => ({
+        id: w.id,
+        name: w.user_name,
+        reward_claimed: w.reward_claimed,
+        claimed_at: w.claimed_at
+      })))
+
       // Usar el filtro personalizado si se proporciona, sino usar el estado actual
       const activeFilter = customFilter !== null ? customFilter : filterClaimed
       console.log('🔍 [Game] Aplicando filtro:', activeFilter)
@@ -179,8 +187,12 @@ function Game() {
 
       if (activeFilter === 'pending') {
         winnersData = winnersData.filter(w => !w.reward_claimed)
+        console.log('📊 [Game] Winners PENDIENTES (reward_claimed = false):', winnersData.length, winnersData.map(w => w.user_name))
       } else if (activeFilter === 'claimed') {
         winnersData = winnersData.filter(w => w.reward_claimed)
+        console.log('📊 [Game] Winners RECOGIDOS (reward_claimed = true):', winnersData.length, winnersData.map(w => w.user_name))
+      } else {
+        console.log('📊 [Game] Mostrando TODOS los winners:', winnersData.length)
       }
 
       setWinners(winnersData)
@@ -436,37 +448,19 @@ function Game() {
       const result = await leaderboardService.markWinnerClaimed(winnerId)
       console.log('✅ [Game] Resultado de marcar como reclamado:', result)
 
-      // Actualizar localmente el winner antes de recargar
-      console.log('🔄 [Game] Actualizando estado local del ganador...')
-      setWinners(prevWinners =>
-        prevWinners.map(w =>
-          w.id === winnerId
-            ? { ...w, reward_claimed: true, claimed_at: new Date().toISOString() }
-            : w
-        )
-      )
+      // Mostrar mensaje de éxito inmediatamente
+      alert('✅ Premio marcado como recogido exitosamente')
 
-      // Si está en el filtro de "pendientes", cambiar temporalmente a "all" para mostrar el cambio
-      let previousFilter = filterClaimed
-      let newFilter = filterClaimed
+      // Recargar la lista completa de ganadores del backend manteniendo el filtro actual
+      console.log('🔄 [Game] Recargando lista de ganadores desde el backend con filtro actual:', filterClaimed)
+      await loadWinners()
+
+      console.log('✅ [Game] Lista de ganadores actualizada')
+
+      // Informar al usuario sobre el cambio de vista si aplica
       if (filterClaimed === 'pending') {
-        console.log('🔄 [Game] Cambiando temporalmente filtro a "all" para mostrar el cambio')
-        newFilter = 'all'
-        setFilterClaimed('all')
+        console.log('ℹ️ [Game] El ganador reclamado ya no aparece en "Pendientes", ahora está en "Recogidos"')
       }
-
-      // Recargar la lista completa de ganadores del backend con el nuevo filtro
-      console.log('🔄 [Game] Recargando lista de ganadores desde el backend con filtro:', newFilter)
-      await loadWinners(newFilter)
-
-      // Mostrar mensaje de éxito con información contextual
-      if (previousFilter === 'pending') {
-        alert('✅ Premio marcado como recogido exitosamente.\n\nEl ganador ahora aparece en la pestaña "Recogidos".\nSe ha cambiado el filtro a "Todos" para que puedas ver el cambio.')
-      } else {
-        alert('✅ Premio marcado como recogido exitosamente')
-      }
-
-      console.log('✅ [Game] Premio procesado y UI actualizada')
     } catch (err) {
       console.error('❌ [Game] Error marking winner as claimed:', err)
       console.error('❌ [Game] Error details:', {
