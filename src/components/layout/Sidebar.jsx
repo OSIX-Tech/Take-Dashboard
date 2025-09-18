@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import gsap from 'gsap'
-import { 
-  Menu as MenuIcon, 
-  Calendar, 
-  Gift, 
+import {
+  Menu as MenuIcon,
+  Calendar,
+  Gift,
   Trophy,
   Wallet,
-  ChevronLeft, 
+  ChevronLeft,
   ChevronRight
 } from 'lucide-react'
 
@@ -42,33 +42,33 @@ const Sidebar = () => {
   }, [isCollapsed])
 
   const menuItems = [
-    { 
-      icon: <MenuIcon className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
-      label: 'Menú', 
+    {
+      icon: <MenuIcon className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />,
+      label: 'Menú',
       path: '/menu',
       description: 'Gestionar elementos del menú'
     },
-    { 
-      icon: <Calendar className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
-      label: 'Eventos', 
+    {
+      icon: <Calendar className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />,
+      label: 'Eventos',
       path: '/events',
       description: 'Gestionar eventos'
     },
-    { 
-      icon: <Gift className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
-      label: 'Recompensas', 
+    {
+      icon: <Gift className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />,
+      label: 'Recompensas',
       path: '/rewards',
       description: 'Gestionar recompensas'
     },
-    { 
-      icon: <Trophy className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
-      label: 'Juego', 
+    {
+      icon: <Trophy className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />,
+      label: 'Juego',
       path: '/game',
       description: 'Leaderboard y periodos'
     },
-    { 
-      icon: <Wallet className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />, 
-      label: 'Wallet', 
+    {
+      icon: <Wallet className="w-5 h-5 md:w-6 md:h-6 lg:w-6 lg:h-6" />,
+      label: 'Wallet',
       path: '/wallet',
       description: 'Gestionar Google Wallet'
     },

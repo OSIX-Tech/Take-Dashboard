@@ -446,7 +446,7 @@ function App() {
                 </Layout>
               ) : <Navigate to="/login" replace />
             } />
-            
+
             {/* Ruta de fallback - redirige al login si la ruta no existe */}
             <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>

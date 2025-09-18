@@ -41,7 +41,7 @@ function Game() {
 
   // gameId hardcodeado para el juego principal - Flappy Bird
   // TODO: En el futuro, esto debería venir de una configuración o API
-  const GAME_ID = '7ed73f84-2303-405b-91e9-13f3feec3057' // Flappy Bird UUID
+  const GAME_ID = 'efe9e672-c88d-4a24-88d3-4319a0317e77' // Flappy Bird UUID
 
   const [newPeriod, setNewPeriod] = useState({
     gameId: GAME_ID,
@@ -240,7 +240,7 @@ function Game() {
         gameId: GAME_ID, // Siempre usar el gameId hardcodeado
         durationDays: newPeriod.durationDays,
         autoRestart: newPeriod.autoRestart,
-        rewardId: newPeriod.rewardId || null // Agregar rewardId según FRONTEND_CHANGES_REWARDS.md
+        reward_id: newPeriod.rewardId || null // Usar reward_id como espera el backend
       }
 
       console.log('🆕 [Game] Creando nuevo periodo con datos:', periodData)
