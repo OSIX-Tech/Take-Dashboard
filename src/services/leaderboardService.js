@@ -113,12 +113,12 @@ export const leaderboardService = {
       'full data': data
     })
 
-    // API expects camelCase for some fields, but reward_id uses snake_case
+    // API expects camelCase for most fields, but reward_id uses snake_case
     const requestBody = {
       gameId: data.gameId,
       durationDays: data.durationDays,
       autoRestart: data.autoRestart,
-      reward_id: data.reward_id || null // Mantener reward_id en snake_case
+      reward_id: data.reward_id || null // TODO es reward_id en snake_case
     }
 
     const url = 'high_score/periods'

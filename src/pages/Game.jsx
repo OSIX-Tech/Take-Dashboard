@@ -41,7 +41,7 @@ function Game() {
 
   // gameId hardcodeado para el juego principal - Flappy Bird
   // TODO: En el futuro, esto debería venir de una configuración o API
-  const GAME_ID = 'efe9e672-c88d-4a24-88d3-4319a0317e77' // Flappy Bird UUID
+  const GAME_ID = 'dcd345e5-0f1a-4809-9ec5-82c0277ef541' // Flappy Bird UUID
 
   const [newPeriod, setNewPeriod] = useState({
     gameId: GAME_ID,
@@ -241,6 +241,10 @@ function Game() {
 
   const handleCreatePeriod = async (e) => {
     e.preventDefault()
+    console.log('🚀 [Game] Form submitted!')
+    console.log('📊 [Game] Current newPeriod state at submit:', newPeriod)
+    console.log('📊 [Game] reward_id value at submit:', newPeriod.reward_id)
+
     try {
       // Asegurar que siempre se use el gameId hardcodeado
       const periodData = {
@@ -254,10 +258,19 @@ function Game() {
       console.log('🔍 [Game] Verificando reward_id antes de enviar:', {
         'newPeriod.reward_id': newPeriod.reward_id,
         'periodData.reward_id': periodData.reward_id,
-        'typeof reward_id': typeof periodData.reward_id
+        'typeof reward_id': typeof periodData.reward_id,
+        'is null?': periodData.reward_id === null,
+        'is undefined?': periodData.reward_id === undefined,
+        'is empty string?': periodData.reward_id === ''
       })
       const response = await leaderboardService.createPeriod(periodData)
       console.log('✅ [Game] Periodo creado:', response)
+      console.log('🔍 [Game] Response data detail:', {
+        'response.data': response?.data,
+        'response.data.reward_id': response?.data?.reward_id,
+        'response.data.rewardId': response?.data?.rewardId,
+        'all response.data keys': response?.data ? Object.keys(response.data) : []
+      })
 
       // Ya no necesitamos localStorage - el reward_id se envía directamente al backend
 
@@ -868,18 +881,27 @@ function Game() {
                     <select
                       value={newPeriod.reward_id || ''}
                       onChange={(e) => {
-                        const selectedRewardId = e.target.value || null
-                        console.log('🎯 [CREATE] Reward selected:', selectedRewardId)
-                        setNewPeriod({...newPeriod, reward_id: selectedRewardId})
+                        const selectedValue = e.target.value
+                        const selectedRewardId = selectedValue === '' ? null : selectedValue
+                        console.log('🎯 [CREATE] Dropdown onChange triggered')
+                        console.log('📝 [CREATE] Raw value from dropdown:', selectedValue)
+                        console.log('📝 [CREATE] Processed reward_id:', selectedRewardId)
+                        console.log('📝 [CREATE] Current state before update:', newPeriod)
+                        const updatedPeriod = {...newPeriod, reward_id: selectedRewardId}
+                        console.log('📝 [CREATE] State after update:', updatedPeriod)
+                        setNewPeriod(updatedPeriod)
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
-                      {rewards.map((reward) => (
-                        <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
-                        </option>
-                      ))}
+                      {rewards.map((reward) => {
+                        console.log('📋 [CREATE] Rendering option for reward:', reward.id, reward.name)
+                        return (
+                          <option key={reward.id} value={reward.id}>
+                            {reward.name} - {reward.required_seals} sellos
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
 
@@ -989,11 +1011,14 @@ function Game() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
-                      {rewards.map((reward) => (
-                        <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
-                        </option>
-                      ))}
+                      {rewards.map((reward) => {
+                        console.log('📋 [CREATE] Rendering option for reward:', reward.id, reward.name)
+                        return (
+                          <option key={reward.id} value={reward.id}>
+                            {reward.name} - {reward.required_seals} sellos
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
 
