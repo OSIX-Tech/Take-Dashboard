@@ -47,7 +47,7 @@ function Game() {
     gameId: GAME_ID,
     durationDays: 7,
     autoRestart: true,
-    rewardId: null // Inicializar rewardId
+    reward_id: null // Inicializar reward_id
   })
 
   const [rewards, setRewards] = useState([])
@@ -247,22 +247,22 @@ function Game() {
         gameId: GAME_ID, // Siempre usar el gameId hardcodeado
         durationDays: newPeriod.durationDays,
         autoRestart: newPeriod.autoRestart,
-        reward_id: newPeriod.rewardId || null // Pasar reward_id al servicio
+        reward_id: newPeriod.reward_id || null // Pasar reward_id al servicio
       }
 
       console.log('🆕 [Game] Creando nuevo periodo con datos:', periodData)
       console.log('🔍 [Game] Verificando reward_id antes de enviar:', {
-        'newPeriod.rewardId': newPeriod.rewardId,
+        'newPeriod.reward_id': newPeriod.reward_id,
         'periodData.reward_id': periodData.reward_id,
         'typeof reward_id': typeof periodData.reward_id
       })
       const response = await leaderboardService.createPeriod(periodData)
       console.log('✅ [Game] Periodo creado:', response)
 
-      // Ya no necesitamos localStorage - el rewardId se envía directamente al backend
+      // Ya no necesitamos localStorage - el reward_id se envía directamente al backend
 
       setShowNewPeriodForm(false)
-      setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true, rewardId: null })
+      setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true, reward_id: null })
 
       // Mostrar mensaje de éxito
       if (response && response.data) {
@@ -866,11 +866,11 @@ function Game() {
                   <div>
                     <label className="block text-sm font-medium mb-1">Recompensa</label>
                     <select
-                      value={newPeriod.rewardId || ''}
+                      value={newPeriod.reward_id || ''}
                       onChange={(e) => {
                         const selectedRewardId = e.target.value || null
                         console.log('🎯 [CREATE] Reward selected:', selectedRewardId)
-                        setNewPeriod({...newPeriod, rewardId: selectedRewardId})
+                        setNewPeriod({...newPeriod, reward_id: selectedRewardId})
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >

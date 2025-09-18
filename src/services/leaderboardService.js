@@ -109,8 +109,8 @@ export const leaderboardService = {
     console.log('🎯 [LeaderboardService] createPeriod called with data:', data)
     console.log('🔍 [LeaderboardService] Checking reward_id in received data:', {
       'data.reward_id': data.reward_id,
-      'data.rewardId': data.rewardId,
-      'all data keys': Object.keys(data)
+      'all data keys': Object.keys(data),
+      'full data': data
     })
 
     // API expects camelCase for most fields, but reward_id uses snake_case
