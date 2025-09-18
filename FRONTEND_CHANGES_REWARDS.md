@@ -27,7 +27,7 @@ The reward system has been updated so that rewards are now assigned to the **per
 
 // NEW - Add rewardId field
 {
-  "gameId": "uuid",
+  "game_id": "uuid",
   "durationDays": 7,
   "autoRestart": true,
   "rewardId": "uuid-of-reward"  // Optional, can be null

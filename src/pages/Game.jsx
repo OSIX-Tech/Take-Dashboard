@@ -144,7 +144,7 @@ function Game() {
     try {
       setLoading(true)
       // Obtener ganadores del juego específico
-      const response = await leaderboardService.getAllWinners({ gameId: GAME_ID })
+      const response = await leaderboardService.getAllWinners({ game_id: GAME_ID })
       console.log('🔍 Winners response for game:', GAME_ID, response)
 
       let data = []

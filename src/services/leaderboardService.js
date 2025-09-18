@@ -59,7 +59,7 @@ export const leaderboardService = {
    */
   async getAllPeriods(gameId = null) {
     console.log('🎯 [LeaderboardService] getAllPeriods called with gameId:', gameId)
-    const params = gameId ? { gameId } : {}
+    const params = gameId ? { game_id: gameId } : {} // Usar snake_case para el parámetro
     const url = 'high_score/periods'
     console.log('🔗 [LeaderboardService] Request URL:', url)
     console.log('📦 [LeaderboardService] Request params:', params)
@@ -113,9 +113,9 @@ export const leaderboardService = {
       'full data': data
     })
 
-    // API expects camelCase for most fields, but reward_id uses snake_case
+    // API expects snake_case for game_id and reward_id, camelCase for others
     const requestBody = {
-      gameId: data.gameId,
+      game_id: data.gameId, // Convertir a snake_case
       durationDays: data.durationDays,
       autoRestart: data.autoRestart,
       reward_id: data.reward_id || null // TODO es reward_id en snake_case
@@ -412,8 +412,8 @@ export const leaderboardService = {
         console.log('📦 [LeaderboardService] Using mock data for winners')
         let result = [...mockWinners]
 
-        if (params.gameId) {
-          // Para filtrar por gameId, necesitaríamos el game_id en los winners
+        if (params.gameId || params.game_id) {
+          // Para filtrar por game_id, necesitaríamos el game_id en los winners
           // Por ahora solo devolvemos todos
         }
         if (params.position) {
