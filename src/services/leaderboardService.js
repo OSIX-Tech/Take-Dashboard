@@ -107,12 +107,12 @@ export const leaderboardService = {
    */
   async createPeriod(data) {
     console.log('🎯 [LeaderboardService] createPeriod called with data:', data)
-    // API expects camelCase based on the guide
-    // NO enviamos rewardId al backend, es solo visual
+    // API expects camelCase for most fields, but reward_id uses snake_case
     const requestBody = {
       gameId: data.gameId,
       durationDays: data.durationDays,
-      autoRestart: data.autoRestart
+      autoRestart: data.autoRestart,
+      reward_id: data.reward_id // Enviar reward_id al backend
     }
     const url = 'high_score/periods'
     console.log('🔗 [LeaderboardService] POST URL:', url)

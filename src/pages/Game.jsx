@@ -247,7 +247,7 @@ function Game() {
         gameId: GAME_ID, // Siempre usar el gameId hardcodeado
         durationDays: newPeriod.durationDays,
         autoRestart: newPeriod.autoRestart,
-        reward_id: newPeriod.rewardId || null // Usar reward_id como espera el backend
+        reward_id: newPeriod.rewardId || null // Pasar reward_id al servicio
       }
 
       console.log('🆕 [Game] Creando nuevo periodo con datos:', periodData)
