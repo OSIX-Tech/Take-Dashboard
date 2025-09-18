@@ -251,6 +251,11 @@ function Game() {
       }
 
       console.log('🆕 [Game] Creando nuevo periodo con datos:', periodData)
+      console.log('🔍 [Game] Verificando reward_id antes de enviar:', {
+        'newPeriod.rewardId': newPeriod.rewardId,
+        'periodData.reward_id': periodData.reward_id,
+        'typeof reward_id': typeof periodData.reward_id
+      })
       const response = await leaderboardService.createPeriod(periodData)
       console.log('✅ [Game] Periodo creado:', response)
 

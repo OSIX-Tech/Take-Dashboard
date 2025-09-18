@@ -107,16 +107,26 @@ export const leaderboardService = {
    */
   async createPeriod(data) {
     console.log('🎯 [LeaderboardService] createPeriod called with data:', data)
+    console.log('🔍 [LeaderboardService] Checking reward_id in received data:', {
+      'data.reward_id': data.reward_id,
+      'data.rewardId': data.rewardId,
+      'all data keys': Object.keys(data)
+    })
+
     // API expects camelCase for most fields, but reward_id uses snake_case
     const requestBody = {
       gameId: data.gameId,
       durationDays: data.durationDays,
       autoRestart: data.autoRestart,
-      reward_id: data.reward_id // Enviar reward_id al backend
+      reward_id: data.reward_id || null // Enviar reward_id al backend
     }
+
     const url = 'high_score/periods'
+
+    // Debug para verificar que reward_id está en el body
     console.log('🔗 [LeaderboardService] POST URL:', url)
     console.log('📦 [LeaderboardService] Request body:', requestBody)
+    console.log('🎯 [LeaderboardService] REWARD_ID being sent:', requestBody.reward_id)
 
     try {
       const response = await apiService.post(url, requestBody)
