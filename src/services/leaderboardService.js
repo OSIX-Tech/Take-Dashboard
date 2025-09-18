@@ -127,6 +127,7 @@ export const leaderboardService = {
     console.log('🔗 [LeaderboardService] POST URL:', url)
     console.log('📦 [LeaderboardService] Request body:', requestBody)
     console.log('🎯 [LeaderboardService] REWARD_ID being sent:', requestBody.reward_id)
+    console.log('🔍 [LeaderboardService] Request body stringified:', JSON.stringify(requestBody))
 
     try {
       const response = await apiService.post(url, requestBody)

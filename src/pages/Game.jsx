@@ -47,7 +47,7 @@ function Game() {
     gameId: GAME_ID,
     durationDays: 7,
     autoRestart: true,
-    rewardId: null
+    rewardId: null // Inicializar rewardId
   })
 
   const [rewards, setRewards] = useState([])

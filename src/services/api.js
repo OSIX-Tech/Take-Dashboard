@@ -146,13 +146,17 @@ class ApiService {
       const credentials = await this.getCredentialsOption()
       console.log(`🔧 [API] Using credentials: ${credentials}`)
 
+      const bodyToSend = JSON.stringify(data)
+      console.log(`🎯 [API] JSON.stringify body:`, bodyToSend)
+      console.log(`🔍 [API] Body includes reward_id:`, bodyToSend.includes('reward_id'))
+
       const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...this.getAuthHeaders()
         },
-        body: JSON.stringify(data),
+        body: bodyToSend,
         credentials: credentials
       })
 
