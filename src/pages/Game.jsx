@@ -65,7 +65,7 @@ function Game() {
     if (activeTab === 'periods') {
       loadPeriods()
       fetchActivePeriod()
-      loadRewards() // Cargar rewards cuando se muestra la tab de periodos
+      // No cargar rewards aquí, se cargarán cuando se abran los modales
     } else if (activeTab === 'winners') {
       loadWinners()
     }
@@ -75,7 +75,7 @@ function Game() {
         fetchActivePeriod()
       }
     }, 60000)
-    
+
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, filterClaimed])
@@ -126,6 +126,13 @@ function Game() {
     try {
       const rewardsData = await rewardsService.getRewards()
       console.log('🎁 Rewards loaded:', rewardsData)
+      // Log para ver los IDs de las rewards disponibles
+      if (rewardsData && rewardsData.length > 0) {
+        console.log('🎯 Available reward IDs:')
+        rewardsData.forEach(reward => {
+          console.log(`  - ${reward.name}: ID = ${reward.id}`)
+        })
+      }
       setRewards(rewardsData || [])
     } catch (err) {
       console.error('Error loading rewards:', err)
@@ -473,8 +480,12 @@ function Game() {
     }
   }
 
-  const openEditForm = (period) => {
+  const openEditForm = async (period) => {
     console.log('📝 [Game] openEditForm called with period:', period)
+
+    // Cargar rewards antes de abrir el modal
+    console.log('🔄 Loading rewards for edit modal...')
+    await loadRewards()
 
     // Asegurar que duration_days esté presente y sea un número válido
     let durationDays = period.duration_days
@@ -597,7 +608,11 @@ function Game() {
               Procesar Expirados
             </button>
             <button
-              onClick={() => setShowNewPeriodForm(true)}
+              onClick={async () => {
+                console.log('🔄 Loading rewards for create modal...')
+                await loadRewards()
+                setShowNewPeriodForm(true)
+              }}
               className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -614,7 +629,11 @@ function Game() {
                 <p className="text-sm text-gray-600 mt-1">Crea un nuevo periodo para comenzar la competencia</p>
               </div>
               <button
-                onClick={() => setShowNewPeriodForm(true)}
+                onClick={async () => {
+                  console.log('🔄 Loading rewards for create modal...')
+                  await loadRewards()
+                  setShowNewPeriodForm(true)
+                }}
                 className="px-6 py-3 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2 mx-auto"
               >
                 <Plus className="h-5 w-5" />
@@ -685,10 +704,10 @@ function Game() {
                   Cerrar Periodo
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     console.log('🎯 [EDIT] Botón Editar Duración clickeado')
                     console.log('🎯 [EDIT] activePeriod:', activePeriod)
-                    openEditForm(activePeriod)
+                    await openEditForm(activePeriod)
                   }}
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2"
                 >
@@ -785,7 +804,7 @@ function Game() {
                               Cerrar Periodo
                             </button>
                             <button
-                              onClick={() => openEditForm(period)}
+                              onClick={async () => await openEditForm(period)}
                               className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
                             >
                               Editar
@@ -843,7 +862,11 @@ function Game() {
                     <label className="block text-sm font-medium mb-1">Recompensa</label>
                     <select
                       value={newPeriod.rewardId || ''}
-                      onChange={(e) => setNewPeriod({...newPeriod, rewardId: e.target.value || null})}
+                      onChange={(e) => {
+                        const selectedRewardId = e.target.value || null
+                        console.log('🎯 [CREATE] Reward selected:', selectedRewardId)
+                        setNewPeriod({...newPeriod, rewardId: selectedRewardId})
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
@@ -953,7 +976,11 @@ function Game() {
                     <label className="block text-sm font-medium mb-1">Recompensa</label>
                     <select
                       value={editData.reward_id || ''}
-                      onChange={(e) => setEditData({...editData, reward_id: e.target.value || null})}
+                      onChange={(e) => {
+                        const selectedRewardId = e.target.value || null
+                        console.log('🎯 [EDIT] Reward selected:', selectedRewardId)
+                        setEditData({...editData, reward_id: selectedRewardId})
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
