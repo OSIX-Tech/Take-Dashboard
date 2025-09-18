@@ -113,12 +113,12 @@ export const leaderboardService = {
       'full data': data
     })
 
-    // API expects camelCase for most fields, but reward_id uses snake_case
+    // API expects camelCase for some fields, but reward_id uses snake_case
     const requestBody = {
       gameId: data.gameId,
       durationDays: data.durationDays,
       autoRestart: data.autoRestart,
-      reward_id: data.reward_id || null // Enviar reward_id al backend
+      reward_id: data.reward_id || null // Mantener reward_id en snake_case
     }
 
     const url = 'high_score/periods'
@@ -203,6 +203,7 @@ export const leaderboardService = {
     console.log('🎯 [LeaderboardService] Data received:')
     console.log('  - duration_days:', data.duration_days)
     console.log('  - auto_restart:', data.auto_restart)
+    console.log('  - reward_id:', data.reward_id)
 
     // Verificar si tenemos los datos necesarios
     if (!periodId) {
@@ -215,18 +216,21 @@ export const leaderboardService = {
       throw new Error('duration_days es requerido para actualizar el período')
     }
 
-    // NUEVO FORMATO: Backend ahora espera duration_days en lugar de end_date
+    // Backend espera camelCase para algunos campos, pero reward_id en snake_case
     const requestBody = {
-      duration_days: parseInt(data.duration_days),
-      auto_restart: data.auto_restart || false
+      durationDays: parseInt(data.duration_days),  // camelCase
+      autoRestart: data.auto_restart || false,     // camelCase
+      reward_id: data.reward_id || null             // snake_case para reward_id
     }
     const url = `high_score/periods/${periodId}`
     console.log('🔗 [LeaderboardService] PUT URL:', url)
     console.log('📦 [LeaderboardService] Request body (NUEVO FORMATO):', JSON.stringify(requestBody, null, 2))
     console.log('📦 [LeaderboardService] Body details:')
-    console.log('  - duration_days enviado:', requestBody.duration_days)
-    console.log('  - auto_restart enviado:', requestBody.auto_restart)
-    console.log('  - Tipo de duration_days:', typeof requestBody.duration_days)
+    console.log('  - durationDays enviado:', requestBody.durationDays)
+    console.log('  - autoRestart enviado:', requestBody.autoRestart)
+    console.log('  - reward_id enviado:', requestBody.reward_id)
+    console.log('  - Tipo de durationDays:', typeof requestBody.durationDays)
+    console.log('  - Tipo de reward_id:', typeof requestBody.reward_id)
 
     try {
       console.log('🚀 [LeaderboardService] Sending PUT request...')
