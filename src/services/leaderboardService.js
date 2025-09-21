@@ -538,8 +538,7 @@ export const leaderboardService = {
   formatTimeRemaining(endDate) {
     const end = new Date(endDate)
     const now = new Date()
-    // Sumar 2 horas al cálculo (2 * 60 * 60 * 1000 ms)
-    const diff = end - now + (2 * 60 * 60 * 1000)
+    const diff = end - now
 
     if (diff <= 0) return 'Periodo terminado'
 
