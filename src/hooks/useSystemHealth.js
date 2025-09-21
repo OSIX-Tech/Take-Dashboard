@@ -15,7 +15,7 @@ export const useSystemHealth = () => {
       setLastCheck(new Date())
       return diagnostic
     } catch (error) {
-      console.error('❌ Error verificando estado del sistema:', error)
+      
       const errorStatus = {
         systemStatus: 'UNKNOWN_ERROR',
         systemMessage: 'Error verificando estado del sistema',
@@ -38,7 +38,7 @@ export const useSystemHealth = () => {
     try {
       return await healthService.validateConfiguration()
     } catch (error) {
-      console.error('❌ Error verificando configuración:', error)
+      
       return { errors: [], warnings: [] }
     }
   }, [])
@@ -48,7 +48,7 @@ export const useSystemHealth = () => {
     try {
       return await healthService.checkBackendHealth()
     } catch (error) {
-      console.error('❌ Error verificando backend:', error)
+      
       return { status: 'UNKNOWN_ERROR', message: 'Error verificando backend' }
     }
   }, [])
@@ -58,7 +58,7 @@ export const useSystemHealth = () => {
     try {
       return await healthService.checkAuthEndpoint()
     } catch (error) {
-      console.error('❌ Error verificando endpoint de autenticación:', error)
+      
       return { status: 'ERROR', message: 'Error verificando autenticación' }
     }
   }, [])
@@ -68,7 +68,7 @@ export const useSystemHealth = () => {
     try {
       return await healthService.checkCorsConfiguration()
     } catch (error) {
-      console.error('❌ Error verificando CORS:', error)
+      
       return { status: 'UNKNOWN', message: 'Error verificando CORS' }
     }
   }, [])

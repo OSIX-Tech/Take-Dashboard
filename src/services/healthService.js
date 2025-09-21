@@ -27,7 +27,7 @@ export const healthService = {
         
         if (response.ok) {
           // Si el backend responde, asumir que está bien configurado
-          console.log('✅ Backend disponible y configurado correctamente')
+          
         } else {
           warnings.push({
             type: 'BACKEND_WARNING',
@@ -38,7 +38,7 @@ export const healthService = {
         }
       } catch (error) {
         // Si no se puede conectar, no es un error de configuración del frontend
-        console.log('⚠️ No se puede conectar al backend - puede estar apagado o mal configurado')
+        
       }
     }
 
@@ -205,7 +205,6 @@ export const healthService = {
 
   // Ejecutar diagnóstico completo del sistema
   async runFullDiagnostic() {
-    console.log('🔍 Iniciando diagnóstico completo del sistema...')
 
     const results = {
       timestamp: new Date().toISOString(),
@@ -234,7 +233,6 @@ export const healthService = {
       results.systemMessage = 'Sistema funcionando correctamente'
     }
 
-    console.log('📋 Resultados del diagnóstico:', results)
     return results
   }
 } 

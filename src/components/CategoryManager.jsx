@@ -74,7 +74,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
         setSuccess(null)
       }, 1500)
     } catch (err) {
-      console.error('Error saving category:', err)
+      
       setError(err.message || 'Error al guardar la categoría')
     } finally {
       setSavingCategory(false)
@@ -103,7 +103,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
         setLocalCategories(updatedCategories)
         onDataChange({ categories: updatedCategories, allergens: localAllergens })
       } catch (err) {
-        console.error('Error deleting category:', err)
+        
         setError('Error al eliminar la categoría')
       }
     }
@@ -162,7 +162,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
       onDataChange({ categories: localCategories, allergens: localAllergens })
       resetAllergenForm()
     } catch (err) {
-      console.error('Error saving allergen:', err)
+      
       setError('Error al guardar el alérgeno')
     } finally {
       setLoading(false)
@@ -205,7 +205,7 @@ function CategoryManager({ categories, allergens, onDataChange, onClose }) {
         setLocalAllergens(updatedAllergens)
         onDataChange({ categories: localCategories, allergens: updatedAllergens })
       } catch (err) {
-        console.error('Error deleting allergen:', err)
+        
         setError('Error al eliminar el alérgeno')
       }
     }

@@ -84,10 +84,8 @@ function Game() {
     try {
       // Solo obtener el periodo activo del juego hardcodeado
       const period = await leaderboardService.getActivePeriod(GAME_ID)
-      console.log('🎯 Active period for game:', GAME_ID, period)
       setActivePeriod(period || null)
     } catch (err) {
-      console.error('❌ Error loading active period:', err)
       setActivePeriod(null)
     }
   }
@@ -99,7 +97,6 @@ function Game() {
       setLoading(true)
       // Solo cargar periodos del juego hardcodeado
       const response = await leaderboardService.getAllPeriods(GAME_ID)
-      console.log('🔍 Periods response for game:', GAME_ID, response)
 
       let data = []
       if (Array.isArray(response)) {
@@ -107,14 +104,12 @@ function Game() {
       } else if (response && response.data && Array.isArray(response.data)) {
         data = response.data
       } else if (response && response.success === false) {
-        console.warn('⚠️ Periods endpoint returned error:', response.error || response.message)
         data = []
       }
 
       setPeriods(data)
       setError(null)
     } catch (err) {
-      console.error('❌ Error loading periods:', err)
       setError('Error al cargar los periodos. Verifica que el backend esté configurado.')
       setPeriods([])
     } finally {
@@ -125,17 +120,8 @@ function Game() {
   const loadRewards = async () => {
     try {
       const rewardsData = await rewardsService.getRewards()
-      console.log('🎁 Rewards loaded:', rewardsData)
-      // Log para ver los IDs de las rewards disponibles
-      if (rewardsData && rewardsData.length > 0) {
-        console.log('🎯 Available reward IDs:')
-        rewardsData.forEach(reward => {
-          console.log(`  - ${reward.name}: ID = ${reward.id}`)
-        })
-      }
       setRewards(rewardsData || [])
     } catch (err) {
-      console.error('Error loading rewards:', err)
       setRewards([])
     }
   }
@@ -145,7 +131,6 @@ function Game() {
       setLoading(true)
       // Obtener ganadores del juego específico
       const response = await leaderboardService.getAllWinners({ game_id: GAME_ID })
-      console.log('🔍 Winners response for game:', GAME_ID, response)
 
       let data = []
       if (Array.isArray(response)) {
@@ -153,21 +138,10 @@ function Game() {
       } else if (response && response.data && Array.isArray(response.data)) {
         data = response.data
       } else if (response && response.success === false) {
-        console.warn('⚠️ Winners endpoint returned error:', response.error || response.message)
         data = []
       }
 
-      // Debug: mostrar todos los winners y su estado
-      console.log('📊 [Game] Todos los winners del backend (RAW):', data)
 
-      // Verificar el primer winner en detalle
-      if (data.length > 0) {
-        console.log('🔍 [Game] Primer winner - todas las propiedades:', Object.keys(data[0]))
-        console.log('🔍 [Game] Primer winner - valores:', data[0])
-        if (data[0].users) {
-          console.log('🔍 [Game] Primer winner - users object:', data[0].users)
-        }
-      }
 
       // Mapear los campos correctamente desde el backend
       data = data.map(w => ({
@@ -176,38 +150,16 @@ function Game() {
         user_name: w.users?.name || w.users?.username || 'Usuario Desconocido'
       }))
 
-      console.log('📊 [Game] Winners mapeados correctamente:', data.map(w => ({
-        id: w.id,
-        name: w.user_name,
-        reward_claimed: w.reward_claimed,
-        reward_claimed_type: typeof w.reward_claimed,
-        claimed_at: w.claimed_at
-      })))
 
       // Usar el filtro personalizado si se proporciona, sino usar el estado actual
       const activeFilter = customFilter !== null ? customFilter : filterClaimed
-      console.log('🔍 [Game] Aplicando filtro:', activeFilter)
 
       let winnersData = data
 
       if (activeFilter === 'pending') {
         winnersData = winnersData.filter(w => !w.reward_claimed)
-        console.log('📊 [Game] Winners PENDIENTES (reward_claimed = false):', winnersData.length)
-        console.log('📊 [Game] Detalle pendientes:', winnersData.map(w => ({
-          id: w.id,
-          name: w.user_name,
-          reward_claimed: w.reward_claimed
-        })))
       } else if (activeFilter === 'claimed') {
         winnersData = winnersData.filter(w => w.reward_claimed)
-        console.log('📊 [Game] Winners RECOGIDOS (reward_claimed = true):', winnersData.length)
-        console.log('📊 [Game] Detalle recogidos:', winnersData.map(w => ({
-          id: w.id,
-          name: w.user_name,
-          reward_claimed: w.reward_claimed
-        })))
-      } else {
-        console.log('📊 [Game] Mostrando TODOS los winners:', winnersData.length)
       }
 
       setWinners(winnersData)
@@ -226,7 +178,6 @@ function Game() {
 
       setError(null)
     } catch (err) {
-      console.error('❌ Error loading winners:', err)
       setError('Error al cargar los ganadores. Verifica que el backend esté configurado.')
       setWinners([])
       setStats({
@@ -241,9 +192,6 @@ function Game() {
 
   const handleCreatePeriod = async (e) => {
     e.preventDefault()
-    console.log('🚀 [Game] Form submitted!')
-    console.log('📊 [Game] Current newPeriod state at submit:', newPeriod)
-    console.log('📊 [Game] reward_id value at submit:', newPeriod.reward_id)
 
     try {
       // Asegurar que siempre se use el gameId hardcodeado
@@ -254,23 +202,7 @@ function Game() {
         reward_id: newPeriod.reward_id || null // Pasar reward_id al servicio
       }
 
-      console.log('🆕 [Game] Creando nuevo periodo con datos:', periodData)
-      console.log('🔍 [Game] Verificando reward_id antes de enviar:', {
-        'newPeriod.reward_id': newPeriod.reward_id,
-        'periodData.reward_id': periodData.reward_id,
-        'typeof reward_id': typeof periodData.reward_id,
-        'is null?': periodData.reward_id === null,
-        'is undefined?': periodData.reward_id === undefined,
-        'is empty string?': periodData.reward_id === ''
-      })
       const response = await leaderboardService.createPeriod(periodData)
-      console.log('✅ [Game] Periodo creado:', response)
-      console.log('🔍 [Game] Response data detail:', {
-        'response.data': response?.data,
-        'response.data.reward_id': response?.data?.reward_id,
-        'response.data.rewardId': response?.data?.rewardId,
-        'all response.data keys': response?.data ? Object.keys(response.data) : []
-      })
 
       // Ya no necesitamos localStorage - el reward_id se envía directamente al backend
 
@@ -286,7 +218,6 @@ function Game() {
       await loadPeriods()
       await fetchActivePeriod()
     } catch (err) {
-      console.error('❌ [Game] Error creating period:', err)
 
       // Mejorar manejo de errores
       let errorMessage = 'Error al crear el periodo'
@@ -307,12 +238,8 @@ function Game() {
 
   const handleUpdatePeriod = async (e) => {
     e.preventDefault()
-    console.log('🔄 [Game] handleUpdatePeriod called')
-    console.log('🔄 [Game] editingPeriod:', editingPeriod)
-    console.log('🔄 [Game] editData:', editData)
 
     if (!editingPeriod) {
-      console.error('❌ [Game] No editingPeriod found')
       return
     }
 
@@ -324,13 +251,8 @@ function Game() {
         reward_id: editData.reward_id || null
       }
 
-      console.log('📤 [Game] Calling updatePeriod with NEW FORMAT:', {
-        periodId: editingPeriod.id,
-        updateData
-      })
 
       const result = await leaderboardService.updatePeriod(editingPeriod.id, updateData)
-      console.log('✅ [Game] Period updated successfully:', result)
 
       // Ya no necesitamos localStorage - el reward_id se envía directamente al backend
 
@@ -343,11 +265,6 @@ function Game() {
       await loadPeriods()
       await fetchActivePeriod() // Refrescar periodo activo también
     } catch (err) {
-      console.error('❌ [Game] Error updating period:', err)
-      console.error('❌ [Game] Error details:', {
-        message: err.message,
-        stack: err.stack
-      })
 
       // Mensaje de error más detallado
       let errorMsg = 'Error al actualizar el periodo'
@@ -376,9 +293,7 @@ function Game() {
     if (!periodToClose) return
 
     try {
-      console.log('🎯 [Game] Cerrando periodo:', periodToClose.id)
       const result = await leaderboardService.closePeriod(periodToClose.id, 1)
-      console.log('✅ [Game] Periodo cerrado exitosamente:', result)
 
       setShowCloseModal(false)
       setPeriodToClose(null)
@@ -394,8 +309,6 @@ function Game() {
       await loadPeriods()
       await fetchActivePeriod()
     } catch (err) {
-      console.error('❌ [Game] Error closing period:', err)
-      console.error('❌ Error details:', err)
 
       // Mejorar el manejo de errores
       let errorMessage = 'Error al cerrar el periodo'
@@ -421,9 +334,7 @@ function Game() {
 
   const handleProcessExpired = async () => {
     try {
-      console.log('🔄 [Game] Procesando periodos expirados...')
       const result = await leaderboardService.processExpiredPeriods()
-      console.log('✅ [Game] Resultado del procesamiento:', result)
 
       await loadPeriods()
       await fetchActivePeriod()
@@ -439,31 +350,21 @@ function Game() {
         alert('Periodos expirados procesados correctamente')
       }
     } catch (err) {
-      console.error('❌ [Game] Error processing expired periods:', err)
       setError('Error al procesar periodos expirados')
     }
   }
 
   const handleMarkClaimed = async (winnerId) => {
-    console.log('🎆 [Game] handleMarkClaimed iniciado con winnerId:', winnerId)
 
     if (!winnerId) {
-      console.error('❌ [Game] ERROR: No winnerId provided to handleMarkClaimed')
       alert('Error: No se encontró el ID del ganador')
       return
     }
 
     // Encontrar el winner actual para verificar su estado
     const currentWinner = winners.find(w => w.id === winnerId)
-    console.log('🔍 [Game] Estado actual del ganador:', {
-      id: currentWinner?.id,
-      name: currentWinner?.user_name,
-      reward_claimed: currentWinner?.reward_claimed,
-      claimed_at: currentWinner?.claimed_at
-    })
 
     if (currentWinner?.reward_claimed) {
-      console.warn('⚠️ [Game] Este premio ya está marcado como recogido')
       alert('Este premio ya está marcado como recogido')
       return
     }
@@ -471,38 +372,22 @@ function Game() {
     if (!confirm('¿Confirmar que el premio ha sido recogido?')) return
 
     try {
-      console.log('📤 [Game] Enviando solicitud para marcar como reclamado:', winnerId)
       const result = await leaderboardService.markWinnerClaimed(winnerId)
-      console.log('✅ [Game] Resultado de marcar como reclamado:', result)
 
       // Mostrar mensaje de éxito inmediatamente
       alert('✅ Premio marcado como recogido exitosamente')
 
       // Recargar la lista completa de ganadores del backend manteniendo el filtro actual
-      console.log('🔄 [Game] Recargando lista de ganadores desde el backend con filtro actual:', filterClaimed)
       await loadWinners()
 
-      console.log('✅ [Game] Lista de ganadores actualizada')
-
-      // Informar al usuario sobre el cambio de vista si aplica
-      if (filterClaimed === 'pending') {
-        console.log('ℹ️ [Game] El ganador reclamado ya no aparece en "Pendientes", ahora está en "Recogidos"')
-      }
     } catch (err) {
-      console.error('❌ [Game] Error marking winner as claimed:', err)
-      console.error('❌ [Game] Error details:', {
-        message: err.message,
-        stack: err.stack
-      })
       setError(`Error al marcar premio como recogido: ${err.message}`)
     }
   }
 
   const openEditForm = async (period) => {
-    console.log('📝 [Game] openEditForm called with period:', period)
 
     // Cargar rewards antes de abrir el modal
-    console.log('🔄 Loading rewards for edit modal...')
     await loadRewards()
 
     // Asegurar que duration_days esté presente y sea un número válido
@@ -520,7 +405,6 @@ function Game() {
     }
     durationDays = parseInt(durationDays) || 7
 
-    console.log('📝 [Game] Setting edit data with duration_days:', durationDays)
 
     setEditingPeriod(period)
     setEditData({
@@ -627,7 +511,6 @@ function Game() {
             </button>
             <button
               onClick={async () => {
-                console.log('🔄 Loading rewards for create modal...')
                 await loadRewards()
                 setShowNewPeriodForm(true)
               }}
@@ -648,8 +531,7 @@ function Game() {
               </div>
               <button
                 onClick={async () => {
-                  console.log('🔄 Loading rewards for create modal...')
-                  await loadRewards()
+                    await loadRewards()
                   setShowNewPeriodForm(true)
                 }}
                 className="px-6 py-3 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2 mx-auto"
@@ -723,8 +605,6 @@ function Game() {
                 </button>
                 <button
                   onClick={async () => {
-                    console.log('🎯 [EDIT] Botón Editar Duración clickeado')
-                    console.log('🎯 [EDIT] activePeriod:', activePeriod)
                     await openEditForm(activePeriod)
                   }}
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2"
@@ -883,19 +763,13 @@ function Game() {
                       onChange={(e) => {
                         const selectedValue = e.target.value
                         const selectedRewardId = selectedValue === '' ? null : selectedValue
-                        console.log('🎯 [CREATE] Dropdown onChange triggered')
-                        console.log('📝 [CREATE] Raw value from dropdown:', selectedValue)
-                        console.log('📝 [CREATE] Processed reward_id:', selectedRewardId)
-                        console.log('📝 [CREATE] Current state before update:', newPeriod)
                         const updatedPeriod = {...newPeriod, reward_id: selectedRewardId}
-                        console.log('📝 [CREATE] State after update:', updatedPeriod)
                         setNewPeriod(updatedPeriod)
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => {
-                        console.log('📋 [CREATE] Rendering option for reward:', reward.id, reward.name)
                         return (
                           <option key={reward.id} value={reward.id}>
                             {reward.name} - {reward.required_seals} sellos
@@ -954,7 +828,6 @@ function Game() {
                 
                 <form
                   onSubmit={(e) => {
-                    console.log('📨 [EDIT] FORM ONSUBMIT TRIGGERED')
                     handleUpdatePeriod(e)
                   }}
                   className="space-y-4"
@@ -975,12 +848,10 @@ function Game() {
                         const value = e.target.value
                         // Permitir campo vacío temporalmente mientras escribe
                         if (value === '') {
-                          console.log('🔄 [EDIT] Duration input cleared')
                           setEditData({...editData, duration_days: ''})
                         } else {
                           const numValue = parseInt(value)
                           if (!isNaN(numValue) && numValue > 0) {
-                            console.log('🔄 [EDIT] Duration input changed to:', numValue)
                             setEditData({...editData, duration_days: numValue})
                           }
                         }
@@ -988,7 +859,6 @@ function Game() {
                       onBlur={(e) => {
                         // Si el campo queda vacío al perder el foco, poner 1
                         if (e.target.value === '' || editData.duration_days === '') {
-                          console.log('🔄 [EDIT] Duration defaulted to 1 on blur')
                           setEditData({...editData, duration_days: 1})
                         }
                       }}
@@ -1005,14 +875,12 @@ function Game() {
                       value={editData.reward_id || ''}
                       onChange={(e) => {
                         const selectedRewardId = e.target.value || null
-                        console.log('🎯 [EDIT] Reward selected:', selectedRewardId)
                         setEditData({...editData, reward_id: selectedRewardId})
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => {
-                        console.log('📋 [CREATE] Rendering option for reward:', reward.id, reward.name)
                         return (
                           <option key={reward.id} value={reward.id}>
                             {reward.name} - {reward.required_seals} sellos
@@ -1029,7 +897,6 @@ function Game() {
                       checked={editData.auto_restart}
                       onChange={(e) => {
                         const newValue = e.target.checked
-                        console.log('🔄 [EDIT] Auto-restart changed to:', newValue)
                         setEditData({...editData, auto_restart: newValue})
                       }}
                       className="rounded"
@@ -1053,80 +920,12 @@ function Game() {
                     </div>
                   )}
                   
-                  {/* Botones de debug y prueba */}
-                  <div className="p-2 bg-yellow-50 border border-yellow-300 rounded text-xs space-y-2">
-                    <p className="font-semibold text-yellow-800">🔧 Herramientas de Debug:</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        console.log('🔍 [DEBUG] === ESTADO DEL FORMULARIO ===')
-                        console.log('🔍 [DEBUG] editingPeriod:', editingPeriod)
-                        console.log('🔍 [DEBUG] editData:', editData)
-                        console.log('🔍 [DEBUG] showEditForm:', showEditForm)
-                        console.log('🔍 [DEBUG] Form will send:', {
-                          periodId: editingPeriod?.id,
-                          duration_days: editData.duration_days,
-                          auto_restart: editData.auto_restart,
-                          start_date: editingPeriod?.start_date
-                        })
-                        alert(`Estado del formulario:\n\nPeriod ID: ${editingPeriod?.id}\nDuración actual: ${editData.duration_days} días\nAuto-restart: ${editData.auto_restart}\nFecha inicio: ${editingPeriod?.start_date}`)
-                      }}
-                      className="text-yellow-700 underline block w-full text-left hover:bg-yellow-100 p-1"
-                    >
-                      🔍 Ver estado del formulario
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        console.log('🧪 [TEST] === PROBANDO PUT DIRECTO ===')
-                        try {
-                          const testData = {
-                            duration_days: editData.duration_days,
-                            auto_restart: editData.auto_restart,
-                            start_date: editingPeriod.start_date
-                          }
-                          console.log('🧪 [TEST] Enviando a updatePeriod:', testData)
-                          const result = await leaderboardService.updatePeriod(editingPeriod.id, testData)
-                          console.log('🧪 [TEST] Resultado exitoso:', result)
-                          alert('PUT ejecutado exitosamente - revisa la consola')
-                          await loadPeriods()
-                          await fetchActivePeriod()
-                        } catch (err) {
-                          console.error('🧪 [TEST] Error en PUT:', err)
-                          alert(`Error en PUT: ${err.message}`)
-                        }
-                      }}
-                      className="text-blue-700 underline block w-full text-left hover:bg-blue-100 p-1"
-                    >
-                      🧪 Probar PUT directamente (sin form submit)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        console.log('📝 [TEST] Simulando submit manual')
-                        const form = document.querySelector('form')
-                        if (form) {
-                          console.log('📝 [TEST] Form found:', form)
-                          const event = new Event('submit', { bubbles: true, cancelable: true })
-                          form.dispatchEvent(event)
-                        } else {
-                          console.error('📝 [TEST] No form found!')
-                        }
-                      }}
-                      className="text-green-700 underline block w-full text-left hover:bg-green-100 p-1"
-                    >
-                      📝 Simular submit del formulario
-                    </button>
-                  </div>
 
                   <div className="flex gap-2 pt-2">
                     <button
                       type="submit"
                       className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
                       onClick={(e) => {
-                        console.log('📤 [EDIT] Submit button clicked')
-                        console.log('📤 [EDIT] Event type:', e.type)
-                        console.log('📤 [EDIT] Form validity:', e.target.form?.checkValidity())
                       }}
                     >
                       Guardar Cambios
@@ -1134,7 +933,6 @@ function Game() {
                     <button
                       type="button"
                       onClick={() => {
-                        console.log('❌ Cancel button clicked')
                         setShowEditForm(false)
                       }}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -1244,12 +1042,6 @@ function Game() {
                   <div
                     className="flex justify-between items-start cursor-pointer"
                     onClick={() => {
-                      console.log('👥 [Game] Winner clicked:', {
-                        id: winner.id,
-                        name: winner.user_name,
-                        reward_claimed: winner.reward_claimed,
-                        position: winner.position
-                      })
                       setExpandedWinner(expandedWinner === winner.id ? null : winner.id)
                     }}
                   >
@@ -1333,30 +1125,6 @@ function Game() {
                             Marcar como Recogido
                           </button>
 
-                          {/* Herramientas de debug */}
-                          <div className="p-2 bg-gray-100 rounded text-xs space-y-1">
-                            <p className="font-semibold">🔧 Debug Info:</p>
-                            <p>Winner ID: {winner.id || 'NO ID'}</p>
-                            <p>User ID: {winner.user_id || 'NO USER ID'}</p>
-                            <p>Status: {winner.reward_claimed ? 'Reclamado' : 'Pendiente'}</p>
-                            <button
-                              onClick={async () => {
-                                console.log('🧪 [DEBUG] Testing mark claimed directly')
-                                console.log('🧪 [DEBUG] Winner object:', winner)
-                                try {
-                                  const result = await leaderboardService.markWinnerClaimed(winner.id)
-                                  console.log('🧪 [DEBUG] Direct mark result:', result)
-                                  alert('Ver consola para resultado del test')
-                                } catch (err) {
-                                  console.error('🧪 [DEBUG] Direct mark error:', err)
-                                  alert('Error en test - ver consola')
-                                }
-                              }}
-                              className="text-blue-600 underline"
-                            >
-                              🧪 Test directo del servicio
-                            </button>
-                          </div>
                         </div>
                       ) : (
                         <div className="p-2 bg-green-100 rounded text-sm">

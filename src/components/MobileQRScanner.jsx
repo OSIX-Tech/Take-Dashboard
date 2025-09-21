@@ -62,14 +62,14 @@ function MobileQRScanner({ onScan, onClose, autoStart = true }) {
             setCameraActive(true);
             setIsInitializing(false);
           } catch (err) {
-            console.error('Error starting scanner:', err);
+            
             setError('No se pudo iniciar la cámara. Verifica los permisos.');
             setIsInitializing(false);
           }
         }
       }, 100);
     } catch (err) {
-      console.error('Scanner error:', err);
+      
       setError(err.message || 'Error al iniciar el escáner');
       setIsInitializing(false);
     }

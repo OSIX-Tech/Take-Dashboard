@@ -58,15 +58,11 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async getAllPeriods(gameId = null) {
-    console.log('🎯 [LeaderboardService] getAllPeriods called with gameId:', gameId)
     const params = gameId ? { game_id: gameId } : {} // Usar snake_case para el parámetro
     const url = 'high_score/periods'
-    console.log('🔗 [LeaderboardService] Request URL:', url)
-    console.log('📦 [LeaderboardService] Request params:', params)
 
     try {
       const response = await apiService.get(url, params)
-      console.log('✅ [LeaderboardService] getAllPeriods response:', response)
 
       // Procesar los periodos para asegurar que tengan duration_days
       let periods = response.data || response
@@ -87,11 +83,9 @@ export const leaderboardService = {
 
       return periods
     } catch (error) {
-      console.error('❌ [LeaderboardService] getAllPeriods error:', error)
 
       // Si es 404, devolver mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Using mock data for periods')
         return gameId ? mockPeriods.filter(p => p.game_id === gameId) : mockPeriods
       }
 
@@ -106,12 +100,6 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async createPeriod(data) {
-    console.log('🎯 [LeaderboardService] createPeriod called with data:', data)
-    console.log('🔍 [LeaderboardService] Checking reward_id in received data:', {
-      'data.reward_id': data.reward_id,
-      'all data keys': Object.keys(data),
-      'full data': data
-    })
 
     // API expects snake_case for game_id and reward_id, camelCase for others
     const requestBody = {
@@ -123,15 +111,9 @@ export const leaderboardService = {
 
     const url = 'high_score/periods'
 
-    // Debug para verificar que reward_id está en el body
-    console.log('🔗 [LeaderboardService] POST URL:', url)
-    console.log('📦 [LeaderboardService] Request body:', requestBody)
-    console.log('🎯 [LeaderboardService] REWARD_ID being sent:', requestBody.reward_id)
-    console.log('🔍 [LeaderboardService] Request body stringified:', JSON.stringify(requestBody))
 
     try {
       const response = await apiService.post(url, requestBody)
-      console.log('✅ [LeaderboardService] createPeriod response:', response)
 
       // El backend devuelve start_date y end_date, calculamos duration_days
       if (response && response.data) {
@@ -143,24 +125,14 @@ export const leaderboardService = {
           const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
           response.data.duration_days = diffInDays
 
-          // Log para debug
-          console.log('📊 [LeaderboardService] Period dates from backend:', {
-            requested_days: data.durationDays,
-            start_date: response.data.start_date,
-            end_date: response.data.end_date,
-            calculated_days: diffInDays,
-            diff_in_hours: diffInMs / (1000 * 60 * 60)
-          })
         }
       }
 
       return response
     } catch (error) {
-      console.error('❌ [LeaderboardService] createPeriod error:', error)
 
       // Si es 404, simular creación con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Simulating period creation with mock data')
         const now = new Date()
         const startDate = new Date(now)
         // Establecer el inicio al principio del día actual
@@ -199,20 +171,13 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async updatePeriod(periodId, data) {
-    console.log('🎯 [LeaderboardService] updatePeriod called with periodId:', periodId, 'data:', data)
-    console.log('🎯 [LeaderboardService] Data received:')
-    console.log('  - duration_days:', data.duration_days)
-    console.log('  - auto_restart:', data.auto_restart)
-    console.log('  - reward_id:', data.reward_id)
 
     // Verificar si tenemos los datos necesarios
     if (!periodId) {
-      console.error('❌ [LeaderboardService] ERROR: No periodId provided')
       throw new Error('periodId es requerido')
     }
 
     if (data.duration_days === undefined || data.duration_days === null || data.duration_days === '') {
-      console.error('❌ [LeaderboardService] ERROR: duration_days es requerido')
       throw new Error('duration_days es requerido para actualizar el período')
     }
 
@@ -223,20 +188,9 @@ export const leaderboardService = {
       reward_id: data.reward_id || null             // snake_case para reward_id
     }
     const url = `high_score/periods/${periodId}`
-    console.log('🔗 [LeaderboardService] PUT URL:', url)
-    console.log('📦 [LeaderboardService] Request body (NUEVO FORMATO):', JSON.stringify(requestBody, null, 2))
-    console.log('📦 [LeaderboardService] Body details:')
-    console.log('  - durationDays enviado:', requestBody.durationDays)
-    console.log('  - autoRestart enviado:', requestBody.autoRestart)
-    console.log('  - reward_id enviado:', requestBody.reward_id)
-    console.log('  - Tipo de durationDays:', typeof requestBody.durationDays)
-    console.log('  - Tipo de reward_id:', typeof requestBody.reward_id)
 
     try {
-      console.log('🚀 [LeaderboardService] Sending PUT request...')
       const response = await apiService.put(url, requestBody)
-      console.log('✅ [LeaderboardService] updatePeriod response:', response)
-      console.log('✅ [LeaderboardService] Response data:', response?.data)
 
       // El backend devuelve el periodo actualizado, calcular duration_days
       if (response && response.data) {
@@ -252,15 +206,9 @@ export const leaderboardService = {
 
       return response
     } catch (error) {
-      console.error('❌ [LeaderboardService] updatePeriod error:', error)
-      console.error('❌ [LeaderboardService] Error details:')
-      console.error('  - Status:', error.status)
-      console.error('  - Message:', error.message)
-      console.error('  - Stack:', error.stack)
 
       // Si es 404, simular actualización con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Simulating period update with mock data')
         const period = mockPeriods.find(p => p.id === periodId)
         if (period) {
           if (requestBody.end_date) period.end_date = requestBody.end_date
@@ -293,7 +241,6 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async closePeriod(periodId, topPositions = 1) {
-    console.log('🎯 [LeaderboardService] closePeriod called with periodId:', periodId, 'topPositions:', topPositions)
 
     if (!periodId) {
       throw new Error('periodId es requerido para cerrar un periodo')
@@ -303,26 +250,14 @@ export const leaderboardService = {
 
     // Intentar primero con el body según la documentación
     const requestBody = { topPositions }
-    console.log('🔗 [LeaderboardService] POST URL:', url)
-    console.log('📦 [LeaderboardService] Request body:', requestBody)
 
     try {
       const response = await apiService.post(url, requestBody)
-      console.log('✅ [LeaderboardService] closePeriod response:', response)
       return response.data || response
     } catch (error) {
-      console.error('❌ [LeaderboardService] closePeriod error:', error)
-      console.error('❌ Error details:', {
-        status: error.status,
-        message: error.message,
-        response: error.response,
-        periodId: periodId,
-        requestBody: requestBody
-      })
 
       // Si es 404, simular cierre con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Simulating period closure with mock data')
         const period = mockPeriods.find(p => p.id === periodId)
         if (period) {
           period.is_active = false
@@ -363,20 +298,15 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async getPeriodWinners(periodId) {
-    console.log('🎯 [LeaderboardService] getPeriodWinners called with periodId:', periodId)
     const url = `high_score/periods/${periodId}/winners`
-    console.log('🔗 [LeaderboardService] GET URL:', url)
 
     try {
       const response = await apiService.get(url)
-      console.log('✅ [LeaderboardService] getPeriodWinners response:', response)
       return response.data || response
     } catch (error) {
-      console.error('❌ [LeaderboardService] getPeriodWinners error:', error)
 
       // Si es 404, devolver mock data filtrada
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Using mock data for period winners')
         return mockWinners.filter(w => w.period_id === periodId)
       }
 
@@ -395,21 +325,15 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async getAllWinners(params = {}) {
-    console.log('🎯 [LeaderboardService] getAllWinners called with params:', params)
     const url = 'high_score/winners'
-    console.log('🔗 [LeaderboardService] GET URL:', url)
-    console.log('📦 [LeaderboardService] Request params:', params)
 
     try {
       const response = await apiService.get(url, params)
-      console.log('✅ [LeaderboardService] getAllWinners response:', response)
       return response.data || response
     } catch (error) {
-      console.error('❌ [LeaderboardService] getAllWinners error:', error)
 
       // Si es 404, devolver mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Using mock data for winners')
         let result = [...mockWinners]
 
         if (params.gameId || params.game_id) {
@@ -437,43 +361,26 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async markWinnerClaimed(winnerId) {
-    console.log('🎯 [LeaderboardService] markWinnerClaimed called with winnerId:', winnerId)
 
     if (!winnerId) {
-      console.error('❌ [LeaderboardService] ERROR: No winnerId provided')
       throw new Error('winnerId es requerido para marcar como reclamado')
     }
 
     const url = `high_score/winners/${winnerId}/mark-claimed`
-    console.log('🔗 [LeaderboardService] POST URL:', url)
-    console.log('📦 [LeaderboardService] Sending POST request to mark as claimed...')
 
     try {
       const response = await apiService.post(url, {})
-      console.log('✅ [LeaderboardService] markWinnerClaimed response:', response)
-      console.log('✅ [LeaderboardService] Response type:', typeof response)
-      console.log('✅ [LeaderboardService] Response keys:', Object.keys(response || {}))
-      console.log('✅ [LeaderboardService] Response details:', {
-        success: response?.success,
-        data: response?.data,
-        message: response?.message,
-        full_response: JSON.stringify(response)
-      })
 
       // Verificar si la respuesta indica éxito
       if (response && (response.success || response.data)) {
-        console.log('✅ [LeaderboardService] Marcado exitosamente')
         return response.data || response
       } else {
-        console.error('⚠️ [LeaderboardService] Respuesta inesperada:', response)
         throw new Error('Respuesta inesperada del servidor')
       }
     } catch (error) {
-      console.error('❌ [LeaderboardService] markWinnerClaimed error:', error)
 
       // Si es 404, simular marcado con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Simulating mark claimed with mock data')
         const winner = mockWinners.find(w => w.id === winnerId)
         if (winner) {
           winner.reward_claimed = true
@@ -505,20 +412,15 @@ export const leaderboardService = {
    * Según high-score-admin-guide.md
    */
   async processExpiredPeriods() {
-    console.log('🎯 [LeaderboardService] processExpiredPeriods called')
     const url = 'high_score/process-expired'
-    console.log('🔗 [LeaderboardService] POST URL:', url)
 
     try {
       const response = await apiService.post(url)
-      console.log('✅ [LeaderboardService] processExpiredPeriods response:', response)
       return response.data || response
     } catch (error) {
-      console.error('❌ [LeaderboardService] processExpiredPeriods error:', error)
 
       // Si es 404, simular procesamiento con mock data
       if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
-        console.log('📦 [LeaderboardService] Simulating expired periods processing with mock data')
         const now = new Date()
         const expiredPeriods = mockPeriods.filter(p => p.is_active && new Date(p.end_date) < now)
 
@@ -580,10 +482,8 @@ export const leaderboardService = {
    * Get the active period for a specific game
    */
   async getActivePeriod(gameId = null) {
-    console.log('🔍 [LeaderboardService] getActivePeriod called with gameId:', gameId)
     try {
       const response = await this.getAllPeriods(gameId)
-      console.log('📊 [LeaderboardService] getActivePeriod - response received:', response)
 
       let periods = []
       if (Array.isArray(response)) {
@@ -594,7 +494,6 @@ export const leaderboardService = {
 
       if (periods.length > 0) {
         const activePeriods = periods.filter(p => p.is_active)
-        console.log('🎯 [LeaderboardService] Active periods found:', activePeriods.length)
 
         // Asegurar que el periodo activo tenga duration_days
         const processPeriod = (period) => {
@@ -611,17 +510,13 @@ export const leaderboardService = {
 
         if (gameId) {
           const period = activePeriods.find(p => p.game_id === gameId)
-          console.log('✨ [LeaderboardService] Period for gameId', gameId, ':', period)
           return processPeriod(period) || null
         }
-        console.log('✨ [LeaderboardService] Returning first active period:', activePeriods[0])
         return processPeriod(activePeriods[0]) || null
       }
 
-      console.log('⚠️ [LeaderboardService] No periods found')
       return null
     } catch (error) {
-      console.error('❌ [LeaderboardService] getActivePeriod error:', error)
       return null
     }
   },

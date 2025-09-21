@@ -16,7 +16,6 @@ const LoginWallet = () => {
   useEffect(() => {
     // Check if mobile device
     setIsMobile(walletAuthService.isMobileDevice())
-    console.log('📱 [LoginWallet] Is mobile device:', walletAuthService.isMobileDevice())
 
     // Check for OAuth redirect response first
     const oauthResponse = walletAuthService.handleOAuthRedirect()
@@ -25,7 +24,7 @@ const LoginWallet = () => {
         setAuthError(`Error de autenticación: ${oauthResponse.error}`)
       } else if (oauthResponse.credential) {
         // We have a token from redirect, process it
-        console.log('🔐 [LoginWallet] OAuth redirect token received')
+        
         handleGoogleResponse({ credential: oauthResponse.credential })
         return
       }
@@ -39,15 +38,13 @@ const LoginWallet = () => {
           return
         }
 
-        console.log('🔐 [LoginWallet] Initializing Google Sign-In with client ID:', clientId.substring(0, 10) + '...')
-
         // Only initialize Google Sign-In JavaScript API for desktop
         if (!walletAuthService.isMobileDevice()) {
           walletAuthService.initializeGoogleSignIn(clientId, handleGoogleResponse)
         }
         setGoogleInitialized(true)
       } catch (error) {
-        console.error('Error initializing Google Sign-In:', error)
+        
         setAuthError('Error al inicializar Google Sign-In. Por favor recarga la página.')
       }
     }
@@ -73,7 +70,7 @@ const LoginWallet = () => {
 
   // Handle Google sign-in response
   const handleGoogleResponse = async (credentialResponse) => {
-    console.log('📦 [LoginWallet] Google credential received')
+    
     setIsGoogleLoading(true)
     setAuthError(null)
     
@@ -84,7 +81,7 @@ const LoginWallet = () => {
       // Redirect to addWallet page after successful authentication
       navigate('/addWallet')
     } catch (error) {
-      console.error('Authentication error:', error)
+      
       setAuthError(error.message || 'Error al autenticarse. Por favor intenta de nuevo.')
     } finally {
       setIsGoogleLoading(false)
@@ -103,14 +100,14 @@ const LoginWallet = () => {
 
     // For mobile devices or when cookies are blocked, use redirect flow
     if (isMobile) {
-      console.log('📱 [LoginWallet] Using redirect flow for mobile')
+      
       try {
         // Generate OAuth URL and redirect
         const oauthUrl = walletAuthService.generateOAuthUrl(clientId)
-        console.log('🔗 [LoginWallet] Redirecting to:', oauthUrl)
+        
         window.location.href = oauthUrl
       } catch (error) {
-        console.error('Error with redirect flow:', error)
+        
         setAuthError('Error al iniciar sesión con Google')
         setIsGoogleLoading(false)
       }
@@ -119,11 +116,10 @@ const LoginWallet = () => {
       try {
         // First try the prompt
         window.google.accounts.id.prompt((notification) => {
-          console.log('🔔 [LoginWallet] Google prompt notification:', notification)
+          
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
             // If One Tap doesn't work, fallback to redirect flow
-            console.log('⚠️ [LoginWallet] One Tap not displayed, falling back to redirect flow')
-            
+
             // Show message and use redirect flow
             setAuthError('Las cookies de terceros están bloqueadas. Usando método alternativo...')
             setTimeout(() => {
@@ -133,7 +129,7 @@ const LoginWallet = () => {
           }
         })
       } catch (error) {
-        console.error('Error triggering Google Sign-In:', error)
+        
         // Fallback to redirect flow
         const oauthUrl = walletAuthService.generateOAuthUrl(clientId)
         window.location.href = oauthUrl

@@ -45,7 +45,7 @@ export const uploadService = {
         throw new Error('No se recibió URL de la imagen')
       }
     } catch (error) {
-      console.error('Error uploading image:', error)
+      
       throw error
     }
   },
@@ -69,7 +69,7 @@ export const uploadService = {
         data: { filePath }
       })
     } catch (error) {
-      console.error('Error deleting image:', error)
+      
       // No lanzar error para no interrumpir el flujo si falla el borrado
     }
   },

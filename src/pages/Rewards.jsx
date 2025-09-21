@@ -119,8 +119,7 @@ const Rewards = () => {
       setShowDeleteModal(false)
       setRewardToDelete(null)
     } catch (error) {
-      console.error('Error deleting reward:', error)
-      setError('Error al eliminar la recompensa')
+            setError('Error al eliminar la recompensa')
     }
   }
 
@@ -165,15 +164,10 @@ const Rewards = () => {
         required_seals: formData.is_game_reward ? 0 : parseInt(formData.required_seals)
       }
 
-      console.log('🚀 Submitting reward data:', payload)
-      console.log('📸 Image file:', selectedImageFile)
-
       if (editingReward) {
-        console.log('📝 Updating reward:', editingReward.id)
-        // Always use multipart endpoint for rewards
+                // Always use multipart endpoint for rewards
         const response = await rewardsService.updateRewardWithImage(editingReward.id, payload, selectedImageFile)
-        console.log('✅ Reward updated:', response)
-
+        
         // Update reward locally after successful save (use response which has the icon_url)
         setRewards(rewards.map(reward =>
           reward.id === editingReward.id
@@ -182,11 +176,9 @@ const Rewards = () => {
         ))
         setEditingReward(null)
       } else {
-        console.log('➕ Creating new reward')
-        // Always use multipart endpoint for rewards
+                // Always use multipart endpoint for rewards
         const response = await rewardsService.createRewardWithImage(payload, selectedImageFile)
-        console.log('✅ Reward created:', response)
-        
+                
         // Add new reward to list
         const newReward = response.data || response
         setRewards([...rewards, newReward])
@@ -197,8 +189,7 @@ const Rewards = () => {
       setFormData({ name: '', description: '', required_seals: '', image_url: '', is_game_reward: false })
       setSelectedImageFile(null)
     } catch (error) {
-      console.error('Error saving reward:', error)
-      setError('Error al guardar la recompensa')
+            setError('Error al guardar la recompensa')
     }
   }
 
@@ -479,12 +470,10 @@ const Rewards = () => {
                 currentImageUrl={formData.image_url || ''}
                 mode="deferred"
                 onFileSelected={(file) => {
-                  console.log('🎯 File selected in Rewards:', file)
-                  setSelectedImageFile(file)
+                                    setSelectedImageFile(file)
                 }}
                 onImageUploaded={(url) => {
-                  console.log('📍 Image URL updated:', url)
-                  setFormData(prev => ({...prev, image_url: url}))
+                                    setFormData(prev => ({...prev, image_url: url}))
                 }}
                 folder="rewards"
               />

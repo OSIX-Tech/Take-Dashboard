@@ -11,7 +11,10 @@
       "Bash(npm run lint)",
       "Bash(cat:*)",
       "Bash(git log:*)",
-      "Bash(del \"C:\\Users\\Nico\\Documents\\OSIX\\TakeDash\\src\\services\\wishlistService.js\")"
+      "Bash(del \"C:\\Users\\Nico\\Documents\\OSIX\\TakeDash\\src\\services\\wishlistService.js\")",
+      "Bash(find:*)",
+      "Bash(node:*)",
+      "Bash(npx acorn:*)"
     ],
     "deny": []
   }

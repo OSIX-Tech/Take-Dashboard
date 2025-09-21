@@ -20,7 +20,6 @@ class ApiService {
     
     // Para usuarios demo, no enviar Authorization header (usar solo cookies)
     if (tokenToUse && tokenToUse.includes('.demo.signature')) {
-      console.log('🎭 API - Demo user detected, not sending Authorization header')
       return {}
     }
     
@@ -55,7 +54,6 @@ class ApiService {
         this.corsStatus = response.ok
         return this.corsStatus
       } catch (error) {
-        console.log('⚠️ API - CORS not configured, using fallback mode')
         this.corsStatus = false
         return false
       } finally {
@@ -103,13 +101,9 @@ class ApiService {
         }
       })
 
-      console.log(`🌐 [API] Making GET request to: ${url.toString()}`)
-      console.log(`🔑 [API] Headers:`, this.getAuthHeaders())
-      console.log(`📊 [API] Query params:`, params)
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 [API] Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -120,16 +114,8 @@ class ApiService {
         credentials: credentials
       })
 
-      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
       return this.handleResponse(response, endpoint)
     } catch (error) {
-      console.error(`❌ GET ${endpoint} failed:`, error)
-      console.error(`❌ Error details:`, {
-        message: error.message,
-        stack: error.stack,
-        endpoint,
-        params
-      })
       throw error
     }
   }
@@ -138,17 +124,11 @@ class ApiService {
   async post(endpoint, data = {}) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 [API] Making POST request to: ${url.toString()}`)
-      console.log(`📦 [API] Request body:`, data)
-      console.log(`🔑 [API] Headers:`, this.getAuthHeaders())
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 [API] Using credentials: ${credentials}`)
 
       const bodyToSend = JSON.stringify(data)
-      console.log(`🎯 [API] JSON.stringify body:`, bodyToSend)
-      console.log(`🔍 [API] Body includes reward_id:`, bodyToSend.includes('reward_id'))
 
       const response = await fetch(url.toString(), {
         method: 'POST',
@@ -160,10 +140,8 @@ class ApiService {
         credentials: credentials
       })
 
-      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
       return this.handleResponse(response, endpoint)
     } catch (error) {
-      console.error(`❌ POST ${endpoint} failed:`, error)
       throw error
     }
   }
@@ -172,10 +150,8 @@ class ApiService {
   async postFormData(endpoint, formData) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 Making POST (multipart) request to: ${url.toString()}`)
 
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'POST',
@@ -187,10 +163,8 @@ class ApiService {
         credentials: credentials
       })
 
-      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
       return this.handleResponse(response, endpoint)
     } catch (error) {
-      console.error(`❌ POST multipart ${endpoint} failed:`, error)
       throw error
     }
   }
@@ -199,13 +173,9 @@ class ApiService {
   async put(endpoint, data = {}) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 [API] Making PUT request to: ${url.toString()}`)
-      console.log(`📦 [API] Request body:`, data)
-      console.log(`🔑 [API] Headers:`, this.getAuthHeaders())
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 [API] Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'PUT',
@@ -217,10 +187,8 @@ class ApiService {
         credentials: credentials
       })
 
-      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
       return this.handleResponse(response, endpoint)
     } catch (error) {
-      console.error(`❌ PUT ${endpoint} failed:`, error)
       throw error
     }
   }
@@ -229,10 +197,8 @@ class ApiService {
   async putFormData(endpoint, formData) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 Making PUT (multipart) request to: ${url.toString()}`)
 
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'PUT',
@@ -244,10 +210,8 @@ class ApiService {
         credentials: credentials
       })
 
-      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
       return this.handleResponse(response, endpoint)
     } catch (error) {
-      console.error(`❌ PUT multipart ${endpoint} failed:`, error)
       throw error
     }
   }
@@ -256,12 +220,9 @@ class ApiService {
   async patch(endpoint, data = {}) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 Making PATCH request to: ${url.toString()}`)
-      console.log(`📦 Data:`, data)
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'PATCH',
@@ -273,10 +234,8 @@ class ApiService {
         credentials: credentials
       })
 
-      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
       return this.handleResponse(response, endpoint)
     } catch (error) {
-      console.error(`❌ PATCH ${endpoint} failed:`, error)
       throw error
     }
   }
@@ -285,11 +244,9 @@ class ApiService {
   async delete(endpoint) {
     try {
       const url = new URL(`${this.baseURL}/${endpoint}`)
-      console.log(`🌐 Making DELETE request to: ${url.toString()}`)
 
       // Detectar si CORS está configurado
       const credentials = await this.getCredentialsOption()
-      console.log(`🔧 Using credentials: ${credentials}`)
 
       const response = await fetch(url.toString(), {
         method: 'DELETE',
@@ -300,10 +257,8 @@ class ApiService {
         credentials: credentials
       })
 
-      console.log(`📡 Response status: ${response.status} for ${endpoint}`)
       return this.handleResponse(response, endpoint)
     } catch (error) {
-      console.error(`❌ DELETE ${endpoint} failed:`, error)
       throw error
     }
   }

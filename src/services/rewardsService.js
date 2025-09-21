@@ -5,39 +5,32 @@ export const rewardsService = {
   async getRewards() {
     try {
       const response = await apiService.get('reward')
-      console.log('🎁 Raw rewards response:', response)
       
       // Handle wrapped response structure
       if (response && typeof response === 'object') {
         // Case 1: {success: true, data: {seals: [], rewards: []}}
         if (response.data && response.data.rewards) {
-          console.log('🎁 Found rewards in response.data.rewards')
           return Array.isArray(response.data.rewards) ? response.data.rewards : []
         }
         
         // Case 2: {success: true, data: [...]}
         if (response.data && Array.isArray(response.data)) {
-          console.log('🎁 Found rewards array in response.data')
           return response.data
         }
         
         // Case 3: {rewards: [...]}
         if (response.rewards && Array.isArray(response.rewards)) {
-          console.log('🎁 Found rewards in response.rewards')
           return response.rewards
         }
         
         // Case 4: Response is the array directly
         if (Array.isArray(response)) {
-          console.log('🎁 Response is directly an array')
           return response
         }
       }
       
-      console.warn('⚠️ Unexpected rewards response structure:', response)
       return []
     } catch (error) {
-      console.error('❌ Error fetching rewards:', error)
       throw error
     }
   },
@@ -65,22 +58,13 @@ export const rewardsService = {
       
       // Add image file if provided
       if (imageFile) {
-        console.log('🖼️ Adding image to FormData:', imageFile.name, imageFile.size, imageFile.type)
         formData.append('image', imageFile)
-      } else {
-        console.log('⚠️ No image file provided for reward creation')
       }
       
-      // Log FormData contents
-      console.log('📦 FormData contents:')
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value)
-      }
       
       const response = await apiService.postFormData('reward', formData)
       return response.data || response
     } catch (error) {
-      console.error('Error creating reward with image:', error)
       throw error
     }
   },
@@ -109,22 +93,13 @@ export const rewardsService = {
       
       // Add image file if provided
       if (imageFile) {
-        console.log('🖼️ Adding image to FormData:', imageFile.name, imageFile.size, imageFile.type)
         formData.append('image', imageFile)
-      } else {
-        console.log('⚠️ No image file provided for reward update')
       }
       
-      // Log FormData contents
-      console.log('📦 FormData contents for update:')
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value)
-      }
       
       const response = await apiService.putFormData(`reward/${id}`, formData)
       return response.data || response
     } catch (error) {
-      console.error('Error updating reward with image:', error)
       throw error
     }
   },

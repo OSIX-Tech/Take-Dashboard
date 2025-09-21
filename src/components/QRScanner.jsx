@@ -63,7 +63,7 @@ function QRScanner({ onScan, onClose, title = "Escanear QR", isModal = false }) 
             {
               onDecodeError: (err) => {
                 // Ignore decode errors during scanning
-                console.log('Scanning...', err.message);
+                
               },
               highlightScanRegion: true,
               highlightCodeOutline: true,
@@ -76,14 +76,14 @@ function QRScanner({ onScan, onClose, title = "Escanear QR", isModal = false }) 
             await qrScannerRef.current.start();
             setIsScanning(false);
           } catch (err) {
-            console.error('Error starting scanner:', err);
+            
             setError('No se pudo iniciar la cámara. Por favor, verifica los permisos.');
             stopScanner();
           }
         }
       }, 100);
     } catch (err) {
-      console.error('Scanner error:', err);
+      
       setError(err.message || 'Error al iniciar el escáner');
       setScannerMode(false);
       setIsScanning(false);

@@ -46,11 +46,9 @@ const Events = () => {
     try {
       setLoading(true)
       setError(null)
-      console.log('🔄 Loading events...')
-
+      
       const eventsResponse = await eventsService.getEvents()
-      console.log('🔍 Events response:', eventsResponse)
-
+      
       // Manejar diferentes tipos de respuesta
       let eventsData = []
       
@@ -67,12 +65,10 @@ const Events = () => {
         }
       }
       
-      console.log('📊 Events data to set:', eventsData)
-      setEvents(eventsData)
+            setEvents(eventsData)
       
     } catch (error) {
-      console.error('Error loading events:', error)
-      setError('Error cargando los eventos')
+            setError('Error cargando los eventos')
       setEvents([])
     } finally {
       setLoading(false)
@@ -94,8 +90,7 @@ const Events = () => {
       alert(contentValidation.error)
       return
     }
-    
-    
+
     // Validate image is required
     if (!formData.image_url && !selectedImageFile) {
       alert('La imagen del evento es obligatoria')
@@ -125,12 +120,9 @@ const Events = () => {
         link_ev: formData.link_ev?.trim() || null,
         folder: 'events'
       }
-      
-      console.log('🚀 Submitting event data:', validatedData)
 
       if (editingEvent) {
-        console.log('📝 Updating event:', editingEvent.id)
-        let response
+                let response
         // Check if there's any image change
         const hasImageChange = selectedImageFile || (editingEvent.image_url !== validatedData.image_url)
         
@@ -141,8 +133,7 @@ const Events = () => {
           // Use regular endpoint only if no image changes at all
           response = await eventsService.updateEvent(editingEvent.id, validatedData)
         }
-        console.log('✅ Event updated:', response)
-
+        
         // Update event locally after successful save
         setEvents(events.map(event =>
           event.id === editingEvent.id
@@ -151,15 +142,13 @@ const Events = () => {
         ))
         setEditingEvent(null)
       } else {
-        console.log('➕ Creating new event')
-        let response
+                let response
         if (selectedImageFile) {
           response = await eventsService.createEventWithImage(validatedData, selectedImageFile)
         } else {
           response = await eventsService.createEvent(validatedData)
         }
-        console.log('✅ Event created:', response)
-
+        
         // Add event locally after successful save
         const newEvent = {
           id: response.id || Date.now().toString(),
@@ -184,8 +173,7 @@ const Events = () => {
       await loadData()
 
     } catch (error) {
-      console.error('❌ Error saving event:', error)
-      alert(`Error al guardar el evento: ${error.message}`)
+            alert(`Error al guardar el evento: ${error.message}`)
     } finally {
       setSubmitting(false)
     }
@@ -221,8 +209,7 @@ const Events = () => {
       setShowDeleteModal(false)
       setEventToDelete(null)
     } catch (error) {
-      console.error('Error deleting event:', error)
-      setError('Error al eliminar el evento')
+            setError('Error al eliminar el evento')
     }
   }
 
@@ -386,8 +373,7 @@ const Events = () => {
                     if (file) {
                       // Don't update formData.image_url with the data URL
                       // Just keep track of the file
-                      console.log('New file selected:', file.name)
-                    } else {
+                                          } else {
                       // If file is removed, set a blank/placeholder image URL
                       const blankImageUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
                       setFormData(prev => ({...prev, image_url: blankImageUrl}))
@@ -694,8 +680,7 @@ const Events = () => {
                     if (file) {
                       // Don't update formData.image_url with the data URL
                       // Just keep track of the file
-                      console.log('New file selected:', file.name)
-                    } else {
+                                          } else {
                       // If file is removed, set a blank/placeholder image URL
                       const blankImageUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
                       setFormData(prev => ({...prev, image_url: blankImageUrl}))

@@ -43,8 +43,7 @@ export const menuService = {
       const response = await apiService.postFormData('menu/category', formData)
       return response.data || response
     } catch (error) {
-      console.error('Error creating category with image:', error)
-      throw error
+            throw error
     }
   },
 
@@ -75,8 +74,7 @@ export const menuService = {
       const response = await apiService.putFormData(`menu/category/${id}`, formData)
       return response.data || response
     } catch (error) {
-      console.error('Error updating category with image:', error)
-      throw error
+            throw error
     }
   },
 

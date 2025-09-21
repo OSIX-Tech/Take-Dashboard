@@ -6,33 +6,30 @@ export const authService = {
 
   // Admin authentication endpoints
   async adminLogin() {
-    console.log('🔐 [authService.adminLogin] Iniciando proceso de login')
+    
     try {
       // Solo verificar que tengamos la URL del backend
-      console.log('🔍 [authService.adminLogin] API_BASE_URL:', AUTH_CONFIG.API_BASE_URL)
+      
       if (!AUTH_CONFIG.API_BASE_URL) {
         throw new Error('CONFIG_ERROR: API Base URL no configurado')
       }
 
       // Verificar conectividad básica con el backend
-      console.log('📡 [authService.adminLogin] Verificando conectividad con backend...')
+      
       try {
         const healthUrl = `${AUTH_CONFIG.API_BASE_URL}/health`
-        console.log('📡 [authService.adminLogin] Health check URL:', healthUrl)
-        
+
         const response = await fetch(healthUrl, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'
         })
-        
-        console.log('📡 [authService.adminLogin] Health check response status:', response.status)
-        
+
         if (!response.ok) {
           throw new Error(`BACKEND_ERROR: Backend respondió con status ${response.status}`)
         }
       } catch (error) {
-        console.error('❌ [authService.adminLogin] Error en health check:', error)
+        
         if (error.message.includes('fetch')) {
           throw new Error('NETWORK_ERROR: No se puede conectar al servidor')
         } else if (error.message.includes('CORS')) {
@@ -44,24 +41,24 @@ export const authService = {
 
       // Inicia el flujo de autenticación de admin
       const loginUrl = `${AUTH_CONFIG.API_BASE_URL}/admin/auth/login`
-      console.log('🚀 [authService.adminLogin] Redirigiendo a:', loginUrl)
+      
       window.location.href = loginUrl
     } catch (error) {
-      console.error('❌ [authService.adminLogin] Error en adminLogin:', error)
+      
       throw error
     }
   },
 
   async adminGoogleAuth() {
     const googleAuthUrl = `${AUTH_CONFIG.API_BASE_URL}/admin/auth/google`
-    console.log('🚀 [authService.adminGoogleAuth] Redirigiendo a Google OAuth:', googleAuthUrl)
+    
     window.location.href = googleAuthUrl
   },
 
   async adminGoogleCallback(code) {
-    console.log('🔄 [authService.adminGoogleCallback] Procesando callback con código')
+    
     const response = await apiService.get(`admin/auth/google/callback?code=${code}`)
-    console.log('📦 [authService.adminGoogleCallback] Respuesta del callback:', response)
+    
     return response
   },
 
@@ -70,21 +67,21 @@ export const authService = {
   },
 
   async adminLogout() {
-    console.log('🔍 adminLogout - Iniciando logout')
+    
     try {
       const result = await apiService.post('admin/auth/logout')
-      console.log('✅ adminLogout - Logout exitoso:', result)
+      
       return result
     } catch (error) {
-      console.error('❌ adminLogout - Error:', error)
+      
       throw error
     }
   },
 
   async getAdminProfile() {
-    console.log('👤 [authService.getAdminProfile] Obteniendo perfil de admin...')
+    
     const profile = await apiService.get('admin/auth/me')
-    console.log('👤 [authService.getAdminProfile] Perfil obtenido:', profile)
+    
     return profile
   },
 
@@ -93,13 +90,13 @@ export const authService = {
   },
 
   async checkSession() {
-    console.log('🔍 [authService.checkSession] Verificando sesión...')
+    
     try {
       const response = await apiService.get('admin/auth/me')
-      console.log('✅ [authService.checkSession] Sesión verificada:', response)
+      
       return response
     } catch (error) {
-      console.error('❌ [authService.checkSession] Session check failed:', error.message)
+      
       throw error
     }
   },
@@ -107,13 +104,13 @@ export const authService = {
   // Utility methods
   isAuthenticated() {
     const hasToken = !!localStorage.getItem('adminToken')
-    console.log('🔍 [authService.isAuthenticated] Token en localStorage:', hasToken)
+    
     return hasToken
   },
 
   isAdminAuthenticated() {
     const hasAdminToken = !!localStorage.getItem('adminToken')
-    console.log('🔍 [authService.isAdminAuthenticated] Admin token en localStorage:', hasAdminToken)
+    
     return hasAdminToken
   },
 
@@ -148,7 +145,7 @@ export const authService = {
         role: adminToken ? 'admin' : 'user'
       }
     } catch (error) {
-      console.error('Error decoding token:', error)
+      
       return {
         name: 'Usuario',
         email: 'admin@take.com',
@@ -169,19 +166,18 @@ export const authService = {
       // Iniciar flujo de autenticación de admin
       await this.adminLogin()
     } catch (error) {
-      console.error('Error initiating admin login:', error)
+      
       throw error
     }
   },
 
   async handleAdminCallback(code) {
-    console.log('🔄 [authService.handleAdminCallback] Manejando callback con código')
+    
     try {
       const response = await this.adminGoogleCallback(code)
-      console.log('📦 [authService.handleAdminCallback] Respuesta recibida:', response)
-      
+
       if (response && response.token) {
-        console.log('✅ [authService.handleAdminCallback] Token recibido, guardando en localStorage')
+        
         localStorage.setItem('adminToken', response.token)
         
         const user = response.user || {
@@ -190,14 +186,13 @@ export const authService = {
           isAdmin: true,
           role: 'admin'
         }
-        console.log('👤 [authService.handleAdminCallback] Usuario final:', user)
+        
         return user
       }
-      
-      console.error('❌ [authService.handleAdminCallback] No se recibió token en la respuesta')
+
       throw new Error('No token received from admin callback')
     } catch (error) {
-      console.error('❌ [authService.handleAdminCallback] Error en admin callback:', error)
+      
       throw error
     }
   }
@@ -205,18 +200,14 @@ export const authService = {
 
 // Función auxiliar para extraer token del callback URL
 export function extractTokenFromUrl() {
-  console.log('🔍 [extractTokenFromUrl] Buscando token en URL...')
-  console.log('🔍 [extractTokenFromUrl] URL completa:', window.location.href)
-  console.log('🔍 [extractTokenFromUrl] Search:', window.location.search)
-  console.log('🔍 [extractTokenFromUrl] Hash:', window.location.hash)
-  
+
   // Buscar en hash fragment (después de #)
   if (window.location.hash) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const token = hashParams.get('token')
     const adminToken = hashParams.get('adminToken')
     if (token || adminToken) {
-      console.log('✅ [extractTokenFromUrl] Token encontrado en hash')
+      
       return token || adminToken
     }
   }
@@ -228,7 +219,7 @@ export function extractTokenFromUrl() {
   const accessToken = urlParams.get('access_token')
   
   if (token || adminToken || accessToken) {
-    console.log('✅ [extractTokenFromUrl] Token encontrado en query params')
+    
     return token || adminToken || accessToken
   }
   
@@ -237,14 +228,13 @@ export function extractTokenFromUrl() {
   if (adminInfo) {
     try {
       const decoded = JSON.parse(decodeURIComponent(adminInfo))
-      console.log('👥 [extractTokenFromUrl] AdminInfo encontrado:', decoded)
+      
       // Guardar info del admin aunque no tengamos token
       localStorage.setItem('adminInfo', JSON.stringify(decoded))
     } catch (e) {
-      console.error('Error decodificando adminInfo:', e)
+      
     }
   }
-  
-  console.log('❌ [extractTokenFromUrl] No se encontró token en URL')
+
   return null
 } 

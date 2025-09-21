@@ -20,8 +20,7 @@ const Login = ({ onLogin }) => {
     if (errorParam) {
       const decodedError = decodeURIComponent(errorParam)
       setAuthError(decodedError)
-      console.error('❌ Login - Error de autenticación recibido:', decodedError)
-    }
+          }
   }, [searchParams])
 
   // Limpiar localStorage al cargar la página para evitar errores de tokens inválidos
@@ -102,8 +101,6 @@ const Login = ({ onLogin }) => {
             Gestión administrativa de Take
           </p>
         </div>
-
-
 
         {/* Login Card */}
         <Card className="border-0 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl bg-white">

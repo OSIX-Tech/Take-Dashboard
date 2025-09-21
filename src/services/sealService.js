@@ -12,12 +12,10 @@ export const sealService = {
    */
   async getAvailableRewards(lifetimeSeals) {
     try {
-      console.log('🏆 Getting available rewards for lifetime seals:', lifetimeSeals);
-      
+
       // Get all rewards from the rewards service
       const allRewards = await rewardsService.getRewards();
-      console.log('📋 All rewards from service:', allRewards);
-      
+
       // Filter rewards based on lifetime seals
       const availableRewards = allRewards
         .filter(reward => {
@@ -25,11 +23,10 @@ export const sealService = {
           return requiredSeals > 0 && requiredSeals <= lifetimeSeals;
         })
         .sort((a, b) => Number(a.required_seals) - Number(b.required_seals));
-      
-      console.log(`✅ Found ${availableRewards.length} available rewards for ${lifetimeSeals} lifetime seals`);
+
       return availableRewards;
     } catch (error) {
-      console.error('❌ Error getting available rewards:', error);
+      
       return [];
     }
   },
@@ -42,10 +39,9 @@ export const sealService = {
    */
   async getNewlyUnlockedRewards(previousLifetimeSeals, newLifetimeSeals) {
     try {
-      console.log('🎁 Checking newly unlocked rewards:', { previousLifetimeSeals, newLifetimeSeals });
-      
+
       if (previousLifetimeSeals >= newLifetimeSeals) {
-        console.log('⚠️ No new seals added, no new rewards to unlock');
+        
         return [];
       }
       
@@ -57,18 +53,14 @@ export const sealService = {
         const requiredSeals = Number(reward.required_seals);
         return requiredSeals > previousLifetimeSeals && requiredSeals <= newLifetimeSeals;
       }).sort((a, b) => Number(a.required_seals) - Number(b.required_seals));
-      
-      console.log(`🎉 Unlocked ${newlyUnlocked.length} new rewards!`);
+
       if (newlyUnlocked.length > 0) {
-        console.log('🎁 Newly unlocked rewards:', newlyUnlocked.map(r => ({
-          name: r.name,
-          required_seals: r.required_seals
-        })));
+        // Newly unlocked rewards found
       }
       
       return newlyUnlocked;
     } catch (error) {
-      console.error('❌ Error checking newly unlocked rewards:', error);
+      
       return [];
     }
   },
@@ -89,17 +81,16 @@ export const sealService = {
       
       if (nextReward) {
         const sealsNeeded = Number(nextReward.required_seals) - lifetimeSeals;
-        console.log(`🎯 Next reward "${nextReward.name}" in ${sealsNeeded} seals`);
+        
         return {
           ...nextReward,
           seals_needed: sealsNeeded
         };
       }
-      
-      console.log('🌟 All rewards unlocked!');
+
       return null;
     } catch (error) {
-      console.error('❌ Error getting next reward milestone:', error);
+      
       return null;
     }
   },

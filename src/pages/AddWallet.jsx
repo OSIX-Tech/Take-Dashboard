@@ -53,7 +53,7 @@ const AddWallet = () => {
       // The service will redirect to Google Wallet URL
       // Show success briefly before redirect happens
       if (result) {
-        console.log('✅ Pass generated successfully:', result)
+        
         setSuccess(true)
         
         // Reset loading state after a brief moment since we're redirecting
@@ -63,7 +63,7 @@ const AddWallet = () => {
         }, 1000)
       }
     } catch (error) {
-      console.error('Error adding to wallet:', error)
+      
       setError(error.message || 'Error al añadir la tarjeta a Google Wallet')
       setIsLoading(false)
     }

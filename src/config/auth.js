@@ -19,18 +19,9 @@ export const AUTH_CONFIG = {
     : 'https://take-dashboard.vercel.app/admin/auth/callback',
   
   // Debug mode para logs detallados
-  DEBUG: true
+  DEBUG: false
 }
 
-// Log config en desarrollo
-if (AUTH_CONFIG.DEBUG) {
-  console.log('🔧 [AUTH_CONFIG] Configuración actual:', {
-    API_BASE_URL: AUTH_CONFIG.API_BASE_URL,
-    CALLBACK_URL: AUTH_CONFIG.CALLBACK_URL,
-    isDevelopment,
-    DEMO_MODE: AUTH_CONFIG.DEMO_MODE
-  })
-}
 
 // Demo user data
 export const DEMO_USER = {

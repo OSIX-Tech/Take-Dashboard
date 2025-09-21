@@ -25,15 +25,9 @@ const AdminCallback = ({ onLogin }) => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      console.log('🔍 [AdminCallback] Iniciando handleCallback')
-      console.log('🔍 [AdminCallback] URL completa:', window.location.href)
-      console.log('🔍 [AdminCallback] Search params:', Object.fromEntries(searchParams))
-      console.log('🍪 [AdminCallback] Cookies actuales:', document.cookie)
-      
       // Esperar un momento para que las cookies se establezcan
       await new Promise(resolve => setTimeout(resolve, 500))
-      console.log('🍪 [AdminCallback] Cookies después de esperar:', document.cookie)
-      
+
       try {
         const code = searchParams.get('code')
         const token = searchParams.get('token')
@@ -44,7 +38,7 @@ const AdminCallback = ({ onLogin }) => {
         const adminTokenCookie = cookies.find(c => c.trim().startsWith('adminToken='))
         if (adminTokenCookie && !token) {
           const cookieToken = adminTokenCookie.split('=')[1]
-          console.log('🍪 [AdminCallback] Token encontrado en cookie:', !!cookieToken)
+          
           if (cookieToken) {
             localStorage.setItem('adminToken', cookieToken)
             const user = authService.getCurrentUser()
@@ -53,62 +47,55 @@ const AdminCallback = ({ onLogin }) => {
             return
           }
         }
-        
-        console.log('🔍 [AdminCallback] Parámetros extraídos:', { code: !!code, token: !!token, error })
-        
+
         if (error) {
-          console.error('❌ [AdminCallback] Error recibido en URL:', error)
+          
           setError('Error en autenticación: ' + decodeURIComponent(error))
           return
         }
         
         // Si recibimos un token directamente del backend
         if (token) {
-          console.log('✅ [AdminCallback] Token recibido directamente del backend')
-          localStorage.setItem('adminToken', token)
-          console.log('💾 [AdminCallback] Token guardado en localStorage')
           
+          localStorage.setItem('adminToken', token)
+
           // Obtener el usuario desde el token o hacer una llamada al backend
           const user = authService.getCurrentUser()
-          console.log('👤 [AdminCallback] Usuario obtenido:', user)
+          
           onLogin(user)
-          console.log('🚀 [AdminCallback] Redirigiendo a /menu...')
+          
           window.location.href = '/menu'
           return
         }
         
         if (!code) {
-          console.log('⚠️ [AdminCallback] No hay código en la URL')
+          
           // Si no hay código ni token, verificar si hay un token en localStorage
           const adminToken = localStorage.getItem('adminToken')
-          console.log('🔍 [AdminCallback] Token en localStorage:', !!adminToken)
-          
+
           if (adminToken) {
-            console.log('✅ [AdminCallback] Token encontrado en localStorage, redirigiendo')
+            
             onLogin(authService.getCurrentUser())
             window.location.href = '/menu'
             return
           }
-          
-          console.error('❌ [AdminCallback] No se recibió código de autorización')
+
           setError('No se recibió código de autorización')
           return
         }
 
-        console.log('🔄 [AdminCallback] Procesando código de autorización...')
         const userData = await authService.handleAdminCallback(code)
-        console.log('✅ [AdminCallback] Callback procesado, userData:', userData)
+        
         onLogin(userData)
         
         // Redirigir al dashboard
-        console.log('🚀 [AdminCallback] Redirigiendo a /menu después del callback...')
+        
         window.location.href = '/menu'
       } catch (err) {
-        console.error('❌ [AdminCallback] Error en callback de admin:', err)
-        console.error('❌ [AdminCallback] Stack trace:', err.stack)
+
         setError('Error procesando autenticación: ' + err.message)
       } finally {
-        console.log('🏁 [AdminCallback] Finalizando loading')
+        
         setLoading(false)
       }
     }
@@ -160,13 +147,10 @@ function App() {
   // Check authentication status on app load
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('🔐 [App] Iniciando checkAuth...')
-      console.log('🔐 [App] URL actual:', window.location.pathname)
-      console.log('🔐 [App] URL completa:', window.location.href)
-      
+
       // Skip auth check for wallet routes - they have their own auth flow
       if (window.location.pathname === '/loginWallet' || window.location.pathname === '/addWallet') {
-        console.log('🎫 [App] Wallet route detected, skipping main auth check')
+        
         setIsLoading(false)
         return
       }
@@ -174,7 +158,7 @@ function App() {
       // PRIMERO: Verificar si venimos de un callback con token
       const tokenFromUrl = extractTokenFromUrl()
       if (tokenFromUrl) {
-        console.log('🎆 [App] Token encontrado en URL, procesando...')
+        
         localStorage.setItem('adminToken', tokenFromUrl)
         
         // Limpiar la URL
@@ -190,120 +174,89 @@ function App() {
       
       // SEGUNDO: Si estamos en /menu y venimos de un login, intentar obtener sesión del backend
       if (window.location.pathname === '/menu' && document.referrer.includes('accounts.google.com')) {
-        console.log('🔄 [App] Detectado retorno de Google OAuth, verificando sesión...')
+        
         try {
           // Intentar obtener el perfil con las cookies que el backend debió establecer
           const profile = await authService.getAdminProfile()
           if (profile && profile.data) {
-            console.log('✅ [App] Sesión obtenida del backend después de OAuth')
+            
             setCurrentUser(profile.data)
             setIsAuthenticated(true)
             setIsLoading(false)
             return
           }
         } catch (error) {
-          console.log('⚠️ [App] No se pudo obtener sesión después de OAuth:', error.message)
+          
         }
       }
       
       try {
         // Agregar un pequeño delay para dar tiempo a que las cookies se establezcan
-        console.log('⏳ [App] Esperando 100ms para cookies...')
+        
         await new Promise(resolve => setTimeout(resolve, 100))
         
         // ANÁLISIS DE COOKIES Y CROSS-DOMAIN
-        console.log('🔒 [App] === ANÁLISIS DE COOKIES CROSS-DOMAIN ===')
-        console.log('🔒 [App] Dominio actual:', window.location.hostname)
-        console.log('🔒 [App] Origen actual:', window.location.origin)
-        console.log('🔒 [App] Backend URL:', AUTH_CONFIG.API_BASE_URL)
-        
+
         // Analizar dominios
         const currentDomain = window.location.hostname
         const backendDomain = new URL(AUTH_CONFIG.API_BASE_URL).hostname
-        console.log('🌐 [App] Comparación de dominios:')
-        console.log('  - Frontend:', currentDomain)
-        console.log('  - Backend:', backendDomain)
-        console.log('  - ¿Son el mismo?:', currentDomain === backendDomain)
-        console.log('  - ¿Comparten dominio base?:', currentDomain.split('.').slice(-2).join('.') === backendDomain.split('.').slice(-2).join('.'))
-        
+
         // ADVERTENCIA CROSS-DOMAIN
         if (currentDomain !== backendDomain && !currentDomain.includes('localhost')) {
-          console.warn('⚠️ 🔴 [App] === PROBLEMA DETECTADO: CROSS-DOMAIN COOKIES ===')
-          console.warn('⚠️ [App] Frontend:', currentDomain)
-          console.warn('⚠️ [App] Backend:', backendDomain)
-          console.warn('⚠️ [App] Las cookies del backend NO son accesibles desde este dominio')
-          console.warn('⚠️ [App] Esto es una restricción de seguridad del navegador (SameSite)')
-          console.warn('💡 [App] SOLUCIONES POSIBLES:')
-          console.warn('  1️⃣  Usar subdominios: app.tudominio.com + api.tudominio.com')
-          console.warn('  2️⃣  Backend debe enviar token en URL de redirección')
-          console.warn('  3️⃣  Configurar proxy reverso en el mismo dominio')
-          console.warn('  4️⃣  Usar localStorage con token en lugar de cookies')
-          console.warn('🔴 [App] === FIN DEL ANÁLISIS ===')
+
         } else if (currentDomain === backendDomain) {
-          console.log('✅ [App] Mismo dominio detectado, cookies deberían funcionar')
+          
         }
-        
+
         // Verificar si las cookies pueden ser leídas
-        console.log('🍪 [App] document.cookie accesible:', typeof document.cookie)
-        console.log('🍪 [App] Contenido de document.cookie:', document.cookie || '(VACIO - No hay cookies accesibles)')
-        
+
         // Primero, intentar leer la cookie adminInfo que el backend establece
         const cookies = document.cookie.split(';')
         const adminInfoCookie = cookies.find(c => c.trim().startsWith('adminInfo='))
         const adminTokenCookie = cookies.find(c => c.trim().startsWith('adminToken='))
-        
-        console.log('🍪 [App] Cookies encontradas:', cookies.length > 1 || cookies[0] !== '' ? cookies.map(c => c.split('=')[0].trim()) : 'NINGUNA COOKIE ENCONTRADA')
-        console.log('🍪 [App] adminTokenCookie encontrada:', !!adminTokenCookie)
-        console.log('🍪 [App] adminInfoCookie encontrada:', !!adminInfoCookie)
-        
+
         if (adminTokenCookie) {
           const token = adminTokenCookie.split('=')[1]
-          console.log('✅ [App] Token encontrado en cookie, guardando en localStorage')
+          
           localStorage.setItem('adminToken', token)
         }
         
         if (adminInfoCookie) {
           try {
             const adminInfo = JSON.parse(decodeURIComponent(adminInfoCookie.split('=')[1]))
-            console.log('✅ [App] Admin info parseado desde cookie:', adminInfo)
+            
             setCurrentUser(adminInfo)
             setIsAuthenticated(true)
             setIsLoading(false)
             return
           } catch (e) {
-            console.error('❌ [App] Error parseando admin info cookie:', e)
+            
           }
         }
         
         // Verificar si hay token en localStorage (admin)
         const hasAuthToken = authService.isAuthenticated()
         const hasAdminToken = authService.isAdminAuthenticated()
-        
-        console.log('🔍 [App] hasAuthToken:', hasAuthToken)
-        console.log('🔍 [App] hasAdminToken:', hasAdminToken)
-        console.log('🔍 [App] localStorage adminToken:', !!localStorage.getItem('adminToken'))
-        
+
         if (hasAuthToken || hasAdminToken) {
           // Si hay token, verificar si es demo o real
           const user = authService.getCurrentUser()
-          console.log('👤 [App] Usuario desde token:', user)
-          
+
           if (user?.isDemo) {
-            console.log('🎭 [App] Usuario demo detectado, no verificando con backend')
+            
             setCurrentUser(user)
             setIsAuthenticated(true)
           } else {
             // Token real - intentar verificar la sesión con el backend
-            console.log('🔄 [App] Token real, verificando sesión con backend...')
+            
             try {
               const sessionCheck = await authService.checkSession()
-              console.log('✅ [App] Sesión válida:', sessionCheck)
+              
               setCurrentUser(user)
               setIsAuthenticated(true)
             } catch (error) {
               // Si la sesión no es válida, limpiar y redirigir a login
-              console.error('❌ [App] Sesión inválida:', error.message)
-              console.log('🧹 [App] Limpiando tokens...')
+
               authService.clearAuth()
               setIsAuthenticated(false)
               setCurrentUser(null)
@@ -311,36 +264,33 @@ function App() {
           }
         } else {
           // No hay tokens en localStorage, pero verificar si hay sesión en el backend
-          console.log('⚠️ [App] No hay tokens locales, verificando sesión en backend...')
+          
           try {
             const userData = await authService.getAdminProfile()
-            console.log('📡 [App] Respuesta de getAdminProfile:', userData)
+            
             if (userData) {
-              console.log('✅ [App] Sesión válida encontrada en el backend')
+              
               setCurrentUser(userData)
               setIsAuthenticated(true)
             } else {
-              console.log('❌ [App] No hay datos de usuario del backend')
+              
               setIsAuthenticated(false)
               setCurrentUser(null)
             }
           } catch (error) {
-            console.error('❌ [App] Error verificando sesión en backend:', error.message)
+            
             setIsAuthenticated(false)
             setCurrentUser(null)
           }
         }
       } catch (error) {
-        console.error('❌ [App] Error general en checkAuth:', error)
-        console.error('❌ [App] Stack trace:', error.stack)
+
         // En caso de error, asumir que no está autenticado
         authService.clearAuth()
         setIsAuthenticated(false)
         setCurrentUser(null)
       } finally {
-        console.log('🏁 [App] checkAuth completado')
-        console.log('🏁 [App] Estado final - isAuthenticated:', isAuthenticated)
-        console.log('🏁 [App] Estado final - currentUser:', currentUser)
+
         setIsLoading(false)
       }
     }
@@ -355,10 +305,9 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      console.log('🔍 Logout - Llamando adminLogout()')
       await authService.adminLogout()
     } catch (error) {
-      console.error('Logout error:', error)
+      
     } finally {
       // Limpiar estado local independientemente del resultado del backend
       authService.clearAuth()

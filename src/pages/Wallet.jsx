@@ -62,53 +62,45 @@ function Wallet() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-
   const loadInitialData = async () => {
     setInitialLoading(true);
-    console.log('🚀 [Wallet] Starting loadInitialData...');
-    
+
     try {
       // Load stats and transactions in parallel
       const [statsData, transactionsData] = await Promise.all([
         walletService.getStats().catch(err => {
-          console.error('❌ [Wallet] Error loading stats:', err);
+          
           return null;
         }),
         walletService.getTransactions({ limit: filters.limit }).catch(err => {
-          console.error('❌ [Wallet] Error loading transactions:', err);
+          
           return { transactions: [] };
         })
       ]);
 
-      console.log('📊 [Wallet] Stats data received:', statsData);
-      console.log('📋 [Wallet] Transactions data received:', transactionsData);
-      
       // Validate stats data before setting
       if (statsData && typeof statsData === 'object' && !Array.isArray(statsData)) {
-        console.log('✅ [Wallet] Setting valid stats data');
+        
         setStats(statsData);
       } else {
-        console.warn('⚠️ [Wallet] Invalid stats data structure, using null');
+        
         setStats(null);
       }
       
       // Validate transactions data
       const transactions = transactionsData?.transactions || transactionsData || [];
       if (Array.isArray(transactions)) {
-        console.log('✅ [Wallet] Setting transactions array with length:', transactions.length);
+        
         setTransactions(transactions);
       } else {
-        console.warn('⚠️ [Wallet] Invalid transactions data, using empty array');
-        console.warn('⚠️ [Wallet] Received transactions data type:', typeof transactions);
-        console.warn('⚠️ [Wallet] Received transactions data:', transactions);
+
         setTransactions([]);
       }
     } catch (err) {
-      console.error('❌ [Wallet] Error loading initial data:', err);
-      console.error('❌ [Wallet] Error stack:', err.stack);
+
       setError('Error al cargar los datos');
     } finally {
-      console.log('🏁 [Wallet] Finished loadInitialData');
+      
       setInitialLoading(false);
     }
   };
@@ -118,7 +110,7 @@ function Wallet() {
       const data = await walletService.getStats();
       setStats(data);
     } catch (err) {
-      console.error('Error loading stats:', err);
+      
       setError('Error al cargar las estadísticas');
     }
   };
@@ -137,7 +129,7 @@ function Wallet() {
       const txData = data?.transactions || data || [];
       setTransactions(Array.isArray(txData) ? txData : []);
     } catch (err) {
-      console.error('Error loading transactions:', err);
+      
       setError('Error al cargar las transacciones');
     } finally {
       setLoading(false);
@@ -165,8 +157,7 @@ function Wallet() {
     try {
       // Get user info from scan endpoint
       const response = await walletService.scanQRToken(token);
-      console.log('🔍 Raw QR Scan Response:', response);
-      
+
       // Handle the new API response format
       let scanData;
       if (response?.success && response?.data) {
@@ -174,8 +165,7 @@ function Wallet() {
       } else {
         scanData = response?.data || response;
       }
-      console.log('📊 Extracted scan data:', scanData);
-      
+
       // The response already has all the seal information we need
       const userDataWithSeals = {
         user: scanData?.user || {},
@@ -186,25 +176,15 @@ function Wallet() {
         availableRewards: scanData?.availableRewards || [],
         lastUpdated: scanData?.lastUpdated || null
       };
-      
-      console.log('📦 User data with seals:', {
-        userName: userDataWithSeals.user?.name,
-        userEmail: userDataWithSeals.user?.email,
-        currentSeals: userDataWithSeals.currentSeals,
-        sealsRemaining: userDataWithSeals.sealsRemaining,
-        totalSeals: userDataWithSeals.totalSeals,
-        lifetimeSeals: userDataWithSeals.lifetimeSeals,
-        availableRewards: userDataWithSeals.availableRewards?.length || 0
-      });
-      
+
       setUserInfo(userDataWithSeals);
       setSealsToAdd(1);
       setNotes('');
       // Ensure we're showing the scanner section with user info
       setShowScanner(true);
-      console.log('✅ User info set successfully');
+      
     } catch (err) {
-      console.error('❌ Error in handleScanQR:', err);
+      
       setError(err.message || 'Error al escanear el código QR');
     } finally {
       setLoading(false);
@@ -219,10 +199,9 @@ function Wallet() {
     setSuccess(null);
 
     try {
-      console.log('📌 Adding seals:', { qrToken, sealsToAdd, notes });
-      const response = await walletService.addSeals(qrToken, sealsToAdd, notes);
-      console.log('✅ Add seals response:', response);
       
+      const response = await walletService.addSeals(qrToken, sealsToAdd, notes);
+
       // Handle the new API response format
       let result;
       if (response?.success && response?.data) {
@@ -271,8 +250,7 @@ function Wallet() {
       } else {
         // If no user data in response, fetch updated info
         const updatedResponse = await walletService.scanQRToken(qrToken);
-        console.log('🔄 Updated user data after adding seals:', updatedResponse);
-        
+
         let updatedData;
         if (updatedResponse?.success && updatedResponse?.data) {
           updatedData = updatedResponse.data;
@@ -344,8 +322,7 @@ function Wallet() {
   };
 
   const renderUserInfo = () => {
-    console.log('🎨 Rendering user info with data:', userInfo);
-    
+
     // Desktop/Tablet Premium Design - Responsive columns
     const renderDesktopLayout = () => (
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.2fr,1fr] gap-3 md:gap-4 lg:gap-6">
@@ -668,18 +645,11 @@ function Wallet() {
     return <LoadingSpinner />;
   }
 
-  // Debug logs
-  console.log('🔍 [Wallet] Final render state check:');
-  console.log('  - stats:', stats);
-  console.log('  - transactions:', transactions);
-  console.log('  - transactions is array?:', Array.isArray(transactions));
-  console.log('  - error:', error);
-  console.log('  - success:', success);
-  
+  // Debug logs removed
+
   // Additional safety check
   if (stats && typeof stats === 'object' && (stats.seals !== undefined || stats.rewards !== undefined)) {
-    console.error('❌❌❌ [Wallet] FOUND THE PROBLEM: stats contains {seals, rewards} structure!');
-    console.error('❌❌❌ [Wallet] Invalid stats object:', stats);
+
     setStats(null);
     setError('Estructura de datos incorrecta recibida del servidor');
   }
@@ -804,8 +774,7 @@ function Wallet() {
               </Card>
             </div>
           </div>
-          
-          
+
           {/* Mobile - Simplified Card View */}
           <div className="md:hidden">
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -900,7 +869,6 @@ function Wallet() {
                 </p>
               </div>
 
-
               {/* Actions - Simplified */}
               <div className="p-3 border-t border-gray-200 space-y-2">
                 {/* Quick Seal Buttons */}
@@ -960,20 +928,11 @@ function Wallet() {
 
       {/* Statistics Cards - Never show on mobile */}
       {!isMobile && (() => {
-        
-        console.log('🎨 [Wallet] Rendering stats section, stats value:', stats);
-        console.log('🎨 [Wallet] Stats type:', typeof stats);
-        console.log('🎨 [Wallet] Stats is array?:', Array.isArray(stats));
-        
         if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
-          console.warn('⚠️ [Wallet] Skipping stats render due to invalid data');
+          
           return null;
         }
-        
-        console.log('🎨 [Wallet] Stats.wallets:', stats.wallets);
-        console.log('🎨 [Wallet] Stats.today:', stats.today);
-        console.log('🎨 [Wallet] Stats.thisWeek:', stats.thisWeek);
-        
+
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
             <Card className="border-0 shadow-macos">
@@ -1085,7 +1044,7 @@ function Wallet() {
                   
                   // Log if we find the problematic structure
                   if (typeof countData === 'object' && (countData.seals !== undefined || countData.rewards !== undefined)) {
-                    console.warn('⚠️ [Wallet] dailyBreakdown contains {seals, rewards} structure for date:', date, countData);
+                    
                   }
                   
                   return (
@@ -1234,7 +1193,6 @@ function Wallet() {
       </Card>
       )}
 
-
       {/* Newly Unlocked Rewards Modal */}
       {showUnlockedRewardsModal && newlyUnlockedRewards.length > 0 && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
@@ -1279,11 +1237,7 @@ function Wallet() {
     </div>
     );
   } catch (renderError) {
-    console.error('❌❌❌ [Wallet] Render error caught:', renderError);
-    console.error('❌❌❌ [Wallet] Error stack:', renderError.stack);
-    console.error('❌❌❌ [Wallet] Current state when error occurred:');
-    console.error('  - stats:', stats);
-    console.error('  - transactions:', transactions);
+
     return (
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">

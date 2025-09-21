@@ -9,10 +9,8 @@ export const eventsService = {
       const response = await apiService.get('event')
       return response.data || response
     } catch (error) {
-      console.error('Error fetching events:', error)
-      // Fallback to mock data if backend is not available
-      console.log('🔧 Falling back to mock data for events')
-      return { success: true, data: [] }
+            // Fallback to mock data if backend is not available
+            return { success: true, data: [] }
     }
   },
 
@@ -22,8 +20,7 @@ export const eventsService = {
       const response = await apiService.get(`event/${id}`)
       return response.data || response
     } catch (error) {
-      console.error('Error fetching event:', error)
-      throw error
+            throw error
     }
   },
 
@@ -33,8 +30,7 @@ export const eventsService = {
       const response = await apiService.post('event', data)
       return response.data || response
     } catch (error) {
-      console.error('Error creating event:', error)
-      throw error
+            throw error
     }
   },
 
@@ -65,8 +61,7 @@ export const eventsService = {
       const response = await apiService.postFormData('event', formData)
       return response.data || response
     } catch (error) {
-      console.error('Error creating event with image:', error)
-      throw error
+            throw error
     }
   },
 
@@ -76,8 +71,7 @@ export const eventsService = {
       const response = await apiService.put(`event/${id}`, data)
       return response.data || response
     } catch (error) {
-      console.error('Error updating event:', error)
-      throw error
+            throw error
     }
   },
 
@@ -108,8 +102,7 @@ export const eventsService = {
       const response = await apiService.putFormData(`event/${id}`, formData)
       return response.data || response
     } catch (error) {
-      console.error('Error updating event with image:', error)
-      throw error
+            throw error
     }
   },
 
@@ -119,8 +112,7 @@ export const eventsService = {
       const response = await apiService.delete(`event/${id}`)
       return response.data || response
     } catch (error) {
-      console.error('Error deleting event:', error)
-      throw error
+            throw error
     }
   },
 
@@ -130,8 +122,7 @@ export const eventsService = {
       const events = await this.getEvents()
       return events.filter(event => event.status === status)
     } catch (error) {
-      console.error('Error fetching events by status:', error)
-      throw error
+            throw error
     }
   },
 
@@ -142,8 +133,7 @@ export const eventsService = {
       const now = new Date()
       return events.filter(event => new Date(event.published_at) > now)
     } catch (error) {
-      console.error('Error fetching upcoming events:', error)
-      throw error
+            throw error
     }
   },
 
@@ -154,8 +144,7 @@ export const eventsService = {
       const now = new Date()
       return events.filter(event => new Date(event.published_at) < now)
     } catch (error) {
-      console.error('Error fetching past events:', error)
-      throw error
+            throw error
     }
   },
 
@@ -178,8 +167,7 @@ export const eventsService = {
         completed_events: completedEvents
       }
     } catch (error) {
-      console.error('Error calculating event stats:', error)
-      throw error
+            throw error
     }
   }
 } 

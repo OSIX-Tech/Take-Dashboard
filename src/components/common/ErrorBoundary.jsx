@@ -15,16 +15,10 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     // Enhanced error logging
-    console.error('🚨🚨🚨 ErrorBoundary caught an error:', error)
-    console.error('🚨🚨🚨 Error message:', error.message)
-    console.error('🚨🚨🚨 Error stack:', error.stack)
-    console.error('🚨🚨🚨 Component stack:', errorInfo.componentStack)
-    
+
     // Check if this is the {seals, rewards} error
     if (error.message && error.message.includes('object with keys')) {
-      console.error('🚨🚨🚨 DETECTED OBJECT RENDERING ERROR!')
-      console.error('🚨🚨🚨 This usually means a component is trying to render an object directly.')
-      console.error('🚨🚨🚨 Check the component stack above to identify the problematic component.')
+
     }
     
     // Update state with error details

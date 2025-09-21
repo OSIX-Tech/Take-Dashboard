@@ -60,11 +60,9 @@ function ImageUpload({
 
   // Handle file selection
   const handleFileSelect = (e) => {
-    console.log('File select triggered, files:', e.target.files)
-    const file = e.target.files[0]
+        const file = e.target.files[0]
     if (file) {
-      console.log('File selected:', file.name)
-      handleFile(file)
+            handleFile(file)
     }
   }
 
@@ -109,8 +107,7 @@ function ImageUpload({
         onImageUploaded(result.url)
       }
     } catch (err) {
-      console.error('Error uploading image:', err)
-      setError(err.message || 'Error al subir la imagen')
+            setError(err.message || 'Error al subir la imagen')
       setPreviewUrl(currentImageUrl) // Revert to original
     } finally {
       setIsUploading(false)
@@ -153,8 +150,7 @@ function ImageUpload({
         onClick={(e) => {
           e.stopPropagation()
           if (!disabled && !previewUrl && fileInputRef.current) {
-            console.log('Div clicked, opening file selector')
-            fileInputRef.current.click()
+                        fileInputRef.current.click()
           }
         }}
       >

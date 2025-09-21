@@ -70,8 +70,7 @@ const Menu = () => {
         setAllergens(menuResponse.allergens || [])
       }
     } catch (error) {
-      console.error('Error loading data:', error)
-    }
+          }
   }
 
   // Load data on component mount
@@ -209,8 +208,7 @@ const Menu = () => {
       resetForm()
       loadData() // Reload data after save
     } catch (error) {
-      console.error('Error saving item:', error)
-      alert(`Error al ${editingItem ? 'actualizar' : 'crear'} el elemento: ${error.message}`)
+            alert(`Error al ${editingItem ? 'actualizar' : 'crear'} el elemento: ${error.message}`)
     }
   }
 
@@ -262,8 +260,7 @@ const Menu = () => {
       setItems(items.filter(item => item.id !== itemToDelete))
       loadData() // Reload data after delete
     } catch (error) {
-      console.error('Error deleting item:', error)
-      alert('Error al eliminar el elemento: ' + error.message)
+            alert('Error al eliminar el elemento: ' + error.message)
     } finally {
       setShowDeleteModal(false)
       setItemToDelete(null)
@@ -708,8 +705,7 @@ const Menu = () => {
                   if (file) {
                     // Don't update formData.image_url with the data URL
                     // Just keep track of the file
-                    console.log('New file selected:', file.name)
-                  } else {
+                                      } else {
                     // If file is removed, set a blank/placeholder image URL
                     // Using a transparent 1x1 pixel or a placeholder image
                     const blankImageUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
