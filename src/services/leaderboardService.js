@@ -101,12 +101,14 @@ export const leaderboardService = {
    */
   async createPeriod(data) {
 
-    // API expects snake_case for game_id and reward_id, camelCase for others
+    // API expects snake_case for game_id and reward IDs, camelCase for others
     const requestBody = {
       game_id: data.gameId, // Convertir a snake_case
-      durationDays: data.durationDays,
-      autoRestart: data.autoRestart,
-      reward_id: data.reward_id || null // TODO es reward_id en snake_case
+      duration_days: data.durationDays,
+      auto_restart: data.autoRestart,
+      first_place_reward_id: data.first_place_reward_id || null,
+      second_place_reward_id: data.second_place_reward_id || null,
+      third_place_reward_id: data.third_place_reward_id || null
     }
 
     const url = 'high_score/periods'
@@ -181,11 +183,11 @@ export const leaderboardService = {
       throw new Error('duration_days es requerido para actualizar el período')
     }
 
-    // Backend espera camelCase para algunos campos, pero reward_id en snake_case
+    // Backend espera snake_case para todos los campos según DASHBOARD_CHANGES.md
     const requestBody = {
-      durationDays: parseInt(data.duration_days),  // camelCase
-      autoRestart: data.auto_restart || false,     // camelCase
-      reward_id: data.reward_id || null             // snake_case para reward_id
+      first_place_reward_id: data.first_place_reward_id || null,
+      second_place_reward_id: data.second_place_reward_id || null,
+      third_place_reward_id: data.third_place_reward_id || null
     }
     const url = `high_score/periods/${periodId}`
 

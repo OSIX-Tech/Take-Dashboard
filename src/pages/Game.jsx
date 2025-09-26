@@ -47,7 +47,9 @@ function Game() {
     gameId: GAME_ID,
     durationDays: 7,
     autoRestart: true,
-    reward_id: null // Inicializar reward_id
+    first_place_reward_id: null,
+    second_place_reward_id: null,
+    third_place_reward_id: null
   })
 
   const [rewards, setRewards] = useState([])
@@ -56,7 +58,9 @@ function Game() {
     duration_days: 7,
     auto_restart: true,
     next_period_duration_days: 7,
-    reward_id: null
+    first_place_reward_id: null,
+    second_place_reward_id: null,
+    third_place_reward_id: null
   })
 
   // Las recompensas de período ahora se manejan directamente en el backend
@@ -199,7 +203,9 @@ function Game() {
         gameId: GAME_ID, // Siempre usar el gameId hardcodeado
         durationDays: newPeriod.durationDays,
         autoRestart: newPeriod.autoRestart,
-        reward_id: newPeriod.reward_id || null // Pasar reward_id al servicio
+        first_place_reward_id: newPeriod.first_place_reward_id || null,
+        second_place_reward_id: newPeriod.second_place_reward_id || null,
+        third_place_reward_id: newPeriod.third_place_reward_id || null
       }
 
       const response = await leaderboardService.createPeriod(periodData)
@@ -207,7 +213,14 @@ function Game() {
       // Ya no necesitamos localStorage - el reward_id se envía directamente al backend
 
       setShowNewPeriodForm(false)
-      setNewPeriod({ gameId: GAME_ID, durationDays: 7, autoRestart: true, reward_id: null })
+      setNewPeriod({
+        gameId: GAME_ID,
+        durationDays: 7,
+        autoRestart: true,
+        first_place_reward_id: null,
+        second_place_reward_id: null,
+        third_place_reward_id: null
+      })
 
       // Mostrar mensaje de éxito
       if (response && response.data) {
@@ -244,11 +257,13 @@ function Game() {
     }
 
     try {
-      // Enviar duration_days, auto_restart y reward_id según FRONTEND_CHANGES_REWARDS.md
+      // Enviar duration_days, auto_restart y reward IDs según DASHBOARD_CHANGES.md
       const updateData = {
         duration_days: editData.duration_days,
         auto_restart: editData.auto_restart,
-        reward_id: editData.reward_id || null
+        first_place_reward_id: editData.first_place_reward_id || null,
+        second_place_reward_id: editData.second_place_reward_id || null,
+        third_place_reward_id: editData.third_place_reward_id || null
       }
 
 
@@ -411,7 +426,9 @@ function Game() {
       duration_days: durationDays,
       auto_restart: period.auto_restart || false,
       next_period_duration_days: durationDays,
-      reward_id: period.reward_id || null // Cargar reward_id desde el backend
+      first_place_reward_id: period.first_place_reward_id || null,
+      second_place_reward_id: period.second_place_reward_id || null,
+      third_place_reward_id: period.third_place_reward_id || null
     })
     setShowEditForm(true)
   }
@@ -596,6 +613,51 @@ function Game() {
                 </div>
               </div>
 
+              {/* Rewards section */}
+              {(activePeriod.first_place_reward || activePeriod.second_place_reward || activePeriod.third_place_reward) && (
+                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Premios del Periodo</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-yellow-500 font-bold">🥇</span>
+                      <div>
+                        <p className="text-sm font-medium">1er Lugar</p>
+                        <p className="text-xs text-gray-600">
+                          {activePeriod.first_place_reward ?
+                            `${activePeriod.first_place_reward.name} (${activePeriod.first_place_reward.required_seals} sellos)` :
+                            'Sin premio'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 font-bold">🥈</span>
+                      <div>
+                        <p className="text-sm font-medium">2do Lugar</p>
+                        <p className="text-xs text-gray-600">
+                          {activePeriod.second_place_reward ?
+                            `${activePeriod.second_place_reward.name} (${activePeriod.second_place_reward.required_seals} sellos)` :
+                            'Sin premio'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600 font-bold">🥉</span>
+                      <div>
+                        <p className="text-sm font-medium">3er Lugar</p>
+                        <p className="text-xs text-gray-600">
+                          {activePeriod.third_place_reward ?
+                            `${activePeriod.third_place_reward.name} (${activePeriod.third_place_reward.required_seals} sellos)` :
+                            'Sin premio'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <button
                   onClick={() => openCloseModal(activePeriod)}
@@ -641,19 +703,11 @@ function Game() {
                             {leaderboardService.formatPeriodDates(period.start_date, period.end_date)}
                           </span>
                         </div>
-                        {period.rewards && (
+                        {(period.first_place_reward || period.second_place_reward || period.third_place_reward) && (
                           <div className="flex items-center gap-2">
-                            {period.rewards.image_url ? (
-                              <img
-                                src={period.rewards.image_url}
-                                alt={period.rewards.name}
-                                className="w-4 h-4 object-cover rounded"
-                              />
-                            ) : (
-                              <Trophy className="h-4 w-4 text-yellow-500" />
-                            )}
+                            <Trophy className="h-4 w-4 text-yellow-500" />
                             <span className="text-sm text-gray-600">
-                              {period.rewards.name}
+                              Premios configurados
                             </span>
                           </div>
                         )}
@@ -681,15 +735,37 @@ function Game() {
                             <p className="text-gray-600">Reinicio Automático</p>
                             <p>{period.auto_restart ? 'Activado' : 'Desactivado'}</p>
                           </div>
-                          <div>
-                            <p className="text-gray-600">Recompensa</p>
-                            <p className="font-medium">
-                              {period.rewards ? (
-                                `${period.rewards.name} (${period.rewards.required_seals} sellos)`
-                              ) : (
-                                <span className="text-gray-400">Sin recompensa</span>
-                              )}
-                            </p>
+                          <div className="col-span-2 md:col-span-3">
+                            <p className="text-gray-600 mb-2">Premios</p>
+                            <div className="space-y-1">
+                              <div className="text-sm">
+                                <span className="font-medium text-yellow-600">🥇 1er lugar:</span>
+                                <span className="ml-2">
+                                  {period.first_place_reward ?
+                                    `${period.first_place_reward.name} (${period.first_place_reward.required_seals} sellos)` :
+                                    'Sin premio'
+                                  }
+                                </span>
+                              </div>
+                              <div className="text-sm">
+                                <span className="font-medium text-gray-600">🥈 2do lugar:</span>
+                                <span className="ml-2">
+                                  {period.second_place_reward ?
+                                    `${period.second_place_reward.name} (${period.second_place_reward.required_seals} sellos)` :
+                                    'Sin premio'
+                                  }
+                                </span>
+                              </div>
+                              <div className="text-sm">
+                                <span className="font-medium text-amber-600">🥉 3er lugar:</span>
+                                <span className="ml-2">
+                                  {period.third_place_reward ?
+                                    `${period.third_place_reward.name} (${period.third_place_reward.required_seals} sellos)` :
+                                    'Sin premio'
+                                  }
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         
@@ -757,25 +833,62 @@ function Game() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Recompensa</label>
+                    <label className="block text-sm font-medium mb-1">Premio 1er Lugar</label>
                     <select
-                      value={newPeriod.reward_id || ''}
+                      value={newPeriod.first_place_reward_id || ''}
                       onChange={(e) => {
                         const selectedValue = e.target.value
                         const selectedRewardId = selectedValue === '' ? null : selectedValue
-                        const updatedPeriod = {...newPeriod, reward_id: selectedRewardId}
-                        setNewPeriod(updatedPeriod)
+                        setNewPeriod({...newPeriod, first_place_reward_id: selectedRewardId})
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
-                      {rewards.map((reward) => {
-                        return (
-                          <option key={reward.id} value={reward.id}>
-                            {reward.name} - {reward.required_seals} sellos
-                          </option>
-                        )
-                      })}
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.required_seals} sellos
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Premio 2do Lugar</label>
+                    <select
+                      value={newPeriod.second_place_reward_id || ''}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value
+                        const selectedRewardId = selectedValue === '' ? null : selectedValue
+                        setNewPeriod({...newPeriod, second_place_reward_id: selectedRewardId})
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Sin recompensa</option>
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.required_seals} sellos
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Premio 3er Lugar</label>
+                    <select
+                      value={newPeriod.third_place_reward_id || ''}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value
+                        const selectedRewardId = selectedValue === '' ? null : selectedValue
+                        setNewPeriod({...newPeriod, third_place_reward_id: selectedRewardId})
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Sin recompensa</option>
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.required_seals} sellos
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -870,23 +983,59 @@ function Game() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Recompensa</label>
+                    <label className="block text-sm font-medium mb-1">Premio 1er Lugar</label>
                     <select
-                      value={editData.reward_id || ''}
+                      value={editData.first_place_reward_id || ''}
                       onChange={(e) => {
                         const selectedRewardId = e.target.value || null
-                        setEditData({...editData, reward_id: selectedRewardId})
+                        setEditData({...editData, first_place_reward_id: selectedRewardId})
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="">Sin recompensa</option>
-                      {rewards.map((reward) => {
-                        return (
-                          <option key={reward.id} value={reward.id}>
-                            {reward.name} - {reward.required_seals} sellos
-                          </option>
-                        )
-                      })}
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.required_seals} sellos
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Premio 2do Lugar</label>
+                    <select
+                      value={editData.second_place_reward_id || ''}
+                      onChange={(e) => {
+                        const selectedRewardId = e.target.value || null
+                        setEditData({...editData, second_place_reward_id: selectedRewardId})
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Sin recompensa</option>
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.required_seals} sellos
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Premio 3er Lugar</label>
+                    <select
+                      value={editData.third_place_reward_id || ''}
+                      onChange={(e) => {
+                        const selectedRewardId = e.target.value || null
+                        setEditData({...editData, third_place_reward_id: selectedRewardId})
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Sin recompensa</option>
+                      {rewards.map((reward) => (
+                        <option key={reward.id} value={reward.id}>
+                          {reward.name} - {reward.required_seals} sellos
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -1065,7 +1214,7 @@ function Game() {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                         <div>
                           <p className="text-gray-600">Puntuación</p>
                           <p className="font-semibold">{winner.score?.toLocaleString() || 0} pts</p>
@@ -1086,6 +1235,12 @@ function Game() {
                           <p className="text-gray-600">Ganó</p>
                           <p className="font-semibold">
                             {formatDaysAgo(winner.created_at)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Premio</p>
+                          <p className="font-semibold">
+                            {winner.reward || 'Sin premio'}
                           </p>
                         </div>
                       </div>
@@ -1162,15 +1317,23 @@ function Game() {
                 </p>
               </div>
 
-              {periodToClose.rewards && (
+              {(periodToClose.first_place_reward || periodToClose.second_place_reward || periodToClose.third_place_reward) && (
                 <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <Trophy className="h-4 w-4 text-yellow-600" />
-                    <p className="text-sm font-medium text-yellow-700">Recompensa:</p>
+                    <p className="text-sm font-medium text-yellow-700">Premios configurados:</p>
                   </div>
-                  <p className="text-sm text-yellow-800 ml-6">
-                    {periodToClose.rewards.name} ({periodToClose.rewards.required_seals} sellos)
-                  </p>
+                  <div className="space-y-1 text-sm text-yellow-800 ml-6">
+                    {periodToClose.first_place_reward && (
+                      <div>🥇 1er lugar: {periodToClose.first_place_reward.name}</div>
+                    )}
+                    {periodToClose.second_place_reward && (
+                      <div>🥈 2do lugar: {periodToClose.second_place_reward.name}</div>
+                    )}
+                    {periodToClose.third_place_reward && (
+                      <div>🥉 3er lugar: {periodToClose.third_place_reward.name}</div>
+                    )}
+                  </div>
                 </div>
               )}
 
