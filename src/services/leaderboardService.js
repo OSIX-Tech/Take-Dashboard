@@ -242,7 +242,7 @@ export const leaderboardService = {
    * Body (opcional): { topPositions: 1 }
    * Según high-score-admin-guide.md
    */
-  async closePeriod(periodId, topPositions = 1) {
+  async closePeriod(periodId, topPositions = 3) {
 
     if (!periodId) {
       throw new Error('periodId es requerido para cerrar un periodo')

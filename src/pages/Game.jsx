@@ -308,7 +308,7 @@ function Game() {
     if (!periodToClose) return
 
     try {
-      const result = await leaderboardService.closePeriod(periodToClose.id, 1)
+      const result = await leaderboardService.closePeriod(periodToClose.id)
 
       setShowCloseModal(false)
       setPeriodToClose(null)
