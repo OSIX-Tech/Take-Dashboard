@@ -151,7 +151,8 @@ function Game() {
       data = data.map(w => ({
         ...w,
         reward_claimed: w.claimed, // El campo se llama 'claimed' en el backend
-        user_name: w.users?.name || w.users?.username || 'Usuario Desconocido'
+        user_name: w.users?.name || w.users?.username || 'Usuario Desconocido',
+        reward: w.rewards?.name || 'Sin premio' // Mapear el nombre del premio desde el backend
       }))
 
 
