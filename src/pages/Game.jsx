@@ -624,7 +624,7 @@ function Game() {
                         <p className="text-sm font-medium">1er Lugar</p>
                         <p className="text-xs text-gray-600">
                           {activePeriod.first_place_reward ?
-                            `${activePeriod.first_place_reward.name} (${activePeriod.first_place_reward.required_seals} sellos)` :
+                            `${activePeriod.first_place_reward.name}` :
                             'Sin premio'
                           }
                         </p>
@@ -636,7 +636,7 @@ function Game() {
                         <p className="text-sm font-medium">2do Lugar</p>
                         <p className="text-xs text-gray-600">
                           {activePeriod.second_place_reward ?
-                            `${activePeriod.second_place_reward.name} (${activePeriod.second_place_reward.required_seals} sellos)` :
+                            `${activePeriod.second_place_reward.name}` :
                             'Sin premio'
                           }
                         </p>
@@ -648,7 +648,7 @@ function Game() {
                         <p className="text-sm font-medium">3er Lugar</p>
                         <p className="text-xs text-gray-600">
                           {activePeriod.third_place_reward ?
-                            `${activePeriod.third_place_reward.name} (${activePeriod.third_place_reward.required_seals} sellos)` :
+                            `${activePeriod.third_place_reward.name}` :
                             'Sin premio'
                           }
                         </p>
@@ -846,7 +846,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
+                          {reward.name}
                         </option>
                       ))}
                     </select>
@@ -866,7 +866,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
+                          {reward.name}
                         </option>
                       ))}
                     </select>
@@ -886,7 +886,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
+                          {reward.name}
                         </option>
                       ))}
                     </select>
@@ -995,7 +995,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
+                          {reward.name}
                         </option>
                       ))}
                     </select>
@@ -1014,7 +1014,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
+                          {reward.name}
                         </option>
                       ))}
                     </select>
@@ -1033,7 +1033,7 @@ function Game() {
                       <option value="">Sin recompensa</option>
                       {rewards.map((reward) => (
                         <option key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.required_seals} sellos
+                          {reward.name}
                         </option>
                       ))}
                     </select>
