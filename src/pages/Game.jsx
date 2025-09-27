@@ -742,7 +742,7 @@ function Game() {
                                 <span className="font-medium text-yellow-600">🥇 1er lugar:</span>
                                 <span className="ml-2">
                                   {period.first_place_reward ?
-                                    `${period.first_place_reward.name} (${period.first_place_reward.required_seals} sellos)` :
+                                    `${period.first_place_reward.name}` :
                                     'Sin premio'
                                   }
                                 </span>
@@ -751,7 +751,7 @@ function Game() {
                                 <span className="font-medium text-gray-600">🥈 2do lugar:</span>
                                 <span className="ml-2">
                                   {period.second_place_reward ?
-                                    `${period.second_place_reward.name} (${period.second_place_reward.required_seals} sellos)` :
+                                    `${period.second_place_reward.name}` :
                                     'Sin premio'
                                   }
                                 </span>
@@ -760,7 +760,7 @@ function Game() {
                                 <span className="font-medium text-amber-600">🥉 3er lugar:</span>
                                 <span className="ml-2">
                                   {period.third_place_reward ?
-                                    `${period.third_place_reward.name} (${period.third_place_reward.required_seals} sellos)` :
+                                    `${period.third_place_reward.name}` :
                                     'Sin premio'
                                   }
                                 </span>
