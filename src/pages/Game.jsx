@@ -1214,16 +1214,10 @@ function Game() {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <p className="text-gray-600">Puntuación</p>
                           <p className="font-semibold">{winner.score?.toLocaleString() || 0} pts</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Periodo</p>
-                          <p className="font-semibold">
-                            {winner.period_id || 'N/A'}
-                          </p>
                         </div>
                         <div>
                           <p className="text-gray-600">Posición</p>
