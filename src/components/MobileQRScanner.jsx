@@ -21,6 +21,17 @@ function MobileQRScanner({ onScan, onClose, autoStart = true }) {
       qrScannerRef.current.destroy();
       qrScannerRef.current = null;
     }
+
+    // Properly release camera stream
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject;
+      const tracks = stream.getTracks();
+      tracks.forEach(track => {
+        track.stop();
+      });
+      videoRef.current.srcObject = null;
+    }
+
     setCameraActive(false);
     setIsInitializing(false);
   }, []);
@@ -36,7 +47,7 @@ function MobileQRScanner({ onScan, onClose, autoStart = true }) {
         throw new Error('No se encontró cámara disponible');
       }
 
-      // Wait for video element to be ready
+      // Wait for video element to be ready and camera to be fully released
       setTimeout(async () => {
         if (videoRef.current && !qrScannerRef.current) {
           qrScannerRef.current = new QrScanner(
@@ -62,12 +73,12 @@ function MobileQRScanner({ onScan, onClose, autoStart = true }) {
             setCameraActive(true);
             setIsInitializing(false);
           } catch (err) {
-            
+
             setError('No se pudo iniciar la cámara. Verifica los permisos.');
             setIsInitializing(false);
           }
         }
-      }, 100);
+      }, 200);
     } catch (err) {
       
       setError(err.message || 'Error al iniciar el escáner');

@@ -294,8 +294,8 @@ function Wallet() {
     setNotes('');
     setError(null);
     setSuccess(null);
-    // Keep scanner open for next scan
-    setShowScanner(true);
+    // Temporarily hide scanner to ensure proper component cleanup
+    setShowScanner(false);
   };
 
   const formatDate = (dateString) => {
@@ -667,7 +667,10 @@ function Wallet() {
           <Button
             onClick={() => {
               resetScanner();
-              setShowScanner(true);
+              // Small delay to ensure proper component remount
+              setTimeout(() => {
+                setShowScanner(true);
+              }, 50);
             }}
             className="hidden md:flex bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2.5 md:px-8 md:py-3 rounded-lg md:rounded-xl group"
           >
@@ -909,7 +912,10 @@ function Wallet() {
                     setNotes('');
                     setError(null);
                     setSuccess(null);
-                    setShowScanner(true);
+                    // Small delay to ensure proper component remount on mobile
+                    setTimeout(() => {
+                      setShowScanner(true);
+                    }, 50);
                   }}
                   variant="outline"
                   className="w-full border border-gray-300 py-2.5 rounded-lg text-sm"
