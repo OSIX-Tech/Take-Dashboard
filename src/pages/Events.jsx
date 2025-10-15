@@ -33,8 +33,10 @@ const Events = () => {
     content: '',
     image_url: '',
     link_ev: '',
-    published_at: new Date().toISOString().slice(0, 16)
+    published_at: new Date().toISOString().slice(0, 16),
+    end_date: ''
   })
+  const [statusFilter, setStatusFilter] = useState('all')
   const [selectedImageFile, setSelectedImageFile] = useState(null)
 
   // Load data on component mount
@@ -42,16 +44,17 @@ const Events = () => {
     loadData()
   }, [])
 
-  const loadData = async () => {
+  const loadData = async (filter = null) => {
     try {
       setLoading(true)
       setError(null)
-      
-      const eventsResponse = await eventsService.getEvents()
-      
+
+      const filterParam = filter && filter !== 'all' ? filter : null
+      const eventsResponse = await eventsService.getEvents(filterParam)
+
       // Manejar diferentes tipos de respuesta
       let eventsData = []
-      
+
       if (eventsResponse) {
         if (Array.isArray(eventsResponse)) {
           eventsData = eventsResponse
@@ -64,9 +67,9 @@ const Events = () => {
           eventsData = Object.values(eventsResponse).find(val => Array.isArray(val)) || []
         }
       }
-      
+
             setEvents(eventsData)
-      
+
     } catch (error) {
             setError('Error cargando los eventos')
       setEvents([])
@@ -104,6 +107,23 @@ const Events = () => {
       return
     }
 
+    // Validate end_date if provided
+    if (formData.end_date) {
+      const endDateValidation = validateDate(formData.end_date)
+      if (!endDateValidation.isValid) {
+        alert('Fecha de finalización inválida')
+        return
+      }
+
+      // Validate end_date >= published_at
+      const startDate = new Date(formData.published_at)
+      const endDate = new Date(formData.end_date)
+      if (endDate < startDate) {
+        alert('La fecha de finalización no puede ser anterior a la fecha de inicio')
+        return
+      }
+    }
+
     try {
       setSubmitting(true)
       
@@ -116,6 +136,7 @@ const Events = () => {
         title: titleValidation.value,
         content: contentValidation.value,
         published_at: dateValidation.value,
+        end_date: formData.end_date?.trim() || null,
         image_url: imageUrlNormalized,
         link_ev: formData.link_ev?.trim() || null,
         folder: 'events'
@@ -164,7 +185,8 @@ const Events = () => {
         content: '',
         image_url: '',
         link_ev: '',
-        published_at: new Date().toISOString().slice(0, 16)
+        published_at: new Date().toISOString().slice(0, 16),
+        end_date: ''
       })
       setSelectedImageFile(null)
       setShowForm(false)
@@ -190,7 +212,8 @@ const Events = () => {
       content: event.content || '',
       image_url: event.image_url || '',
       link_ev: event.link_ev || '',
-      published_at: event.published_at ? new Date(event.published_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)
+      published_at: event.published_at ? new Date(event.published_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+      end_date: event.end_date ? new Date(event.end_date).toISOString().slice(0, 16) : ''
     })
     setSelectedImageFile(null) // Reset selected image file when editing
     setShowForm(true)
@@ -224,7 +247,8 @@ const Events = () => {
       content: '',
       image_url: '',
       link_ev: '',
-      published_at: new Date().toISOString().slice(0, 16)
+      published_at: new Date().toISOString().slice(0, 16),
+      end_date: ''
     })
     setSelectedImageFile(null)
     setEditingEvent(null)
@@ -249,6 +273,72 @@ const Events = () => {
     } catch (error) {
       return 'Fecha inválida'
     }
+  }
+
+  const formatShortDate = (dateString) => {
+    if (!dateString) return 'Sin límite'
+
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch (error) {
+      return 'Fecha inválida'
+    }
+  }
+
+  const getEventStatus = (event) => {
+    // Use backend-calculated status if available
+    if (event.status) {
+      return event.status
+    }
+
+    // Fallback to client-side calculation
+    const now = new Date()
+    const startDate = new Date(event.published_at)
+    const endDate = event.end_date ? new Date(event.end_date) : null
+
+    if (now < startDate) {
+      return 'proximo'
+    } else if (!endDate || now <= endDate) {
+      return 'activo'
+    } else {
+      return 'finalizado'
+    }
+  }
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'proximo':
+        return {
+          label: 'Próximo',
+          className: 'bg-blue-500 text-white border-0'
+        }
+      case 'activo':
+        return {
+          label: 'Activo',
+          className: 'bg-green-500 text-white border-0'
+        }
+      case 'finalizado':
+        return {
+          label: 'Finalizado',
+          className: 'bg-gray-500 text-white border-0'
+        }
+      default:
+        return {
+          label: 'Desconocido',
+          className: 'bg-gray-300 text-gray-700 border-0'
+        }
+    }
+  }
+
+  const handleFilterChange = async (filter) => {
+    setStatusFilter(filter)
+    await loadData(filter)
   }
 
   // Show loading state
@@ -350,7 +440,7 @@ const Events = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora de Inicio *</label>
                 <input
                   type="datetime-local"
                   value={formData.published_at}
@@ -360,7 +450,19 @@ const Events = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora de Fin (opcional)</label>
+                <input
+                  type="datetime-local"
+                  value={formData.end_date}
+                  onChange={(e) => handleInputChange('end_date', e.target.value)}
+                  disabled={submitting}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+                <p className="text-xs text-gray-500 mt-1">Si no se especifica, el evento permanecerá activo indefinidamente</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Evento *</label>
                 <ImageUpload
@@ -419,21 +521,60 @@ const Events = () => {
         </Button>
       </div>
 
+      {/* Status Filters */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Button
+          variant={statusFilter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => handleFilterChange('all')}
+          className="flex items-center"
+        >
+          Todos
+        </Button>
+        <Button
+          variant={statusFilter === 'proximo' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => handleFilterChange('proximo')}
+          className="flex items-center"
+        >
+          Próximos
+        </Button>
+        <Button
+          variant={statusFilter === 'activo' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => handleFilterChange('activo')}
+          className="flex items-center"
+        >
+          Activos
+        </Button>
+        <Button
+          variant={statusFilter === 'finalizado' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => handleFilterChange('finalizado')}
+          className="flex items-center"
+        >
+          Finalizados
+        </Button>
+      </div>
+
       {/* Events Grid - Enhanced Design with Animations */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-children">
         {events.map((event, index) => {
           const eventDate = new Date(event.published_at)
-          const isUpcoming = eventDate > new Date()
+          const eventStatus = getEventStatus(event)
+          const statusBadge = getStatusBadge(eventStatus)
           const dayOfWeek = eventDate.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase()
           const dayNumber = eventDate.getDate()
           const month = eventDate.toLocaleDateString('es-ES', { month: 'short' })
-          
+
           return (
             <Card key={event.id} className="relative bg-white border-0 shadow-sm overflow-hidden">
               {/* Decorative accent line */}
               <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
-                isUpcoming 
-                  ? 'from-gray-900 via-gray-700 to-gray-900' 
+                eventStatus === 'activo'
+                  ? 'from-green-500 via-green-400 to-green-500'
+                  : eventStatus === 'proximo'
+                  ? 'from-blue-500 via-blue-400 to-blue-500'
                   : 'from-gray-400 via-gray-300 to-gray-400'
               }`}></div>
               
@@ -458,12 +599,8 @@ const Events = () => {
                   
                   {/* Status badge */}
                   <div className="absolute top-4 right-4">
-                    <Badge className={`px-3 py-1.5 font-semibold text-xs rounded-full shadow-lg ${
-                      isUpcoming 
-                        ? 'bg-green-500 text-white border-0' 
-                        : 'bg-gray-500 text-white border-0'
-                    }`}>
-                      {isUpcoming ? 'Próximo' : 'Pasado'}
+                    <Badge className={`px-3 py-1.5 font-semibold text-xs rounded-full shadow-lg ${statusBadge.className}`}>
+                      {statusBadge.label}
                     </Badge>
                   </div>
                   
@@ -507,12 +644,8 @@ const Events = () => {
                   
                   {/* Status badge */}
                   <div className="absolute top-4 right-4">
-                    <Badge className={`px-3 py-1.5 font-semibold text-xs rounded-full shadow-md ${
-                      isUpcoming 
-                        ? 'bg-green-500 text-white border-0' 
-                        : 'bg-gray-500 text-white border-0'
-                    }`}>
-                      {isUpcoming ? 'Próximo' : 'Pasado'}
+                    <Badge className={`px-3 py-1.5 font-semibold text-xs rounded-full shadow-md ${statusBadge.className}`}>
+                      {statusBadge.label}
                     </Badge>
                   </div>
                   
@@ -554,6 +687,16 @@ const Events = () => {
                 
                 {/* Event details */}
                 <div className="space-y-2 pt-4 border-t border-gray-100">
+                  <div className="flex items-center text-xs text-gray-600 font-medium">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span>Inicio: {formatShortDate(event.published_at)}</span>
+                  </div>
+                  {event.end_date && (
+                    <div className="flex items-center text-xs text-gray-600 font-medium">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <span>Fin: {formatShortDate(event.end_date)}</span>
+                    </div>
+                  )}
                   <div className="flex items-center text-xs text-gray-500">
                     <Clock className="w-4 h-4 mr-2" />
                     <span>{eventDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -658,7 +801,7 @@ const Events = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora de Inicio *</label>
                 <Input
                   type="datetime-local"
                   value={formData.published_at}
@@ -667,7 +810,18 @@ const Events = () => {
                   disabled={submitting}
                 />
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora de Fin (opcional)</label>
+                <Input
+                  type="datetime-local"
+                  value={formData.end_date}
+                  onChange={(e) => handleInputChange('end_date', e.target.value)}
+                  disabled={submitting}
+                />
+                <p className="text-xs text-gray-500 mt-1">Si no se especifica, el evento permanecerá activo indefinidamente</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del Evento *</label>
                 <ImageUpload

@@ -4,9 +4,10 @@ import { uploadService } from './uploadService.js'
 // Events Service - Updated to match your backend endpoints exactly
 export const eventsService = {
   // Get all events
-  async getEvents() {
+  async getEvents(statusFilter = null) {
     try {
-      const response = await apiService.get('event')
+      const endpoint = statusFilter ? `event/?status=${statusFilter}` : 'event'
+      const response = await apiService.get(endpoint)
       return response.data || response
     } catch (error) {
             // Fallback to mock data if backend is not available
@@ -38,26 +39,31 @@ export const eventsService = {
   async createEventWithImage(eventData, imageFile) {
     try {
       const formData = new FormData()
-      
+
       // Add event fields directly (not as JSON)
       formData.append('title', eventData.title)
       formData.append('content', eventData.content)
-      
+
       // Add published_at if provided
       if (eventData.published_at) {
         formData.append('published_at', eventData.published_at)
       }
-      
+
+      // Add end_date if provided
+      if (eventData.end_date) {
+        formData.append('end_date', eventData.end_date)
+      }
+
       // Add link_ev if provided
       if (eventData.link_ev) {
         formData.append('link_ev', eventData.link_ev)
       }
-      
+
       // Add image file if provided
       if (imageFile) {
         formData.append('image', imageFile)
       }
-      
+
       const response = await apiService.postFormData('event', formData)
       return response.data || response
     } catch (error) {
@@ -79,26 +85,31 @@ export const eventsService = {
   async updateEventWithImage(id, eventData, imageFile) {
     try {
       const formData = new FormData()
-      
+
       // Add event fields directly (not as JSON)
       formData.append('title', eventData.title)
       formData.append('content', eventData.content)
-      
+
       // Add published_at if provided
       if (eventData.published_at) {
         formData.append('published_at', eventData.published_at)
       }
-      
+
+      // Add end_date if provided
+      if (eventData.end_date) {
+        formData.append('end_date', eventData.end_date)
+      }
+
       // Add link_ev if provided
       if (eventData.link_ev) {
         formData.append('link_ev', eventData.link_ev)
       }
-      
+
       // Add image file if provided
       if (imageFile) {
         formData.append('image', imageFile)
       }
-      
+
       const response = await apiService.putFormData(`event/${id}`, formData)
       return response.data || response
     } catch (error) {
