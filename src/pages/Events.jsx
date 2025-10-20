@@ -107,6 +107,21 @@ const Events = () => {
       return
     }
 
+    // Validate start date is not in the past (only when creating new events)
+    if (!editingEvent) {
+      const now = new Date()
+      const startDate = new Date(formData.published_at)
+
+      // Remove time precision to compare only date and time up to minutes
+      now.setSeconds(0, 0)
+      startDate.setSeconds(0, 0)
+
+      if (startDate < now) {
+        alert('La fecha de inicio no puede ser anterior a la fecha actual')
+        return
+      }
+    }
+
     // Validate end_date if provided
     if (formData.end_date) {
       const endDateValidation = validateDate(formData.end_date)
