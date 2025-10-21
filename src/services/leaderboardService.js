@@ -168,8 +168,7 @@ export const leaderboardService = {
   /**
    * Update Period Settings
    * PUT /api/high_score/periods/<period-id>
-   * Body: { end_date, auto_restart }
-   * NOTA: Backend solo acepta end_date y auto_restart según la guía
+   * Body: { duration_days, auto_restart, first_place_reward_id, second_place_reward_id, third_place_reward_id }
    * Según high-score-admin-guide.md
    */
   async updatePeriod(periodId, data) {
@@ -185,6 +184,8 @@ export const leaderboardService = {
 
     // Backend espera snake_case para todos los campos según DASHBOARD_CHANGES.md
     const requestBody = {
+      duration_days: data.duration_days,
+      auto_restart: data.auto_restart,
       first_place_reward_id: data.first_place_reward_id || null,
       second_place_reward_id: data.second_place_reward_id || null,
       third_place_reward_id: data.third_place_reward_id || null

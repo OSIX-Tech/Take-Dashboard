@@ -576,7 +576,7 @@ function Game() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-600">Inicio</p>
                   <p className="font-semibold">
@@ -593,19 +593,6 @@ function Game() {
                   </p>
                   <p className="text-xs text-gray-500">
                     {new Date(activePeriod.end_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Duración Configurada</p>
-                  <p className="font-semibold">{activePeriod.duration_days || 7} días</p>
-                  <p className="text-xs text-gray-500">
-                    Real: {(() => {
-                      const start = new Date(activePeriod.start_date)
-                      const end = new Date(activePeriod.end_date)
-                      const diff = end - start
-                      const days = diff / (1000 * 60 * 60 * 24)
-                      return days.toFixed(2) + ' días'
-                    })()}
                   </p>
                 </div>
                 <div>
