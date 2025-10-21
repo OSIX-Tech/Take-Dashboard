@@ -580,19 +580,35 @@ function Game() {
                 <div>
                   <p className="text-sm text-gray-600">Inicio</p>
                   <p className="font-semibold">
-                    {new Date(activePeriod.start_date).toLocaleDateString('es')}
+                    {(() => {
+                      const date = new Date(activePeriod.start_date)
+                      date.setHours(date.getHours() + 2)
+                      return date.toLocaleDateString('es')
+                    })()}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {new Date(activePeriod.start_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                    {(() => {
+                      const date = new Date(activePeriod.start_date)
+                      date.setHours(date.getHours() + 2)
+                      return date.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+                    })()}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Fin</p>
                   <p className="font-semibold">
-                    {new Date(activePeriod.end_date).toLocaleDateString('es')}
+                    {(() => {
+                      const date = new Date(activePeriod.end_date)
+                      date.setHours(date.getHours() + 2)
+                      return date.toLocaleDateString('es')
+                    })()}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {new Date(activePeriod.end_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                    {(() => {
+                      const date = new Date(activePeriod.end_date)
+                      date.setHours(date.getHours() + 2)
+                      return date.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+                    })()}
                   </p>
                 </div>
                 <div>

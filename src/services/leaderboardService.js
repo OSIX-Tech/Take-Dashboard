@@ -96,16 +96,32 @@ export const leaderboardService = {
   /**
    * Create New Period
    * POST /api/high_score/periods
-   * Body: { gameId, durationDays, autoRestart }
+   * Body: { gameId, durationDays, autoRestart, start_date, end_date }
    * Según high-score-admin-guide.md
    */
   async createPeriod(data) {
+
+    // Calcular start_date y end_date con ajuste de zona horaria (+2 horas)
+    const now = new Date()
+
+    // Start date: principio del día actual en la zona horaria local (+2)
+    const startDate = new Date(now)
+    startDate.setHours(0, 0, 0, 0)
+    // Sumar 2 horas para compensar la diferencia horaria
+    const startDateAdjusted = new Date(startDate.getTime() + (2 * 60 * 60 * 1000))
+
+    // End date: fin del último día (start + duration_days)
+    const endDate = new Date(startDateAdjusted)
+    endDate.setDate(endDate.getDate() + data.durationDays)
+    endDate.setHours(23, 59, 59, 999)
 
     // API expects snake_case for game_id and reward IDs, camelCase for others
     const requestBody = {
       game_id: data.gameId, // Convertir a snake_case
       duration_days: data.durationDays,
       auto_restart: data.autoRestart,
+      start_date: startDateAdjusted.toISOString(),
+      end_date: endDate.toISOString(),
       first_place_reward_id: data.first_place_reward_id || null,
       second_place_reward_id: data.second_place_reward_id || null,
       third_place_reward_id: data.third_place_reward_id || null
@@ -537,11 +553,13 @@ export const leaderboardService = {
 
   /**
    * Format time remaining for a period
+   * Suma 1 hora para ajustar la zona horaria
    */
   formatTimeRemaining(endDate) {
     const end = new Date(endDate)
     const now = new Date()
-    const diff = end - now
+    // Sumar 1 hora (3600000 ms) al tiempo restante
+    const diff = (end - now) + (1 * 60 * 60 * 1000)
 
     if (diff <= 0) return 'Periodo terminado'
 
