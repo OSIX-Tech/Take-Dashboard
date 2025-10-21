@@ -104,16 +104,11 @@ export const leaderboardService = {
     // Calcular start_date y end_date con ajuste de zona horaria (+2 horas)
     const now = new Date()
 
-    // Start date: principio del día actual en la zona horaria local (+2)
-    const startDate = new Date(now)
-    startDate.setHours(0, 0, 0, 0)
-    // Sumar 2 horas para compensar la diferencia horaria
-    const startDateAdjusted = new Date(startDate.getTime() + (2 * 60 * 60 * 1000))
+    // Start date: momento actual + 2 horas para ajustar zona horaria
+    const startDateAdjusted = new Date(now.getTime() + (2 * 60 * 60 * 1000))
 
-    // End date: fin del último día (start + duration_days)
-    const endDate = new Date(startDateAdjusted)
-    endDate.setDate(endDate.getDate() + data.durationDays)
-    endDate.setHours(23, 59, 59, 999)
+    // End date: start + duration_days (en milisegundos)
+    const endDate = new Date(startDateAdjusted.getTime() + (data.durationDays * 24 * 60 * 60 * 1000))
 
     // API expects snake_case for game_id and reward IDs, camelCase for others
     const requestBody = {
